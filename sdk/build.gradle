@@ -1,0 +1,32 @@
+apply plugin: 'android-library'
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion "19.0.0"
+
+    defaultConfig {
+        minSdkVersion 18
+        targetSdkVersion 19
+        versionCode 1
+        versionName "1.0"
+    }
+    release {
+        runProguard false
+        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+    }
+}
+
+dependencies {
+    compile files('libs/aws-android-sdk-1.7.0-core.jar')
+    compile files('libs/aws-android-sdk-1.7.0-s3.jar')
+    compile files('libs/google-http-client-1.17.0-rc.jar')
+    compile files('libs/google-http-client-android-1.17.0-rc.jar')
+    compile files('libs/google-http-client-jackson2-1.17.0-rc.jar')
+    compile files('libs/google-oauth-client-1.17.0-rc.jar')
+    compile files('libs/gson-2.1.jar')
+    // aws-android-sdk includes below:
+    //compile files('libs/jackson-core-2.1.3.jar')
+    //compile files('libs/jackson-core-asl-1.9.11.jar')
+    compile files('libs/jsr305-1.3.9.jar')
+    compile files('libs/protobuf-java-2.4.1.jar')
+}
