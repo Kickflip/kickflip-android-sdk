@@ -9,8 +9,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import io.kickflip.sdk.APICallback;
+import io.kickflip.sdk.AWSCredentials;
+import io.kickflip.sdk.FFmpegWrapper;
 import io.kickflip.sdk.KickflipAPIClient;
+import io.kickflip.sdk.Util;
 
 
 /**
@@ -29,6 +34,16 @@ public class OAuthTestFragment extends Fragment {
 
     private OAuthTestFragmentListener mListener;
 
+
+    View.OnClickListener buttonClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            // KickflipAPIClient automatically fetches credentials for a new user on creation
+            // or retrieves cached credentials
+            setupKickflip();
+        }
+    };
+
     /** Convenience method for creating Fragment instance
      * with arguments
      * @param clientKey Client key
@@ -43,8 +58,32 @@ public class OAuthTestFragment extends Fragment {
         fragment.setArguments(args);
         return fragment;
     }
+
     public OAuthTestFragment() {
         // Required empty public constructor
+    }
+
+    /**
+     * This method creates a KickflipAPIClient instance,
+     * which automatically authenticates and acquires access
+     * credentials for video storage. Depending on your plan
+     * these may be AWSCredentials or an RTMP endpoint.
+     */
+    public void setupKickflip(){
+        if(mKickflipClient != null) return;
+
+        Context applicationContext = getActivity().getApplicationContext();
+        mKickflipClient = new KickflipAPIClient(applicationContext, mClientKey, mClientSecret, new APICallback() {
+            @Override
+            public void onSuccess(Object response) {
+                Toast.makeText(getActivity(), "Success: " + ((AWSCredentials) response).toString(), Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onError(Object response) {
+                Toast.makeText(getActivity(), "Error: " + (response).toString(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     @Override
@@ -62,15 +101,7 @@ public class OAuthTestFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_oauth_test, container, false);
-        root.findViewById(R.id.oauthButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Context applicationContext = getActivity().getApplicationContext();
-                // KickflipAPIClient automatically fetches credentials for a new user on creation
-                // or retrieves cached credentials
-                mKickflipClient = new KickflipAPIClient(applicationContext, mClientKey, mClientSecret);
-            }
-        });
+        root.findViewById(R.id.oauthButton).setOnClickListener(buttonClickListener);
         return root;
     }
 

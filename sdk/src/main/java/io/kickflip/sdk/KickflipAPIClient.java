@@ -26,67 +26,86 @@ import io.kickflip.sdk.json.KFUserDetailResponse;
  */
 public class KickflipAPIClient extends OAuthClient {
     private static final String TAG = "KickflipAPIClient";
+    public static final boolean VERBOSE = true;
 
     public static final String BASE_URL = "http://funkcity.ngrok.com/";
 
-    public static enum METHOD { GET, POST };
+    public static enum METHOD {GET, POST}
+
+    ;
 
     public KickflipAPIClient(Context appContext, String key, String secret) {
+        this(appContext, key, secret, null);
+    }
+
+    public KickflipAPIClient(Context appContext, String key, String secret, APICallback cb) {
         super(appContext, new OAuthConfig()
                 .setCredentialStoreName("KF")
                 .setClientId(key)
                 .setClientSecret(secret)
                 .setAccessTokenRequestUrl(BASE_URL + "o/token/")
                 .setAccessTokenAuthorizeUrl(BASE_URL + "o/authorize/"));
-        initialize();
+        initialize(cb);
     }
 
-    public void initialize(){
-        if(!awsCredentialsAcquired())
-            createNewUser();
+    public void initialize(APICallback cb) {
+        if (!credentialsAcquired()) {
+            createNewUser(cb);
+        } else {
+            cb.onSuccess(getCredentials());
+            if (VERBOSE)
+                Log.i(TAG, "Credentials stored " + getAWSCredentials());
+        }
     }
 
     /**
      * Create a new Kickflip user and
      * store video storage credentials
      */
-    public void createNewUser() {
+    public void createNewUser(final APICallback cb) {
         post(BASE_URL + "api/new/user", KFUserDetailResponse.class, new APICallback() {
             @Override
             public void onSuccess(Object response) {
-                Log.i(TAG, "createNewUser response: " + ((KFUserDetailResponse) response).toString());
+                if (VERBOSE)
+                    Log.i(TAG, "createNewUser response: " + ((KFUserDetailResponse) response).toString());
                 storeUserDetails((KFUserDetailResponse) response);
+                if (cb != null)
+                    cb.onSuccess(response);
             }
 
             @Override
             public void onError(Object response) {
                 Log.w(TAG, "createNewUser Error: " + ((KFUserDetailResponse) response));
+                if (cb != null)
+                    cb.onError(response);
             }
         });
     }
 
     /**
      * Do a GET Request
-     * @param url String url to GET
+     *
+     * @param url           String url to GET
      * @param responseClass Class of the expected response
-     * @param cb Callback that will receive an instance of responseClass
+     * @param cb            Callback that will receive an instance of responseClass
      */
     private void get(final String url, final Class responseClass, final APICallback cb) {
         acquireAccessToken(new OAuthCallback() {
             @Override
             public void ready(HttpRequestFactory requestFactory) {
-                    request(requestFactory, METHOD.GET, url, null, responseClass, cb);
+                request(requestFactory, METHOD.GET, url, null, responseClass, cb);
             }
         });
     }
 
     /**
      * Do a POST Request
-     * @param url String url to POST
+     *
+     * @param url           String url to POST
      * @param responseClass Class of the expected response
-     * @param cb Callback that will receive an instance of responseClass
+     * @param cb            Callback that will receive an instance of responseClass
      */
-    private void post(final String url, final Class responseClass, final APICallback cb){
+    private void post(final String url, final Class responseClass, final APICallback cb) {
         acquireAccessToken(new OAuthCallback() {
             @Override
             public void ready(HttpRequestFactory requestFactory) {
@@ -95,11 +114,11 @@ public class KickflipAPIClient extends OAuthClient {
         });
     }
 
-    private void request(HttpRequestFactory requestFactory, METHOD method, final String url, HttpContent content, final Class responseClass, final APICallback cb){
+    private void request(HttpRequestFactory requestFactory, METHOD method, final String url, HttpContent content, final Class responseClass, final APICallback cb) {
         Log.i(TAG, String.format("Attempting %S request to %s", method, url));
-        try{
+        try {
             HttpRequest request = null;
-            switch(method){
+            switch (method) {
                 case GET:
                     request = requestFactory.buildGetRequest(
                             new GenericUrl(url)).setParser(new JsonObjectParser(new JacksonFactory()));
@@ -110,12 +129,12 @@ public class KickflipAPIClient extends OAuthClient {
                     break;
             }
             handleHttpResponse(request.execute(), responseClass, cb);
-        }catch (IOException exception){
+        } catch (IOException exception) {
             // First try to handle as HttpResponseException
-            try{
+            try {
                 HttpResponseException httpException = (HttpResponseException) exception;
                 Log.i(TAG, "HttpException: " + httpException.getStatusCode());
-                switch(httpException.getStatusCode()){
+                switch (httpException.getStatusCode()) {
                     case 403:
                         // OAuth Access Token invalid
                         Log.i(TAG, "Error 403: OAuth Token appears invalid. Clearing");
@@ -129,7 +148,7 @@ public class KickflipAPIClient extends OAuthClient {
                     default:
                         httpException.printStackTrace();
                 }
-            } catch (ClassCastException e){
+            } catch (ClassCastException e) {
                 exception.printStackTrace();
             }
         }
@@ -145,24 +164,34 @@ public class KickflipAPIClient extends OAuthClient {
         }
     }
 
-    private void storeUserDetails(KFUserDetailResponse response){
-       getStorage().edit().putString("aws_access_key", response.getAwsAccessKey())
-                          .putString("aws_secret_key", response.getAwsSecretKey())
-                          .putString("app_name", response.getAppName())
-                          .putString("name", response.getName())
-                          .apply();
+    private void storeUserDetails(KFUserDetailResponse response) {
+        getStorage().edit().putString("aws_access_key", response.getAwsAccessKey())
+                .putString("aws_secret_key", response.getAwsSecretKey())
+                .putString("app_name", response.getAppName())
+                .putString("name", response.getName())
+                .apply();
     }
 
-    private boolean awsCredentialsAcquired(){
+    public boolean credentialsAcquired() {
+        //TODO: Detect account type: HLS or RTMP
+        return awsCredentialsAcquired();
+    }
+
+    private boolean awsCredentialsAcquired() {
         return getStorage().contains("aws_secret_key");
     }
 
-    private AWSCredentials getAWSCredentials(){
-       return new AWSCredentials(
-               getStorage().getString("aws_access_key",""),
-               getStorage().getString("aws_secret_key",""),
-               getStorage().getString("app_name",""));
+    private AWSCredentials getAWSCredentials() {
+        return new AWSCredentials(
+                getStorage().getString("aws_access_key", ""),
+                getStorage().getString("aws_secret_key", ""),
+                getStorage().getString("app_name", ""));
 
+    }
+
+    public Object getCredentials() {
+        //TODO: Detect account type: HLS or RTMP
+        return getAWSCredentials();
     }
 
 

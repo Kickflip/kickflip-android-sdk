@@ -3,6 +3,7 @@ package io.kickflip.sdk;
 import android.content.Context;
 import android.content.Intent;
 
+
 public class Util {
 	
 	public static Intent createShareChooserIntentWithTitleAndUrl(Context c, String title, String url){
@@ -16,6 +17,13 @@ public class Util {
         shareIntent.putExtra(Intent.EXTRA_SUBJECT, c.getString(R.string.share_subject));
         shareIntent.putExtra(Intent.EXTRA_TEXT, url.replace("%2F", "/"));	// TODO: Fix this in S3 library
         return shareIntent;
-    } 
+    }
 
+/*
+    public static void testFFMpegWrapper(){
+        FFmpegWrapper ffmpeg = new FFmpegWrapper();
+        ffmpeg.prepareAVFormatContext("/sdcard/test.mp4");
+        ffmpeg.finalizeAVFormatContext();
+    }
+*/
 }

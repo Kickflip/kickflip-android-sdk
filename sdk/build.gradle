@@ -9,12 +9,18 @@ android {
         targetSdkVersion 19
         versionCode 1
         versionName "1.0"
+
+        ndk {
+            moduleName "FFmpegWrapper"
+        }
     }
     release {
         runProguard false
         proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
     }
+
 }
+
 
 dependencies {
     compile files('libs/aws-android-sdk-1.7.0-core.jar')
@@ -29,4 +35,5 @@ dependencies {
     //compile files('libs/jackson-core-asl-1.9.11.jar')
     compile files('libs/jsr305-1.3.9.jar')
     compile files('libs/protobuf-java-2.4.1.jar')
+    //compile files('libs/ffmpegwrapper.jar')
 }

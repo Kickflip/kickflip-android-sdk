@@ -27,7 +27,7 @@ public class MainActivity extends FragmentActivity implements OAuthTestFragment.
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, OAuthTestFragment.newInstance("CLIENT_KEY", "CLIENT_SECRET"))
+                    .replace(R.id.container, OAuthTestFragment.newInstance(SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET))
                     .commit();
         }
     }

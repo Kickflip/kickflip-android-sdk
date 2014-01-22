@@ -8,13 +8,13 @@ package io.kickflip.sdk;
 public class AWSCredentials {
     private String mKey;
 
-    public String getmKey() {
+    public String getKey() {
         return mKey;
     }
 
     private String mSecret;
 
-    public String getmSecret() {
+    public String getSecret() {
         return mSecret;
     }
 
@@ -28,5 +28,9 @@ public class AWSCredentials {
         mKey = key;
         mSecret = secret;
         mBucket = bucket;
+    }
+
+    public String toString(){
+        return String.format("Bucket %s Key %s Secret %s", mBucket, mKey, mSecret);
     }
 }
