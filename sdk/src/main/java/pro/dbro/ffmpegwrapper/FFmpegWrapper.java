@@ -15,7 +15,7 @@
  *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kickflip.sdk;
+package pro.dbro.ffmpegwrapper;
 
 import java.nio.ByteBuffer;
 
@@ -59,14 +59,14 @@ public class FFmpegWrapper {
      *
      */
     static public class AVOptions{
-    	private int videoHeight = 1280;
-    	private int videoWidth = 720;
-    	
-    	private int audioSampleRate = 44100;
-    	private int numAudioChannels = 1;
+    	public int videoHeight = 1280;
+        public int videoWidth = 720;
+
+        public int audioSampleRate = 44100;
+        public int numAudioChannels = 1;
     	
         // Format specific options
-    	private int hlsSegmentDurationSec = 10;
+        public int hlsSegmentDurationSec = 10;
         // TODO: Provide a Map for format-specific options
     }
 

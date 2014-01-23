@@ -2,7 +2,7 @@ package io.kickflip.sdk.av;
 
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.opengl.EGL14;
+import android.media.MediaMuxer;
 import android.opengl.EGLContext;
 import android.opengl.GLSurfaceView;
 import android.os.Handler;
@@ -241,6 +241,7 @@ public class CameraRecorder implements SurfaceTexture.OnFrameAvailableListener, 
     private void handleSetSurfaceTexture(int textureId) {
         synchronized (mSurfaceTextureFence) {
             if(mRecordingRequested){
+                // We're hot-swapping the display EGLContext mid-recording
                 // Detach SurfaceTexture
                 mInputWindowSurface.makeCurrent();
                 mSurfaceTexture.detachFromGLContext();
@@ -312,7 +313,9 @@ public class CameraRecorder implements SurfaceTexture.OnFrameAvailableListener, 
      */
     private void prepareEncoder(EGLContext sharedContext, int width, int height, int bitRate,
                                 File outputFile) {
-        mVideoEncoder = new VideoEncoderCore(width, height, bitRate, outputFile);
+        mVideoEncoder = new VideoEncoderCore(width, height, bitRate,
+                AndroidMuxer.create(outputFile.getAbsolutePath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4));
+                //FFmpegMuxer.create(outputFile.getAbsolutePath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4));
         mEglCore = new EglCore(sharedContext, EglCore.FLAG_RECORDABLE);
         mInputWindowSurface = new WindowSurface(mEglCore, mVideoEncoder.getInputSurface());
         mInputWindowSurface.makeCurrent();

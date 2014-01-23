@@ -45,7 +45,8 @@ public class BroadcastFragment extends OAuthTestFragment {
         // recording to continue beyond this fragment's
         // lifecycle! That means the user can minimize the app
         // or even turn off the screen without interrupting the recording!
-        // If you don't want this behavior, call stopRecording onPause
+        // If you don't want this behavior, call stopRecording
+        // on your Fragment/Activity's onStop()
         if(mRecorder == null){
             RecorderConfig config = new RecorderConfig.Builder()
                     .withOuputFile(new File(Environment.getExternalStorageDirectory(), "kftest.mp4"))
