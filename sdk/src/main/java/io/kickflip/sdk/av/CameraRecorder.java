@@ -2,6 +2,7 @@ package io.kickflip.sdk.av;
 
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.GLSurfaceView;
 import android.os.Handler;
@@ -239,25 +240,47 @@ public class CameraRecorder implements SurfaceTexture.OnFrameAvailableListener, 
      */
     private void handleSetSurfaceTexture(int textureId) {
         synchronized (mSurfaceTextureFence) {
-            mEglSaver.makeSavedStateCurrent();  // Make display EGL Context current.
-            prepareEncoder(mEglSaver.getSavedEGLContext(),
-                    mRecorderConfig.getVideoWidth(),
-                    mRecorderConfig.getVideoHeight(),
-                    mRecorderConfig.getVideoBitrate(),
-                    mRecorderConfig.getOuputFile());
-            mTextureId = textureId;
-            mSurfaceTexture = new SurfaceTexture(mTextureId);
-            Log.i(TAG + "-SurfaceTexture", " SurfaceTexture created. pre setOnFrameAvailableListener");
-            mSurfaceTexture.setOnFrameAvailableListener(this);
-            openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight());
-            try {
-                mCamera.setPreviewTexture(mSurfaceTexture);
-            } catch (IOException e) {
-                e.printStackTrace();
+            if(mRecordingRequested){
+                // Detach SurfaceTexture
+                mInputWindowSurface.makeCurrent();
+                mSurfaceTexture.detachFromGLContext();
+                // Release the EGLSurface and EGLContext.
+                mInputWindowSurface.releaseEglSurface();
+                mFullScreen.release();
+                mEglCore.release();
+
+                // Create a new EGLContext and recreate the window surface.
+                mEglCore = new EglCore(mEglSaver.getSavedEGLContext(), EglCore.FLAG_RECORDABLE);
+                mInputWindowSurface.recreate(mEglCore);
+                mInputWindowSurface.makeCurrent();
+
+                // Create new programs and such for the new context.
+                mTextureId = textureId;
+                mFullScreen = new FullFrameRect(Texture2dProgram.ProgramType.TEXTURE_EXT);
+                mSurfaceTexture.attachToGLContext(mTextureId);
+                mEglSaver.makeNothingCurrent();
+            }else{
+                // We're setting up the intial SurfaceTexure pre-recording
+                mEglSaver.makeSavedStateCurrent();  // Make display EGL Context current.
+                prepareEncoder(mEglSaver.getSavedEGLContext(),
+                        mRecorderConfig.getVideoWidth(),
+                        mRecorderConfig.getVideoHeight(),
+                        mRecorderConfig.getVideoBitrate(),
+                        mRecorderConfig.getOuputFile());
+                mTextureId = textureId;
+                mSurfaceTexture = new SurfaceTexture(mTextureId);
+                Log.i(TAG + "-SurfaceTexture", " SurfaceTexture created. pre setOnFrameAvailableListener");
+                mSurfaceTexture.setOnFrameAvailableListener(this);
+                openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight());
+                try {
+                    mCamera.setPreviewTexture(mSurfaceTexture);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                mCamera.startPreview();
+                mReadyForFrames = true;
+                mEglSaver.makeNothingCurrent();
             }
-            mCamera.startPreview();
-            mReadyForFrames = true;
-            mEglSaver.makeNothingCurrent();
         }
     }
 

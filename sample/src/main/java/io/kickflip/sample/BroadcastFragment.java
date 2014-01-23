@@ -20,7 +20,7 @@ import io.kickflip.sdk.av.CameraRecorder;
 public class BroadcastFragment extends OAuthTestFragment {
     private static final String TAG = "BroadcastFragment";
 
-    private CameraRecorder mRecorder;
+    private static CameraRecorder mRecorder;        // Make static to survive Fragment re-creation
     private GLSurfaceView mGLSurfaceView;
 
 
@@ -41,13 +41,20 @@ public class BroadcastFragment extends OAuthTestFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        RecorderConfig config = new RecorderConfig.Builder()
-                .withOuputFile(new File(Environment.getExternalStorageDirectory(), "kftest.mp4"))
-                .withVideoResolution(1280, 720)
-                .withVideoBitrate(2 * 1000 * 1000)
-                .build();
+        // By making the recorder static we can allow
+        // recording to continue beyond this fragment's
+        // lifecycle! That means the user can minimize the app
+        // or even turn off the screen without interrupting the recording!
+        // If you don't want this behavior, call stopRecording onPause
+        if(mRecorder == null){
+            RecorderConfig config = new RecorderConfig.Builder()
+                    .withOuputFile(new File(Environment.getExternalStorageDirectory(), "kftest.mp4"))
+                    .withVideoResolution(1280, 720)
+                    .withVideoBitrate(2 * 1000 * 1000)
+                    .build();
 
-        mRecorder = new CameraRecorder(config);
+            mRecorder = new CameraRecorder(config);
+        }
         Log.i(TAG, String.format("Client Key (%s) Secret (%s)", getClientKey(), getClientSecret()));
     }
 
