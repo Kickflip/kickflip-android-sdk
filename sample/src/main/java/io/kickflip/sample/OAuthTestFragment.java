@@ -13,9 +13,7 @@ import android.widget.Toast;
 
 import io.kickflip.sdk.APICallback;
 import io.kickflip.sdk.AWSCredentials;
-import io.kickflip.sdk.FFmpegWrapper;
 import io.kickflip.sdk.KickflipAPIClient;
-import io.kickflip.sdk.Util;
 
 
 /**
@@ -23,18 +21,9 @@ import io.kickflip.sdk.Util;
  * which allows you to manage your Kickflip account and users
  */
 public class OAuthTestFragment extends Fragment {
+    protected static final String ARG_CLIENT_KEY = "key";
+    protected static final String ARG_CLIENT_SECRET = "secret";
     private static final String TAG = "OAuthTestFragment";
-
-    private static final String ARG_CLIENT_KEY = "key";
-    private static final String ARG_CLIENT_SECRET = "secret";
-
-    private String mClientKey;
-    private String mClientSecret;
-    private KickflipAPIClient mKickflipClient;
-
-    private OAuthTestFragmentListener mListener;
-
-
     View.OnClickListener buttonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -43,10 +32,20 @@ public class OAuthTestFragment extends Fragment {
             setupKickflip();
         }
     };
+    private String mClientKey;
+    private String mClientSecret;
+    private KickflipAPIClient mKickflipClient;
+    private TestFragmentListener mListener;
 
-    /** Convenience method for creating Fragment instance
+    public OAuthTestFragment() {
+        // Required empty public constructor
+    }
+
+    /**
+     * Convenience method for creating Fragment instance
      * with arguments
-     * @param clientKey Client key
+     *
+     * @param clientKey    Client key
      * @param clientSecret Client secret
      * @return
      */
@@ -59,18 +58,14 @@ public class OAuthTestFragment extends Fragment {
         return fragment;
     }
 
-    public OAuthTestFragment() {
-        // Required empty public constructor
-    }
-
     /**
      * This method creates a KickflipAPIClient instance,
      * which automatically authenticates and acquires access
      * credentials for video storage. Depending on your plan
      * these may be AWSCredentials or an RTMP endpoint.
      */
-    public void setupKickflip(){
-        if(mKickflipClient != null) return;
+    public void setupKickflip() {
+        if (mKickflipClient != null) return;
 
         Context applicationContext = getActivity().getApplicationContext();
         mKickflipClient = new KickflipAPIClient(applicationContext, mClientKey, mClientSecret, new APICallback() {
@@ -92,7 +87,7 @@ public class OAuthTestFragment extends Fragment {
         if (getArguments() != null) {
             mClientKey = getArguments().getString(ARG_CLIENT_KEY);
             mClientSecret = getArguments().getString(ARG_CLIENT_SECRET);
-        }else{
+        } else {
             Log.w(TAG, "No client credentials provided! This fragment won't do anything");
         }
     }
@@ -116,10 +111,10 @@ public class OAuthTestFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mListener = (OAuthTestFragmentListener) activity;
+            mListener = (TestFragmentListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
-                    + " must implement OAuthTestFragmentListener");
+                    + " must implement TestFragmentListener");
         }
     }
 
@@ -129,17 +124,25 @@ public class OAuthTestFragment extends Fragment {
         mListener = null;
     }
 
+    public String getClientKey() {
+        return mClientKey;
+    }
+
+    public String getClientSecret() {
+        return mClientSecret;
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
      * to the activity and potentially other fragments contained in that
      * activity.
-     * <p>
+     * <p/>
      * See the Android Training lesson <a href=
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OAuthTestFragmentListener {
+    public interface TestFragmentListener {
         // TODO: Update argument type and name
         public void onFragmentInteraction(Uri uri);
     }
