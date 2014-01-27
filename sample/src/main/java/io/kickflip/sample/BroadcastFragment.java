@@ -10,17 +10,18 @@ import android.view.ViewGroup;
 
 import java.io.File;
 
+import io.kickflip.sdk.av.AVRecorder;
+import io.kickflip.sdk.av.CameraEncoder;
 import io.kickflip.sdk.av.RecorderConfig;
-import io.kickflip.sdk.av.CameraRecorder;
 
 /**
- * A simple example of using the CameraRecorder
+ * A simple example of using the CameraEncoder
  * to write streamable video to disk
  */
 public class BroadcastFragment extends OAuthTestFragment {
     private static final String TAG = "BroadcastFragment";
 
-    private static CameraRecorder mRecorder;        // Make static to survive Fragment re-creation
+    private static AVRecorder mRecorder;        // Make static to survive Fragment re-creation
     private GLSurfaceView mGLSurfaceView;
 
 
@@ -48,13 +49,16 @@ public class BroadcastFragment extends OAuthTestFragment {
         // If you don't want this behavior, call stopRecording
         // on your Fragment/Activity's onStop()
         if(mRecorder == null){
-            RecorderConfig config = new RecorderConfig.Builder()
-                    .withOuputFile(new File(Environment.getExternalStorageDirectory(), "kftest.mp4"))
+
+            File output = new File(Environment.getExternalStorageDirectory(), "kftest.mp4");
+
+            RecorderConfig config = new RecorderConfig.Builder(output)
                     .withVideoResolution(1280, 720)
                     .withVideoBitrate(2 * 1000 * 1000)
+                    .withAudioBitrate(96 * 1000)
                     .build();
 
-            mRecorder = new CameraRecorder(config);
+            mRecorder = new AVRecorder(config);
         }
         Log.i(TAG, String.format("Client Key (%s) Secret (%s)", getClientKey(), getClientSecret()));
     }

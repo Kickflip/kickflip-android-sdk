@@ -12,7 +12,7 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
     private static final String TAG = "CameraSurfaceRenderer";
     private static final boolean VERBOSE = false;
 
-    private CameraRecorder mVideoRecorder;
+    private CameraEncoder mVideoRecorder;
 
     private FullFrameRect mFullScreen;
 
@@ -27,7 +27,7 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
      * <p>
      * @param recorder video encoder object
      */
-    public CameraSurfaceRenderer(CameraRecorder recorder) {
+    public CameraSurfaceRenderer(CameraEncoder recorder) {
         mVideoRecorder = recorder;
 
         mTextureId = -1;

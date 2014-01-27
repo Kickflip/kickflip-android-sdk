@@ -30,10 +30,11 @@ dependencies {
     compile files('libs/google-http-client-jackson2-1.17.0-rc.jar')
     compile files('libs/google-oauth-client-1.17.0-rc.jar')
     compile files('libs/gson-2.1.jar')
-    // aws-android-sdk includes below:
+    // Below are deps of google-http-client that are fulfilled by
+    // aws-android-sdk:
     //compile files('libs/jackson-core-2.1.3.jar')
     //compile files('libs/jackson-core-asl-1.9.11.jar')
     compile files('libs/jsr305-1.3.9.jar')
     compile files('libs/protobuf-java-2.4.1.jar')
-    //compile files('libs/ffmpegwrapper.jar')
+    compile 'com.google.guava:guava:16.0'
 }

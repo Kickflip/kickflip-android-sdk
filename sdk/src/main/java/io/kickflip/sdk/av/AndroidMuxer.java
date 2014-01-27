@@ -11,31 +11,44 @@ import java.nio.ByteBuffer;
 /**
  * Created by davidbrodsky on 1/23/14.
  */
-public class AndroidMuxer implements Muxer {
+public class AndroidMuxer extends Muxer {
     private static final String TAG = "AndroidMuxer";
     private static final boolean VERBOSE = false;
 
     private MediaMuxer mMuxer;
     private boolean mStarted;
 
-    private AndroidMuxer(String outputFile, int format){
+    private AndroidMuxer(String outputFile, FORMAT format){
+        super();
         try {
-            mMuxer = new MediaMuxer(outputFile, format);
+            switch(format){
+                case MPEG4:
+                    mMuxer = new MediaMuxer(outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unrecognized format!");
+            }
         } catch (IOException e) {
             throw new RuntimeException("MediaMuxer creation failed", e);
         }
         mStarted = false;
     }
 
-    public static AndroidMuxer create(String outputFile, int format) {
+    public static AndroidMuxer create(String outputFile, FORMAT format) {
         return new AndroidMuxer(outputFile, format);
     }
 
     @Override
     public int addTrack(MediaFormat trackFormat) {
+        super.addTrack(trackFormat);
         if(mStarted)
             throw new RuntimeException("format changed twice");
-        return mMuxer.addTrack(trackFormat);
+        int track = mMuxer.addTrack(trackFormat);
+
+        if(allTracksAdded()){
+           start();
+        }
+        return track;
     }
 
     @Override
@@ -62,6 +75,7 @@ public class AndroidMuxer implements Muxer {
 
     @Override
     public void writeSampleData(int trackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
+        super.writeSampleData(trackIndex, encodedData, bufferInfo);
         if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
             // MediaMuxer gets the codec config info via the addTrack command
             if (VERBOSE) Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
@@ -69,9 +83,15 @@ public class AndroidMuxer implements Muxer {
         }
 
         if (!mStarted) {
-            throw new RuntimeException("muxer hasn't started");
+            Log.e(TAG, "writeSampleData called before muxer started. Track index: " + trackIndex + " tracks added: " + mNumTracks);
+            return;
+            //throw new RuntimeException("muxer hasn't started");
         }
 
         mMuxer.writeSampleData(trackIndex, encodedData, bufferInfo);
+
+        if(allTracksFinished()){
+            stop();
+        }
     }
 }

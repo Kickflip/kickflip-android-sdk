@@ -27,6 +27,6 @@ public class VideoEncoderConfig {
 
     @Override
     public String toString() {
-        return "VideoEncoderConfig: " + mWidth + "x" + mHeight + " @" + mBitRate;
+        return "VideoEncoderConfig: " + mWidth + "x" + mHeight + " @" + mBitRate + " bps";
     }
 }

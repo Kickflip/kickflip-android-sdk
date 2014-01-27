@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>                   <!-- For broadcasting -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>     <!-- For video output -->
     <uses-permission android:name="android.permission.CAMERA"/>                     <!-- For recording from camera -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>               <!-- For recording from microphone -->
 
     <application
         android:allowBackup="true"
