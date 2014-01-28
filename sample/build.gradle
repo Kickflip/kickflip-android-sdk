@@ -20,5 +20,6 @@ android {
 
 dependencies {
     compile 'com.android.support:support-v4:+'
+    compile files('libs/showcaseview.jar')
     compile project(':sdk')
 }

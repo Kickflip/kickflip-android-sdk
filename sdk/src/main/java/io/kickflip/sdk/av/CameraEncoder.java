@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -41,6 +42,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private RecorderConfig mRecorderConfig;
     private float[] mTransform = new float[16];
 
+    private int mCurrentFilter;
+    private int mNewFilter;
+
     // ----- accessed by multiple threads -----
     private volatile EncoderHandler mHandler;
     private EglStateSaver mEglSaver;
@@ -58,15 +62,23 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private long mStartTimeNs;
 
     private GLSurfaceView mDisplayView;
+    private CameraSurfaceRenderer mDisplayRenderer;
 
     public CameraEncoder(RecorderConfig config) {
         mEncodedFirstFrame = false;
         mReadyForFrames = false;
         mRecordingRequested = false;
 
+        mCurrentFilter = -1;
+        mNewFilter = Filters.FILTER_NONE;
+
         mRecorderConfig = checkNotNull(config);
         mEglSaver = new EglStateSaver();
         startEncodingThread();
+    }
+
+    public RecorderConfig getConfig(){
+        return mRecorderConfig;
     }
 
     /**
@@ -101,9 +113,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     public void setPreviewDisplay(GLSurfaceView display) {
         checkNotNull(display);
+        mDisplayRenderer = new CameraSurfaceRenderer(this);
         // Prep GLSurfaceView and attach Renderer
         display.setEGLContextClientVersion(2);
-        display.setRenderer(new CameraSurfaceRenderer(this));
+        display.setRenderer(mDisplayRenderer);
         display.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         display.setPreserveEGLContextOnPause(true);
         mDisplayView = display;
@@ -126,6 +139,19 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     }
 
     /**
+     * Apply a filter to the camera input
+     * TODO: Apply to display and encoder
+     * @param filter
+     */
+    public void applyFilter(int filter){
+        checkArgument(filter >= 0 && filter <= 6);
+        mDisplayRenderer.changeFilterMode(filter);
+        synchronized (mReadyForFrameFence) {
+            mNewFilter = filter;
+        }
+    }
+
+    /**
      * Called from UI thread
      *
      * @return is the CameraEncoder in the recording state
@@ -140,21 +166,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * Called from UI thread
      */
     public void startRecording() {
-        startRecording(null);
-    }
-
-    public void startRecording(SyncEvent syncEvent){
-        Log.d(TAG, "Encoder: startRecording()");
-        if(syncEvent != null){
-            // Because the SurfaceTexture provides it's
-            // own timestamps, we'll simply assign mStartTimeNs
-            // to the first frame timestamp received
-            // after mRecordingRequested = true
-            synchronized (syncEvent){
-                syncEvent.notify();
-            }
-        }
-
         synchronized (mReadyForFrameFence) {
             mFrameNum = 0;
             mRecordingRequested = true;
@@ -226,6 +237,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             if (mRecordingRequested) {
                 //Log.i(TAG, "encoding frame");
                 mVideoEncoder.drainEncoder(false);
+                if (mCurrentFilter != mNewFilter) {
+                    Filters.updateFilter(mFullScreen, mNewFilter);
+                    mCurrentFilter = mNewFilter;
+                }
                 surfaceTexture.getTransformMatrix(mTransform);
                 mFullScreen.drawFrame(mTextureId, mTransform);
                 if(!mEncodedFirstFrame){
@@ -281,7 +296,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
                 // Create new programs and such for the new context.
                 mTextureId = textureId;
-                mFullScreen = new FullFrameRect(Texture2dProgram.ProgramType.TEXTURE_EXT);
+                //mFullScreen = new FullFrameRect(Texture2dProgram.ProgramType.TEXTURE_EXT);
+                mFullScreen = new FullFrameRect(
+                        new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
                 mSurfaceTexture.attachToGLContext(mTextureId);
                 mEglSaver.makeNothingCurrent();
             }else{
@@ -342,8 +359,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mInputWindowSurface = new WindowSurface(mEglCore, mVideoEncoder.getInputSurface());
         mInputWindowSurface.makeCurrent();
 
-        mFullScreen = new FullFrameRect(Texture2dProgram.ProgramType.TEXTURE_EXT);
-
+        //mFullScreen = new FullFrameRect(Texture2dProgram.ProgramType.TEXTURE_EXT);
+        mFullScreen = new FullFrameRect(
+                new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
     }
 
     private void releaseEncoder() {

@@ -60,18 +60,14 @@ public class MicrophoneEncoder implements Runnable{
     }
 
     public void startRecording(){
-        startRecording(null);
+        mRecordingRequested = true;
+        startAudioRecord();
     }
 
     public boolean isRecording(){
         return mRecordingRequested;
     }
 
-    public void startRecording(SyncEvent sync){
-        mSyncEvent = sync;
-        mRecordingRequested = true;
-        startAudioRecord();
-    }
 
     private void startAudioRecord(){
         if(mAudioRecord != null){
@@ -84,13 +80,7 @@ public class MicrophoneEncoder implements Runnable{
     @Override
     public void run() {
         mAudioRecord.startRecording();
-        if(mSyncEvent != null){
-            synchronized (mSyncEvent){
-                mStartTimeNs = mSyncEvent.getSyncTimeNs();
-                mSyncEvent.notify();
-            }
-        }else
-            mStartTimeNs = System.nanoTime();
+        mStartTimeNs = System.nanoTime();
         Log.i(TAG, "Begin Audio transmission to encoder");
         while(mRecordingRequested){
 
@@ -110,6 +100,7 @@ public class MicrophoneEncoder implements Runnable{
         if (TRACE) Trace.endSection();
         mAudioRecord.stop();
         mEncoderCore.drainEncoder(true);
+        mEncoderCore.release();
     }
 
     // Variables recycled between calls to sendAudioToEncoder

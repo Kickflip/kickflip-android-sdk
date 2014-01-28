@@ -6,5 +6,7 @@
     <string name="action_settings">Settings</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="fetch_oauth_creds">Fetch OAuth Credentials</string>
+    <string name="record">Record</string>
+    <string name="stop">Stop</string>
 
 </resources>

@@ -7,6 +7,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
 
 import java.io.File;
 
@@ -18,7 +22,7 @@ import io.kickflip.sdk.av.RecorderConfig;
  * A simple example of using the CameraEncoder
  * to write streamable video to disk
  */
-public class BroadcastFragment extends OAuthTestFragment {
+public class BroadcastFragment extends OAuthTestFragment implements AdapterView.OnItemSelectedListener{
     private static final String TAG = "BroadcastFragment";
 
     private static AVRecorder mRecorder;        // Make static to survive Fragment re-creation
@@ -50,7 +54,9 @@ public class BroadcastFragment extends OAuthTestFragment {
         // on your Fragment/Activity's onStop()
         if(mRecorder == null){
 
-            File output = new File(Environment.getExternalStorageDirectory(), "kftest.mp4");
+            File container = new File(Environment.getExternalStorageDirectory(), "Kickflip");
+            container.mkdir();
+            File output = new File(container, "kftest.m3u8");
 
             RecorderConfig config = new RecorderConfig.Builder(output)
                     .withVideoResolution(1280, 720)
@@ -61,6 +67,7 @@ public class BroadcastFragment extends OAuthTestFragment {
             mRecorder = new AVRecorder(config);
         }
         Log.i(TAG, String.format("Client Key (%s) Secret (%s)", getClientKey(), getClientSecret()));
+
     }
 
     @Override
@@ -68,6 +75,7 @@ public class BroadcastFragment extends OAuthTestFragment {
         super.onResume();
         mGLSurfaceView.onResume();
     }
+
 
     @Override
     public void onPause() {
@@ -82,16 +90,47 @@ public class BroadcastFragment extends OAuthTestFragment {
         View root = inflater.inflate(R.layout.fragment_broadcast, container, false);
         mGLSurfaceView = (GLSurfaceView) root.findViewById(R.id.cameraPreview);
         mRecorder.setPreviewDisplay(mGLSurfaceView);
-        root.findViewById(R.id.recordButton).setOnClickListener(new View.OnClickListener() {
+        Button recordButton = (Button) root.findViewById(R.id.recordButton);
+        recordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mRecorder.isRecording())
+                if (mRecorder.isRecording()) {
                     mRecorder.stopRecording();
-                else
+                    ((Button) v).setText(R.string.record);
+                } else {
                     mRecorder.startRecording();
+                    ((Button) v).setText(R.string.stop);
+                }
             }
         });
+
+        setupFilterSpinner(root);
         return root;
     }
 
+    private void setupFilterSpinner(View root){
+        Spinner spinner = (Spinner) root.findViewById(R.id.filterSpinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
+                R.array.camera_filter_names, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner.
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(this);
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        final int filterNum = ((Spinner) parent).getSelectedItemPosition();
+        mGLSurfaceView.queueEvent(new Runnable() {
+            @Override public void run() {
+                // notify the renderer that we want to change the encoder's state
+                mRecorder.applyFilter(filterNum);
+            }
+        });
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+    }
 }
