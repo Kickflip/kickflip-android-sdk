@@ -5,6 +5,7 @@ import android.media.MediaMuxer;
 import android.os.Environment;
 
 import java.io.File;
+import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -18,15 +19,39 @@ public class RecorderConfig {
     private final VideoEncoderConfig mVideoConfig;
     private final AudioEncoderConfig mAudioConfig;
 
-    public RecorderConfig(Muxer muxer, VideoEncoderConfig videoConfig, AudioEncoderConfig audioConfig) {
+    private final UUID mUUID;
+
+    public RecorderConfig(){
+        mVideoConfig = new VideoEncoderConfig(1280, 720, 2 * 1000 * 1000);
+        mAudioConfig = new AudioEncoderConfig(1, 44100, 96 * 1000);
+
+        mUUID = UUID.randomUUID();
+
+        File rootDir = new File(Environment.getExternalStorageDirectory(), "Kickflip");
+        File outputDir = new File(rootDir, mUUID.toString());
+        File outputFile = new File(outputDir, String.format("kf_%d.m3u8", System.currentTimeMillis()));
+        outputDir.mkdir();
+        mMuxer = FFmpegMuxer.create(outputFile.getAbsolutePath(), Muxer.FORMAT.MPEG4);
+    }
+
+    public RecorderConfig(UUID uuid, Muxer muxer, VideoEncoderConfig videoConfig, AudioEncoderConfig audioConfig) {
         mVideoConfig = checkNotNull(videoConfig);
         mAudioConfig = checkNotNull(audioConfig);
 
         mMuxer = checkNotNull(muxer);
+        mUUID = uuid;
+    }
+
+    public UUID getUUID(){
+        return mUUID;
     }
 
     public Muxer getMuxer(){
         return mMuxer;
+    }
+
+    public String getOutputPath(){
+        return mMuxer.getOutputPath();
     }
 
     public int getVideoWidth(){
@@ -65,12 +90,35 @@ public class RecorderConfig {
 
         private Muxer mMuxer;
 
-        public Builder(File outputFile){
-            //this(AndroidMuxer.create(outputFile.getAbsolutePath(), Muxer.FORMAT.MPEG4));
-            this(FFmpegMuxer.create(checkNotNull(outputFile.getAbsolutePath()), Muxer.FORMAT.MPEG4));
+        private UUID mUUID;
+
+        /**
+         * Use this builder to have the file structure automatically managed
+         * by recording UUID
+         * @param rootOutputDir recordings will be stored at <rootOutputDir>/<UUID>/
+         */
+        public Builder(File rootOutputDir){
+            //TODO: Make this HLS / RTMP Agnostic
+            setDefaults();
+            mUUID = UUID.randomUUID();
+            File outputDir = new File(rootOutputDir, mUUID.toString());
+            outputDir.mkdir();
+            File outputFile = new File(outputDir, "hls.m3u8");
+            mMuxer = FFmpegMuxer.create(outputFile.getAbsolutePath(), Muxer.FORMAT.MPEG4);
         }
 
+        /**
+         * Use this builder to manage file hierarchy manually
+         * or to provide your own Muxer
+         * @param muxer
+         */
         public Builder(Muxer muxer) {
+            setDefaults();
+            mMuxer = checkNotNull(muxer);
+            mUUID = UUID.randomUUID();
+        }
+
+        private void setDefaults(){
             mWidth = 1280;
             mHeight = 720;
             mVideoBitrate = 2 * 1000 * 1000;
@@ -78,8 +126,6 @@ public class RecorderConfig {
             mAudioSamplerate = 44100;
             mAudioBitrate = 96 * 1000;
             mNumAudioChannels = 1;
-
-            mMuxer = checkNotNull(muxer);
         }
 
         public Builder withMuxer(Muxer muxer) {
@@ -115,7 +161,7 @@ public class RecorderConfig {
         }
 
         public RecorderConfig build() {
-            return new RecorderConfig(mMuxer,
+            return new RecorderConfig(mUUID, mMuxer,
                     new VideoEncoderConfig(mWidth, mHeight, mVideoBitrate),
                     new AudioEncoderConfig(mNumAudioChannels, mAudioSamplerate, mAudioBitrate));
         }

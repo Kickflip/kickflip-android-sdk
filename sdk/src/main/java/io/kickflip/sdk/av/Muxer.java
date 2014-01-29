@@ -6,6 +6,8 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Created by davidbrodsky on 1/23/14.
  */
@@ -16,12 +18,18 @@ public abstract class Muxer {
 
     private final int mExpectedNumTracks = 2;           // TODO: Make this configurable?
 
+    protected String mOutputPath;
     protected int mNumTracks;
     protected int mNumTracksFinished;
 
-    protected Muxer(){
+    protected Muxer(String outputPath){
+        mOutputPath = checkNotNull(outputPath);
         mNumTracks = 0;
         mNumTracksFinished = 0;
+    }
+
+    public String getOutputPath(){
+        return mOutputPath;
     }
 
     /**

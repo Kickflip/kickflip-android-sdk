@@ -7,7 +7,7 @@ import java.net.URL;
 /**
  * Created by davidbrodsky on 1/16/14.
  */
-public class RTMPEndpointResponse extends EndpointResponse {
+public class KickflipRtmpResponse{
 
     @Key
     private URL rtmpUrl;

@@ -19,7 +19,7 @@ public class AndroidMuxer extends Muxer {
     private boolean mStarted;
 
     private AndroidMuxer(String outputFile, FORMAT format){
-        super();
+        super(outputFile);
         try {
             switch(format){
                 case MPEG4:

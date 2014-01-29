@@ -1,5 +1,6 @@
 package io.kickflip.sample;
 
+import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
@@ -13,9 +14,11 @@ import android.widget.Button;
 import android.widget.Spinner;
 
 import java.io.File;
+import java.util.UUID;
 
+import io.kickflip.sdk.FileUtils;
 import io.kickflip.sdk.av.AVRecorder;
-import io.kickflip.sdk.av.CameraEncoder;
+import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.av.RecorderConfig;
 
 /**
@@ -25,7 +28,7 @@ import io.kickflip.sdk.av.RecorderConfig;
 public class BroadcastFragment extends OAuthTestFragment implements AdapterView.OnItemSelectedListener{
     private static final String TAG = "BroadcastFragment";
 
-    private static AVRecorder mRecorder;        // Make static to survive Fragment re-creation
+    private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
     private GLSurfaceView mGLSurfaceView;
 
 
@@ -52,19 +55,19 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         // or even turn off the screen without interrupting the recording!
         // If you don't want this behavior, call stopRecording
         // on your Fragment/Activity's onStop()
-        if(mRecorder == null){
+        if(mBroadcaster == null){
 
-            File container = new File(Environment.getExternalStorageDirectory(), "Kickflip");
-            container.mkdir();
-            File output = new File(container, "kftest.m3u8");
+            File root = new File(Environment.getExternalStorageDirectory(), "Kickflip");
+            root.mkdirs();
 
-            RecorderConfig config = new RecorderConfig.Builder(output)
+            RecorderConfig config = new RecorderConfig.Builder(root)
                     .withVideoResolution(1280, 720)
                     .withVideoBitrate(2 * 1000 * 1000)
                     .withAudioBitrate(96 * 1000)
                     .build();
 
-            mRecorder = new AVRecorder(config);
+            Context context = getActivity().getApplicationContext();
+            mBroadcaster = new Broadcaster(context, config, SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
         }
         Log.i(TAG, String.format("Client Key (%s) Secret (%s)", getClientKey(), getClientSecret()));
 
@@ -89,16 +92,16 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_broadcast, container, false);
         mGLSurfaceView = (GLSurfaceView) root.findViewById(R.id.cameraPreview);
-        mRecorder.setPreviewDisplay(mGLSurfaceView);
+        mBroadcaster.setPreviewDisplay(mGLSurfaceView);
         Button recordButton = (Button) root.findViewById(R.id.recordButton);
         recordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mRecorder.isRecording()) {
-                    mRecorder.stopRecording();
+                if (mBroadcaster.isRecording()) {
+                    mBroadcaster.stopRecording();
                     ((Button) v).setText(R.string.record);
                 } else {
-                    mRecorder.startRecording();
+                    mBroadcaster.startRecording();
                     ((Button) v).setText(R.string.stop);
                 }
             }
@@ -124,7 +127,7 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         mGLSurfaceView.queueEvent(new Runnable() {
             @Override public void run() {
                 // notify the renderer that we want to change the encoder's state
-                mRecorder.applyFilter(filterNum);
+                mBroadcaster.applyFilter(filterNum);
             }
         });
     }

@@ -34,7 +34,7 @@ public class FFmpegMuxer extends Muxer {
 
 
     private FFmpegMuxer(String outputFile, FORMAT format) {
-        super();
+        super(outputFile);
         mFFmpeg = new FFmpegWrapper();
         // Using FFmpeg as a muxer, the only option
         // we'd conceivably configure is the outputFormatName, right?

@@ -11,13 +11,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import io.kickflip.sdk.APICallback;
-import io.kickflip.sdk.AWSCredentials;
-import io.kickflip.sdk.KickflipAPIClient;
+import io.kickflip.sdk.KickflipAuthCallback;
+import io.kickflip.sdk.KickflipApiClient;
+import io.kickflip.sdk.json.KickflipAwsResponse;
 
 
 /**
- * This Fragment demonstrates use of KickflipAPIClient,
+ * This Fragment demonstrates use of KickflipApiClient,
  * which allows you to manage your Kickflip account and users
  */
 public class OAuthTestFragment extends Fragment {
@@ -27,14 +27,14 @@ public class OAuthTestFragment extends Fragment {
     View.OnClickListener buttonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            // KickflipAPIClient automatically fetches credentials for a new user on creation
+            // KickflipApiClient automatically fetches credentials for a new user on creation
             // or retrieves cached credentials
             setupKickflip();
         }
     };
     private String mClientKey;
     private String mClientSecret;
-    private KickflipAPIClient mKickflipClient;
+    private KickflipApiClient mKickflipClient;
     private TestFragmentListener mListener;
 
     public OAuthTestFragment() {
@@ -59,19 +59,19 @@ public class OAuthTestFragment extends Fragment {
     }
 
     /**
-     * This method creates a KickflipAPIClient instance,
+     * This method creates a KickflipApiClient instance,
      * which automatically authenticates and acquires access
      * credentials for video storage. Depending on your plan
-     * these may be AWSCredentials or an RTMP endpoint.
+     * these may be AwsCredentials or an RTMP endpoint.
      */
     public void setupKickflip() {
         if (mKickflipClient != null) return;
 
         Context applicationContext = getActivity().getApplicationContext();
-        mKickflipClient = new KickflipAPIClient(applicationContext, mClientKey, mClientSecret, new APICallback() {
+        mKickflipClient = new KickflipApiClient(applicationContext, mClientKey, mClientSecret, new KickflipAuthCallback() {
             @Override
-            public void onSuccess(Object response) {
-                Toast.makeText(getActivity(), "Success: " + ((AWSCredentials) response).toString(), Toast.LENGTH_LONG).show();
+            public void onSuccess(KickflipAwsResponse response) {
+                Toast.makeText(getActivity(), "Success: " + response.toString(), Toast.LENGTH_LONG).show();
             }
 
             @Override
