@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     tools:context="io.kickflip.sample.BroadcastFragment">
 
-    <android.opengl.GLSurfaceView
+    <io.kickflip.sdk.GLCameraView
         android:id="@+id/cameraPreview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

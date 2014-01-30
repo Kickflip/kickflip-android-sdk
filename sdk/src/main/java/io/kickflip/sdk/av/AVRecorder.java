@@ -2,6 +2,8 @@ package io.kickflip.sdk.av;
 
 import android.opengl.GLSurfaceView;
 
+import io.kickflip.sdk.GLCameraView;
+
 /**
  * Created by davidbrodsky on 1/24/14.
  */
@@ -22,7 +24,7 @@ public class AVRecorder {
         mConfig = config;
     }
 
-    public void setPreviewDisplay(GLSurfaceView display){
+    public void setPreviewDisplay(GLCameraView display){
         mCamEncoder.setPreviewDisplay(display);
     }
 

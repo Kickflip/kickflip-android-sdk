@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import io.kickflip.sdk.GLCameraView;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -61,7 +63,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private boolean mEncodedFirstFrame;
     private long mStartTimeNs;
 
-    private GLSurfaceView mDisplayView;
+    private GLCameraView mDisplayView;
     private CameraSurfaceRenderer mDisplayRenderer;
 
     private int mCurrentCamera;
@@ -96,13 +98,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         if(mCamera != null && mDesiredCamera != mCurrentCamera){
             // Hot swap camera
             releaseCamera();
-            openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight(), mDesiredCamera);
-            try {
-                mCamera.setPreviewTexture(mSurfaceTexture);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            mCamera.startPreview();
+            openAndAttachCameraToSurfaceTexture();
         }
     }
 
@@ -136,7 +132,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         // else use whatever the default size is
     }
 
-    public void setPreviewDisplay(GLSurfaceView display) {
+    public void setPreviewDisplay(GLCameraView display) {
         checkNotNull(display);
         mDisplayRenderer = new CameraSurfaceRenderer(this);
         // Prep GLSurfaceView and attach Renderer
@@ -295,6 +291,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         // Release camera if we're not recording
         if(!mRecordingRequested && mSurfaceTexture != null){
             Log.i("CameraRelease", "Releasing camera");
+            if(mDisplayView != null) mDisplayView.releaseCamera();
             releaseCamera();
         }
     }
@@ -309,14 +306,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         // Re-open camera if we're not recording and the SurfaceTexture has already been created
         if(!mRecordingRequested && mSurfaceTexture != null){
             Log.i("CameraRelease", "Opening camera and attaching to SurfaceTexture");
-            openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight(), mDesiredCamera);
-            try {
-                mCamera.setPreviewTexture(mSurfaceTexture);
-                mCamera.startPreview();
-            } catch (IOException e) {
-                Log.e("CameraRelease", "Failed to setPreviewTexture on camera");
-                e.printStackTrace();
-            }
+            openAndAttachCameraToSurfaceTexture();
         }
     }
 
@@ -375,13 +365,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mSurfaceTexture = new SurfaceTexture(mTextureId);
                 Log.i(TAG + "-SurfaceTexture", " SurfaceTexture created. pre setOnFrameAvailableListener");
                 mSurfaceTexture.setOnFrameAvailableListener(this);
-                openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight(), mDesiredCamera);
-                try {
-                    mCamera.setPreviewTexture(mSurfaceTexture);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                mCamera.startPreview();
+                openAndAttachCameraToSurfaceTexture();
                 mReadyForFrames = true;
                 mEglSaver.makeNothingCurrent();
             }
@@ -442,6 +426,17 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         }
 
         mSurfaceTexture = null;
+    }
+
+    private void openAndAttachCameraToSurfaceTexture(){
+        openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight(), mDesiredCamera);
+        try {
+            mCamera.setPreviewTexture(mSurfaceTexture);
+            mCamera.startPreview();
+            if(mDisplayView != null) mDisplayView.setCamera(mCamera);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -512,6 +507,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * Stops camera preview, and releases the camera to the system.
      */
     private void releaseCamera() {
+        if(mDisplayView != null) mDisplayView.releaseCamera();
         if (mCamera != null) {
             if (VERBOSE) Log.d(TAG, "releasing camera");
             mCamera.stopPreview();
