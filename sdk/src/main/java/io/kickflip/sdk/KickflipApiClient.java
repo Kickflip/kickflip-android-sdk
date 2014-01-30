@@ -36,8 +36,6 @@ public class KickflipApiClient extends OAuthClient {
 
     public static enum METHOD {GET, POST}
 
-    ;
-
     public KickflipApiClient(Context appContext, String key, String secret) {
         this(appContext, key, secret, null);
     }
