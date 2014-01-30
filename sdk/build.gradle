@@ -10,9 +10,6 @@ android {
         versionCode 1
         versionName "1.0"
 
-        ndk {
-            moduleName "FFmpegWrapper"
-        }
     }
     release {
         runProguard false

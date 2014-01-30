@@ -77,14 +77,16 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
     @Override
     public void onResume() {
         super.onResume();
-        mGLSurfaceView.onResume();
+        mBroadcaster.onHostActivityResumed();
+        //mGLSurfaceView.onResume();
     }
 
 
     @Override
     public void onPause() {
         super.onPause();
-        mGLSurfaceView.onPause();
+        mBroadcaster.onHostActivityPaused();
+        //mGLSurfaceView.onPause();
     }
 
 

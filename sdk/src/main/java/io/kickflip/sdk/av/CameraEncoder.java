@@ -285,6 +285,40 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     }
 
+    /**
+     * Hook for Host Activity's onPause()
+     */
+    public void onHostActivityPaused(){
+        // Pause the GLSurfaceView's Renderer thread
+        if(mDisplayView != null)
+            mDisplayView.onPause();
+        // Release camera if we're not recording
+        if(!mRecordingRequested && mSurfaceTexture != null){
+            Log.i("CameraRelease", "Releasing camera");
+            releaseCamera();
+        }
+    }
+
+    /**
+     * Hook for Host Activity's onResume()
+     */
+    public void onHostActivityResumed(){
+        // Resume the GLSurfaceView's Renderer thread
+        if(mDisplayView != null)
+            mDisplayView.onResume();
+        // Re-open camera if we're not recording and the SurfaceTexture has already been created
+        if(!mRecordingRequested && mSurfaceTexture != null){
+            Log.i("CameraRelease", "Opening camera and attaching to SurfaceTexture");
+            openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight(), mDesiredCamera);
+            try {
+                mCamera.setPreviewTexture(mSurfaceTexture);
+                mCamera.startPreview();
+            } catch (IOException e) {
+                Log.e("CameraRelease", "Failed to setPreviewTexture on camera");
+                e.printStackTrace();
+            }
+        }
+    }
 
     /**
      * The GLSurfaceView.Renderer calls here after creating a

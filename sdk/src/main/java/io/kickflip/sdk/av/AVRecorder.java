@@ -51,4 +51,12 @@ public class AVRecorder {
     public void reset(RecorderConfig config){
         init(mConfig);
     }
+
+    public void onHostActivityPaused(){
+        mCamEncoder.onHostActivityPaused();
+    }
+
+    public void onHostActivityResumed(){
+        mCamEncoder.onHostActivityResumed();
+    }
 }

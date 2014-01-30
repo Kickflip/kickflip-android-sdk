@@ -36,6 +36,30 @@ Kickflip.startBroadcastActivity(this, "API_KEY", "API_SECRET", new 	KickflipCall
    	
 `BroadcastActivity` provides a pre-built UI including a camera preview and controls for starting, stopping, and sharing the broadcast.
 
+## Building this project
+
+1. Create a file named `local.properties` in this directory with the following contents:
+    
+	   sdk.dir=/path/to/android-sdk
+
+2. From this directory run:
+
+	   $ ./gradlew assembleDebug
+
+The Kickflip Sample .apk will be in `./sample/build/apk`. 
+
+The Kickflip SDK .aar will be in `./sdk/build/libs`.
+
+## Using the library
+
+The Kickflip SDK will be available from the Maven Central Repository, and will be incorporated as a dependency in your project's `build.gradle`:
+
+    # Coming Soon! Not yet published
+    dependencies {
+	   compile 'io.kickflip:sdk:0.1'
+	}
+
+
 ## License
 
 MIT
