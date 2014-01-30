@@ -2,7 +2,6 @@ package io.kickflip.sample;
 
 import android.content.Context;
 import android.hardware.Camera;
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -15,10 +14,8 @@ import android.widget.Button;
 import android.widget.Spinner;
 
 import java.io.File;
-import java.util.UUID;
 
-import io.kickflip.sdk.FileUtils;
-import io.kickflip.sdk.av.AVRecorder;
+import io.kickflip.sdk.GLCameraView;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.av.RecorderConfig;
 
@@ -30,7 +27,7 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
     private static final String TAG = "BroadcastFragment";
 
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
-    private GLSurfaceView mGLSurfaceView;
+    private GLCameraView mGLSurfaceView;
 
 
     public BroadcastFragment() {
@@ -48,6 +45,7 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
 
         // By making the recorder static we can allow
@@ -76,17 +74,29 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
 
     @Override
     public void onResume() {
+        Log.i(TAG, "onResume");
         super.onResume();
         mBroadcaster.onHostActivityResumed();
-        //mGLSurfaceView.onResume();
     }
 
 
     @Override
     public void onPause() {
+        Log.i(TAG, "onPause");
         super.onPause();
         mBroadcaster.onHostActivityPaused();
-        //mGLSurfaceView.onPause();
+    }
+
+    @Override
+    public void onStop (){
+        Log.i(TAG, "onStop");
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy (){
+        Log.i(TAG, "onDestroy");
+        super.onDestroy();
     }
 
 
@@ -94,7 +104,7 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_broadcast, container, false);
-        mGLSurfaceView = (GLSurfaceView) root.findViewById(R.id.cameraPreview);
+        mGLSurfaceView = (GLCameraView) root.findViewById(R.id.cameraPreview);
         mBroadcaster.setPreviewDisplay(mGLSurfaceView);
         Button recordButton = (Button) root.findViewById(R.id.recordButton);
         recordButton.setOnClickListener(new View.OnClickListener() {

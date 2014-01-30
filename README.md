@@ -41,8 +41,17 @@ Kickflip.startBroadcastActivity(this, "API_KEY", "API_SECRET", new 	KickflipCall
 1. Create a file named `local.properties` in this directory with the following contents:
     
 	    sdk.dir=/path/to/android-sdk
+	    
+2. Create a file named `SECRETS.java` in `./sample/src/main/java/io/kickflip/sample/`:
 
-2. From this directory run:
+		package io.kickflip.sample;
+		public class SECRETS {
+		    public static final String CLIENT_KEY = "YourKickflipKey";
+		    public static final String CLIENT_SECRET = "YourKickflipSecret";
+		}
+
+
+3. From this directory run:
 
 	    $ ./gradlew assembleDebug
 
