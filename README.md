@@ -40,11 +40,11 @@ Kickflip.startBroadcastActivity(this, "API_KEY", "API_SECRET", new 	KickflipCall
 
 1. Create a file named `local.properties` in this directory with the following contents:
     
-	   sdk.dir=/path/to/android-sdk
+	    sdk.dir=/path/to/android-sdk
 
 2. From this directory run:
 
-	   $ ./gradlew assembleDebug
+	    $ ./gradlew assembleDebug
 
 The Kickflip Sample .apk will be in `./sample/build/apk`. 
 

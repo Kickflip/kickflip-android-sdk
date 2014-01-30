@@ -1,3 +1,4 @@
+*.iml
 *.keystore
 SECRETS.java
 .gradle
