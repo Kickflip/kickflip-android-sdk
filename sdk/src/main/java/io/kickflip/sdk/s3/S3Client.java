@@ -50,7 +50,7 @@ public class S3Client {
             return;
 		}
         final String url = "http://" + mBucket + ".s3.amazonaws.com/" + key;
-        //Log.i(TAG, "Attempting to send " + key + " to bucket " + mBucket + " from file " + source);
+        Log.i(TAG, "Attempting to send " + key + " to bucket " + mBucket + " from file " + source);
 		PutObjectRequest por = new PutObjectRequest(mBucket, key, source);
         por.setGeneralProgressListener(new ProgressListener() {
             @Override

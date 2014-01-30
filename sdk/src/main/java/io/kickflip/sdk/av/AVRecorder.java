@@ -13,6 +13,10 @@ public class AVRecorder {
     private RecorderConfig mConfig;
 
     public AVRecorder(RecorderConfig config){
+       init(config);
+    }
+
+    private void init(RecorderConfig config){
         mCamEncoder = new CameraEncoder(config);
         mMicEncoder = new MicrophoneEncoder(config);
         mConfig = config;
@@ -26,9 +30,17 @@ public class AVRecorder {
         mCamEncoder.applyFilter(filter);
     }
 
+    public void requestCamera(int camera){
+        mCamEncoder.requestCamera(camera);
+    }
+
     public void startRecording(){
         mMicEncoder.startRecording();
         mCamEncoder.startRecording();
+    }
+
+    public boolean isRecording(){
+        return mCamEncoder.isRecording();
     }
 
     public void stopRecording(){
@@ -36,7 +48,7 @@ public class AVRecorder {
         mMicEncoder.stopRecording();
     }
 
-    public boolean isRecording(){
-        return mCamEncoder.isRecording();
+    public void reset(RecorderConfig config){
+        init(mConfig);
     }
 }

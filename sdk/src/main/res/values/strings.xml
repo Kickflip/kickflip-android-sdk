@@ -2,15 +2,26 @@
     <string name="app_name">kickflip-android-sdk</string>
     <string name="share_subject">Watch This. It\'s Live!</string>
 
-    <!-- for camera filter spinner match with CameraSurfaceRenderer constants -->
+    <!-- These strings are arranged in particular order
+         so their indicies match the FILTER_XXX constants
+         in Filters.java. Use to populate a Spinner selector-->
     <string-array name="camera_filter_names">
         <item>Normal</item>
         <item>Black &amp; white</item>
-        <item>Filter: blur</item>
-        <item>Filter: sharpen</item>
-        <item>Filter: edge detect</item>
-        <item>Filter: emboss</item>
         <item>Night Mode</item>
+        <item>Chroma Key</item>
+        <item>Blur</item>
+        <item>Sharpen</item>
+        <item>Edge detect</item>
+        <item>Emboss</item>
+    </string-array>
+
+    <!-- These strings also must be preserved in order
+         so their indicies match those of the hardware
+         Cameras in Camera.open(i)-->
+    <string-array name="camera_names">
+        <item>Rear</item>
+        <item>Front</item>
     </string-array>
 
 </resources>

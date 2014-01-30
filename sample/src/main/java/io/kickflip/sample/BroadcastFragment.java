@@ -1,6 +1,7 @@
 package io.kickflip.sample;
 
 import android.content.Context;
+import android.hardware.Camera;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
@@ -108,6 +109,7 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         });
 
         setupFilterSpinner(root);
+        setupCameraSpinner(root);
         return root;
     }
 
@@ -121,15 +123,28 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         spinner.setOnItemSelectedListener(this);
     }
 
+    private void setupCameraSpinner(View root){
+        Spinner spinner = (Spinner) root.findViewById(R.id.cameraSpinner);
+        if(Camera.getNumberOfCameras() == 1){
+            spinner.setVisibility(View.GONE);
+        }else{
+            ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
+                    R.array.camera_names, android.R.layout.simple_spinner_item);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            // Apply the adapter to the spinner.
+            spinner.setAdapter(adapter);
+            spinner.setOnItemSelectedListener(this);
+        }
+    }
+
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        final int filterNum = ((Spinner) parent).getSelectedItemPosition();
-        mGLSurfaceView.queueEvent(new Runnable() {
-            @Override public void run() {
-                // notify the renderer that we want to change the encoder's state
-                mBroadcaster.applyFilter(filterNum);
-            }
-        });
+        if(((String) parent.getTag()).compareTo("filter") == 0 ){
+            //final int filterNum = ((Spinner) parent).getSelectedItemPosition();
+            mBroadcaster.applyFilter(position);
+        }else if(((String) parent.getTag()).compareTo("camera") == 0 ){
+            mBroadcaster.requestCamera(position);
+        }
     }
 
     @Override

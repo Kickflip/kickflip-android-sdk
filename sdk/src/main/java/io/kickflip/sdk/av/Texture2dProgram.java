@@ -29,7 +29,7 @@ public class Texture2dProgram {
     private static final String TAG ="Texture2dProgram";
 
     public enum ProgramType {
-        TEXTURE_2D, TEXTURE_EXT, TEXTURE_EXT_BW, TEXTURE_EXT_NIGHT, TEXTURE_EXT_FILT
+        TEXTURE_2D, TEXTURE_EXT, TEXTURE_EXT_BW, TEXTURE_EXT_NIGHT, TEXTURE_EXT_CHROMA_KEY, TEXTURE_EXT_FILT
     }
 
     // Simple vertex shader, used for all programs.
@@ -86,6 +86,22 @@ public class Texture2dProgram {
                     "    vec4 tc = texture2D(sTexture, vTextureCoord);\n" +
                     "    float color = ((tc.r * 0.3 + tc.g * 0.59 + tc.b * 0.11) - 0.5 * 1.5) + 0.8;\n" +
                     "    gl_FragColor = vec4(color, color + 0.15, color, 1.0);\n" +
+                    "}\n";
+
+    // Fragment shader that applies a Chroma Key effect, making green pixels transparent
+    private static final String FRAGMENT_SHADER_EXT_CHROMA_KEY =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "void main() {\n" +
+                    "    vec4 tc = texture2D(sTexture, vTextureCoord);\n" +
+                    "    float color = ((tc.r * 0.3 + tc.g * 0.59 + tc.b * 0.11) - 0.5 * 1.5) + 0.8;\n" +
+                    "    if(tc.g > 0.7 && tc.b < 0.5 && tc.r < 0.5){ \n" +
+                    "        gl_FragColor = vec4(0, 0, 0, 0.0);\n" +
+                    "    }else{ \n" +
+                    "        gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
+                    "    }\n" +
                     "}\n";
 
 
@@ -162,6 +178,10 @@ public class Texture2dProgram {
             case TEXTURE_EXT_NIGHT:
                 mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
                 mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_EXT_NIGHT);
+                break;
+            case TEXTURE_EXT_CHROMA_KEY:
+                mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+                mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_EXT_CHROMA_KEY);
                 break;
             case TEXTURE_EXT_FILT:
                 mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;

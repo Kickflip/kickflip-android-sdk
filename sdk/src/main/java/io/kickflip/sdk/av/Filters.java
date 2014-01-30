@@ -11,11 +11,12 @@ public class Filters {
     // Camera filters; must match up with camera_filter_names in strings.xml
     static final int FILTER_NONE = 0;
     static final int FILTER_BLACK_WHITE = 1;
-    static final int FILTER_BLUR = 2;
-    static final int FILTER_SHARPEN = 3;
-    static final int FILTER_EDGE_DETECT = 4;
-    static final int FILTER_EMBOSS = 5;
-    static final int FILTER_NIGHT = 6;
+    static final int FILTER_NIGHT = 2;
+    static final int FILTER_CHROMA_KEY = 3;
+    static final int FILTER_BLUR = 4;
+    static final int FILTER_SHARPEN = 5;
+    static final int FILTER_EDGE_DETECT = 6;
+    static final int FILTER_EMBOSS = 7;
 
     /**
      * Updates the filter on the provided FullFrameRect
@@ -39,6 +40,9 @@ public class Filters {
                 break;
             case FILTER_NIGHT:
                 programType = Texture2dProgram.ProgramType.TEXTURE_EXT_NIGHT;
+                break;
+            case FILTER_CHROMA_KEY:
+                programType = Texture2dProgram.ProgramType.TEXTURE_EXT_CHROMA_KEY;
                 break;
             case FILTER_BLUR:
                 programType = Texture2dProgram.ProgramType.TEXTURE_EXT_FILT;

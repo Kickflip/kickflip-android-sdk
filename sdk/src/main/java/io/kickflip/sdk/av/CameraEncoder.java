@@ -64,10 +64,16 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private GLSurfaceView mDisplayView;
     private CameraSurfaceRenderer mDisplayRenderer;
 
+    private int mCurrentCamera;
+    private int mDesiredCamera;
+
     public CameraEncoder(RecorderConfig config) {
         mEncodedFirstFrame = false;
         mReadyForFrames = false;
         mRecordingRequested = false;
+
+        mCurrentCamera = -1;
+        mDesiredCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
 
         mCurrentFilter = -1;
         mNewFilter = Filters.FILTER_NONE;
@@ -79,6 +85,25 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     public RecorderConfig getConfig(){
         return mRecorderConfig;
+    }
+
+    public void requestCamera(int camera){
+        if(Camera.getNumberOfCameras() == 1){
+            Log.w(TAG, "Ignoring requestCamera: only one device camera available.");
+            return;
+        }
+        mDesiredCamera = camera;
+        if(mCamera != null && mDesiredCamera != mCurrentCamera){
+            // Hot swap camera
+            releaseCamera();
+            openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight(), mDesiredCamera);
+            try {
+                mCamera.setPreviewTexture(mSurfaceTexture);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            mCamera.startPreview();
+        }
     }
 
     /**
@@ -131,9 +156,11 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      */
     public SurfaceTexture getSurfaceTextureForDisplay() {
         synchronized (mSurfaceTextureFence) {
-            mEglSaver.makeSavedStateCurrent();
             if (mSurfaceTexture == null)
                 Log.w(TAG, "getSurfaceTextureForDisplay called before ST created");
+            else{
+                mEglSaver.makeSavedStateCurrent();
+            }
             return mSurfaceTexture;
         }
     }
@@ -144,7 +171,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * @param filter
      */
     public void applyFilter(int filter){
-        checkArgument(filter >= 0 && filter <= 6);
+        checkArgument(filter >= 0 && filter <= 7);
         mDisplayRenderer.changeFilterMode(filter);
         synchronized (mReadyForFrameFence) {
             mNewFilter = filter;
@@ -202,6 +229,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             mRecordingRequested = false;
             mVideoEncoder.drainEncoder(true);
             releaseEncoder();
+            releaseCamera();
         }
     }
 
@@ -313,7 +341,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mSurfaceTexture = new SurfaceTexture(mTextureId);
                 Log.i(TAG + "-SurfaceTexture", " SurfaceTexture created. pre setOnFrameAvailableListener");
                 mSurfaceTexture.setOnFrameAvailableListener(this);
-                openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight());
+                openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight(), mDesiredCamera);
                 try {
                     mCamera.setPreviewTexture(mSurfaceTexture);
                 } catch (IOException e) {
@@ -385,7 +413,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     /**
      * Opens a camera, and attempts to establish preview mode at the specified width and height.
      */
-    private void openCamera(int desiredWidth, int desiredHeight) {
+    private void openCamera(int desiredWidth, int desiredHeight, int requestedCameraType) {
+        // There's a confusing conflation of Camera index in Camera.open(i)
+        // with Camera.getCameraInfo().facing values. However the API specifies that Camera.open(0)
+        // will always be a rear-facing camera, and CAMERA_FACING_BACK = 0.
         if (mCamera != null) {
             throw new RuntimeException("camera already initialized");
         }
@@ -394,18 +425,30 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
         // Try to find a front-facing camera (e.g. for videoconferencing).
         int numCameras = Camera.getNumberOfCameras();
-        for (int i = 0; i < numCameras; i++) {
-            Camera.getCameraInfo(i, info);
-            if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                mCamera = Camera.open(i);
-                break;
+        int targetCameraType = requestedCameraType;
+        boolean triedAllCameras = false;
+        cameraLoop:
+        while(!triedAllCameras){
+            for (int i = 0; i < numCameras; i++) {
+                Camera.getCameraInfo(i, info);
+                if (info.facing == targetCameraType) {
+                    Log.i(TAG, "Trying to open camera " + i);
+                    mCamera = Camera.open(i);
+                    mCurrentCamera = targetCameraType;
+                    break cameraLoop;
+                }
             }
+            if(mCamera == null){
+                if(targetCameraType == requestedCameraType)
+                    targetCameraType = (requestedCameraType == Camera.CameraInfo.CAMERA_FACING_BACK ? Camera.CameraInfo.CAMERA_FACING_FRONT : Camera.CameraInfo.CAMERA_FACING_BACK);
+                else
+                    triedAllCameras = true;
+            }
+
         }
+
         if (mCamera == null) {
-            Log.d(TAG, "No front-facing camera found; opening default");
-            mCamera = Camera.open();    // opens first back-facing camera
-        }
-        if (mCamera == null) {
+            mCurrentCamera = -1;
             throw new RuntimeException("Unable to open camera");
         }
 
@@ -429,6 +472,18 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             previewFacts += " @" + (fpsRange[0] / 1000.0) + " - " + (fpsRange[1] / 1000.0) + "fps";
         }
         Log.i(TAG, "Camera preview set: " + previewFacts);
+    }
+
+    /**
+     * Stops camera preview, and releases the camera to the system.
+     */
+    private void releaseCamera() {
+        if (mCamera != null) {
+            if (VERBOSE) Log.d(TAG, "releasing camera");
+            mCamera.stopPreview();
+            mCamera.release();
+            mCamera = null;
+        }
     }
 
     /**

@@ -56,6 +56,7 @@ public class Broadcaster extends AVRecorder {
                 mS3Client.setBucket(response.getAppName());
                 mKickFlipCredentialsReceived = true;
                 Log.i(TAG, "Got storage credentials " + response);
+                emptyQueue();
             }
 
             @Override
@@ -102,8 +103,10 @@ public class Broadcaster extends AVRecorder {
      */
     private void queueOrSubmitUpload(String key, String fileLocation){
         if(mKickFlipCredentialsReceived){
+            Log.i(TAG, "uploading " + key);
             mS3Client.upload(key, new File(fileLocation));
         }else{
+            Log.i(TAG, "queueing " + key);
             queueUpload(key, fileLocation);
         }
     }
@@ -123,6 +126,7 @@ public class Broadcaster extends AVRecorder {
      * Submit all queued uploads to the S3 client
      */
     private void emptyQueue(){
+        if(mUploadQueue == null) return;
         for(Pair<String, String> pair : mUploadQueue){
             mS3Client.upload(pair.first, new File(pair.second));
         }

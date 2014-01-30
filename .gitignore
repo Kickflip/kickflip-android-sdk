@@ -1,3 +1,4 @@
+*.keystore
 SECRETS.java
 .gradle
 local.properties
