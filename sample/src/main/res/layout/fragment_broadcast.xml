@@ -27,13 +27,14 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"/>
 
-    <Spinner
-        android:id="@+id/cameraSpinner"
-        android:padding="15dp"
+    <ImageButton
+        android:id="@+id/cameraFlipper"
         android:tag="camera"
+        android:background="@drawable/transparent_button_bg"
+        android:src="@drawable/ic_camflip"
         android:layout_gravity="top|right"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"/>
+        android:layout_margin="10dp"/>
 
 </FrameLayout>

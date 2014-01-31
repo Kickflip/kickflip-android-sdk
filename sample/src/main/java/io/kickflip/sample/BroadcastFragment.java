@@ -121,7 +121,7 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         });
 
         setupFilterSpinner(root);
-        setupCameraSpinner(root);
+        setupCameraFlipper(root);
         return root;
     }
 
@@ -135,17 +135,17 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         spinner.setOnItemSelectedListener(this);
     }
 
-    private void setupCameraSpinner(View root){
-        Spinner spinner = (Spinner) root.findViewById(R.id.cameraSpinner);
+    private void setupCameraFlipper(View root){
+        View flipper = root.findViewById(R.id.cameraFlipper);
         if(Camera.getNumberOfCameras() == 1){
-            spinner.setVisibility(View.GONE);
+            flipper.setVisibility(View.GONE);
         }else{
-            ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
-                    R.array.camera_names, android.R.layout.simple_spinner_item);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            // Apply the adapter to the spinner.
-            spinner.setAdapter(adapter);
-            spinner.setOnItemSelectedListener(this);
+            flipper.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mBroadcaster.requestOtherCamera();
+                }
+            });
         }
     }
 
@@ -154,8 +154,6 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         if(((String) parent.getTag()).compareTo("filter") == 0 ){
             //final int filterNum = ((Spinner) parent).getSelectedItemPosition();
             mBroadcaster.applyFilter(position);
-        }else if(((String) parent.getTag()).compareTo("camera") == 0 ){
-            mBroadcaster.requestCamera(position);
         }
     }
 

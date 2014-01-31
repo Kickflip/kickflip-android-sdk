@@ -18,7 +18,9 @@
 
     <!-- These strings also must be preserved in order
          so their indicies match those of the hardware
-         Cameras in Camera.open(i)-->
+         Cameras in Camera.open(i). Also note, choosing
+         cameras by name is silly for a user. Consider
+         using a toggle button!-->
     <string-array name="camera_names">
         <item>Rear</item>
         <item>Front</item>

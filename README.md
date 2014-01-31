@@ -38,14 +38,19 @@ Kickflip.startBroadcastActivity(this, "API_KEY", "API_SECRET", new 	KickflipCall
 
 ## Building this project
 
-### Setting up the Android SDK & Build-Tools
-To build this project you need a copy of the Android 4.4.2 SDK (API 19) and the Android SDK Build-Tools version 19. [Download the SDK](http://developer.android.com/sdk/), and run `android` in the SDK's `/tools` directory to install the Android SDK Build-Tools.
+### Set up Java, the Android SDK & Build-Tools
+
+1. [Download and install JDK 1.7](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
+2. [Download and install the Android SDK](http://developer.android.com/sdk/)
+3. Run `/android-sdk/tools/android` to install the following packages:
+    
+![Installing packages from the Android SDK Manager](http://i.imgur.com/PuWsBEB.png)
 
 **ProTip**: You should have the Android SDK root, along with the `/tools` and `/platform-tools` sub-directories added to your PATH.
 
-### Building
+### Build
 
-1. Create a file named `local.properties` in this directory with the following contents:
+1. Define the Android SDK location as $ANDROID_HOME in your environment, or create a file named `local.properties` in this directory with the following contents:
     
 	    sdk.dir=/path/to/android-sdk
 	    

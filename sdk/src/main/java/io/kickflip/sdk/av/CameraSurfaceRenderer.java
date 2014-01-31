@@ -12,7 +12,7 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
     private static final String TAG = "CameraSurfaceRenderer";
     private static final boolean VERBOSE = false;
 
-    private CameraEncoder mVideoRecorder;
+    private CameraEncoder mCameraEncoder;
 
     private FullFrameRect mFullScreen;
 
@@ -39,7 +39,7 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
      * @param recorder video encoder object
      */
     public CameraSurfaceRenderer(CameraEncoder recorder) {
-        mVideoRecorder = recorder;
+        mCameraEncoder = recorder;
 
         mTextureId = -1;
         mFrameCount = -1;
@@ -55,20 +55,6 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         mRecordingEnabled = false;
     }
 
-    /**
-     * Notifies the renderer thread that the activity is pausing.
-     * <p>
-     * For best results, call this *after* disabling Camera preview.
-     */
-    /*
-    public void notifyPausing() {
-        if (mSurfaceTexture != null) {
-            Log.d(TAG, "renderer pausing -- releasing SurfaceTexture");
-            mSurfaceTexture.release();
-            mSurfaceTexture = null;
-        }
-    }
-    */
 
     /**
      * Notifies the renderer that we want to stop or start recording.
@@ -85,11 +71,9 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         // is *not* applied to the recording, because that uses a separate shader.
         mFullScreen = new FullFrameRect(
                 new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
-        //mFullScreen = new FullFrameRect(Texture2dProgram.ProgramType.TEXTURE_EXT);
-        //mFullScreen = new FullFrameRect(Texture2dProgram.ProgramType.TEXTURE_EXT_BW);
         mTextureId = mFullScreen.createTextureObject();
 
-        mVideoRecorder.onSurfaceCreated(mTextureId);
+        mCameraEncoder.onSurfaceCreated(mTextureId);
         mFrameCount = 0;
     }
 
@@ -100,10 +84,14 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 unused) {
-        if (VERBOSE) Log.d(TAG, "onDrawFrame tex=" + mTextureId);
+        if (VERBOSE){
+            if(mFrameCount % 30 == 0){
+                Log.d(TAG, "onDrawFrame tex=" + mTextureId);
+                mCameraEncoder.logSavedEglState();
+            }
+        }
 
         if (mCurrentFilter != mNewFilter) {
-            //updateFilter();
             Filters.updateFilter(mFullScreen, mNewFilter);
             mCurrentFilter = mNewFilter;
         }
@@ -111,22 +99,22 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         if (mIncomingSizeUpdated) {
             mFullScreen.getProgram().setTexSize(mIncomingWidth, mIncomingHeight);
             mIncomingSizeUpdated = false;
+            Log.i(TAG, "setTexSize on display Texture");
         }
 
         // Draw the video frame.
-        if(mVideoRecorder.getSurfaceTextureForDisplay() != null){
-            //Log.i(TAG, "Attempting to display frame");
-            mVideoRecorder.getSurfaceTextureForDisplay().getTransformMatrix(mSTMatrix);
+        if(mCameraEncoder.isSurfaceTextureReadyForDisplay()){
+            mCameraEncoder.getSurfaceTextureForDisplay().getTransformMatrix(mSTMatrix);
             mFullScreen.drawFrame(mTextureId, mSTMatrix);
+
         }
 
         // Draw a flashing box if we're recording.  This only appears on screen.
-        showBox = (mVideoRecorder.isRecording());
+        showBox = (mCameraEncoder.isRecording());
         if (showBox && (++mFrameCount & 0x04) == 0) {
             drawBox();
         }
         mFrameCount++;
-
     }
 
     /**

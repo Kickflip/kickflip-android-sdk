@@ -32,6 +32,10 @@ public class AVRecorder {
         mCamEncoder.applyFilter(filter);
     }
 
+    public void requestOtherCamera(){
+        mCamEncoder.requestOtherCamera();
+    }
+
     public void requestCamera(int camera){
         mCamEncoder.requestCamera(camera);
     }
