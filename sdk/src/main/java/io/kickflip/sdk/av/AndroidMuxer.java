@@ -19,7 +19,7 @@ public class AndroidMuxer extends Muxer {
     private boolean mStarted;
 
     private AndroidMuxer(String outputFile, FORMAT format){
-        super(outputFile);
+        super(outputFile, format);
         try {
             switch(format){
                 case MPEG4:
@@ -51,14 +51,12 @@ public class AndroidMuxer extends Muxer {
         return track;
     }
 
-    @Override
-    public void start() {
+    protected void start() {
         mMuxer.start();
         mStarted = true;
     }
 
-    @Override
-    public void stop() {
+    protected void stop() {
         mMuxer.stop();
         mStarted = false;
     }
@@ -74,8 +72,8 @@ public class AndroidMuxer extends Muxer {
     }
 
     @Override
-    public void writeSampleData(int trackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
-        super.writeSampleData(trackIndex, encodedData, bufferInfo);
+    public void writeSampleData(MediaCodec encoder, int trackIndex, int bufferIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
+        super.writeSampleData(encoder, trackIndex, bufferIndex, encodedData, bufferInfo);
         if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
             // MediaMuxer gets the codec config info via the addTrack command
             if (VERBOSE) Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
@@ -89,6 +87,8 @@ public class AndroidMuxer extends Muxer {
         }
 
         mMuxer.writeSampleData(trackIndex, encodedData, bufferInfo);
+
+        encoder.releaseOutputBuffer(bufferIndex, false);
 
         if(allTracksFinished()){
             stop();

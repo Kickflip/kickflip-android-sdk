@@ -14,7 +14,7 @@ import android.view.ScaleGestureDetector;
 public class GLCameraView extends GLSurfaceView {
     private static final String TAG = "GLCameraView";
 
-    private ScaleGestureDetector mScaleGestureDetector;
+    protected ScaleGestureDetector mScaleGestureDetector;
     private Camera mCamera;
     private int mMaxZoom;
 
@@ -80,7 +80,10 @@ public class GLCameraView extends GLSurfaceView {
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         if(mScaleGestureDetector != null){
-            mScaleGestureDetector.onTouchEvent(ev);
+            if(!mScaleGestureDetector.onTouchEvent(ev)){
+                // No scale gesture detected
+
+            }
         }
         return true;
     }

@@ -9,21 +9,24 @@ import java.nio.ByteBuffer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Created by davidbrodsky on 1/23/14.
+ * Base Muxer class for interaction with MediaCodec based
+ * encoders
  */
 public abstract class Muxer {
     private static final String TAG = "Muxer";
 
-    public static enum FORMAT { MPEG4 }
+    public static enum FORMAT { MPEG4, HLS, RTMP }
 
     private final int mExpectedNumTracks = 2;           // TODO: Make this configurable?
 
+    protected FORMAT mFormat;
     protected String mOutputPath;
     protected int mNumTracks;
     protected int mNumTracksFinished;
 
-    protected Muxer(String outputPath){
+    protected Muxer(String outputPath, FORMAT format){
         mOutputPath = checkNotNull(outputPath);
+        mFormat = format;
         mNumTracks = 0;
         mNumTracksFinished = 0;
     }
@@ -44,10 +47,24 @@ public abstract class Muxer {
         return 0;
     }
 
+    /* Deprecated
+       Starting and stopping should be handled internally
+       by the muxer based on knowledge of expected number of tracks,
+       and the number of tracks already added / finalized
     public void start(){
     }
 
     public void stop(){
+    }
+    */
+
+    /**
+     * Called by the hosting Encoder
+     * to notify the Muxer that it should no
+     * longer assume the Encoder resources are available.
+     *
+     */
+    public void onEncoderReleased(){
     }
 
     public void release(){
@@ -57,13 +74,23 @@ public abstract class Muxer {
         return false;
     }
 
-    public void writeSampleData(int trackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo){
+    /**
+     * Write the MediaCodec output buffer. This method <b>must</b>
+     * be overridden by subclasses to release encodedData, transferring
+     * ownership back to encoder, by calling encoder.releaseOutputBuffer(bufferIndex, false);
+     *
+     * @param trackIndex
+     * @param encodedData
+     * @param bufferInfo
+     */
+    public void writeSampleData(MediaCodec encoder, int trackIndex, int bufferIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo){
         if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             signalEndOfTrack();
         }
         if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) {
         }
     }
+
 
     protected boolean allTracksFinished(){
         return (mNumTracks == mNumTracksFinished);
@@ -80,5 +107,22 @@ public abstract class Muxer {
      */
     public void signalEndOfTrack(){
         mNumTracksFinished++;
+    }
+
+    /**
+     * Does this Muxer's format require AAC ADTS headers?
+     * see http://wiki.multimedia.cx/index.php?title=ADTS
+     * @return
+     */
+    protected boolean formatRequiresADTS(){
+        switch(mFormat){
+            case MPEG4:
+                break;
+            case HLS:
+                return true;
+            case RTMP:
+                break;
+        }
+        return false;
     }
 }

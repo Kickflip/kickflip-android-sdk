@@ -67,6 +67,8 @@ public class FFmpegWrapper {
     	
         // Format specific options
         public int hlsSegmentDurationSec = 10;
+
+        public String outputFormatName = "hls";
         // TODO: Provide a Map for format-specific options
     }
 

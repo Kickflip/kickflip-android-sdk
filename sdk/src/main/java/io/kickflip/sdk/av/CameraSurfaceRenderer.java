@@ -3,9 +3,12 @@ package io.kickflip.sdk.av;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
+import io.kickflip.sdk.GLCameraView;
 
 
 class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
@@ -14,10 +17,15 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
 
     private CameraEncoder mCameraEncoder;
 
-    private FullFrameRect mFullScreen;
+    private FullFrameRect mFullScreenCamera;
+    private FullFrameRect mFullScreenOverlay;
+
+    // Experimenting: May be most sensical way to get handle on Context for loading texture bitmaps
+    private GLCameraView mCameraView;
 
     private final float[] mSTMatrix = new float[16];
-    private int mTextureId;
+    private int mOverlayTextureId;
+    private int mCameraTextureId;
 
     private boolean mRecordingEnabled;
 
@@ -38,10 +46,11 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
      * <p>
      * @param recorder video encoder object
      */
-    public CameraSurfaceRenderer(CameraEncoder recorder) {
+    public CameraSurfaceRenderer(GLCameraView view, CameraEncoder recorder) {
+        mCameraView = view;
         mCameraEncoder = recorder;
 
-        mTextureId = -1;
+        mCameraTextureId = -1;
         mFrameCount = -1;
 
         RecorderConfig config = recorder.getConfig();
@@ -67,13 +76,19 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
         Log.d(TAG, "onSurfaceCreated");
+        //GLES20.glEnable(GLES20.GL_BLEND);
+        //GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         // Set up the texture blitter that will be used for on-screen display.  This
         // is *not* applied to the recording, because that uses a separate shader.
-        mFullScreen = new FullFrameRect(
+        mFullScreenCamera = new FullFrameRect(
                 new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
-        mTextureId = mFullScreen.createTextureObject();
+        //mFullScreenOverlay = new FullFrameRect(
+        //        new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D));
+        mCameraTextureId = mFullScreenCamera.createTextureObject();
+        //mOverlayTextureId = GlUtil.createTextureWithTextContent("hello!");
+        //mOverlayTextureId = GlUtil.createTextureFromImage(mCameraView.getContext(), R.drawable.football);
 
-        mCameraEncoder.onSurfaceCreated(mTextureId);
+        mCameraEncoder.onSurfaceCreated(mCameraTextureId);
         mFrameCount = 0;
     }
 
@@ -86,18 +101,20 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 unused) {
         if (VERBOSE){
             if(mFrameCount % 30 == 0){
-                Log.d(TAG, "onDrawFrame tex=" + mTextureId);
+                Log.d(TAG, "onDrawFrame tex=" + mCameraTextureId);
                 mCameraEncoder.logSavedEglState();
             }
         }
 
         if (mCurrentFilter != mNewFilter) {
-            Filters.updateFilter(mFullScreen, mNewFilter);
+            Filters.updateFilter(mFullScreenCamera, mNewFilter);
             mCurrentFilter = mNewFilter;
+            mIncomingSizeUpdated = true;
         }
 
         if (mIncomingSizeUpdated) {
-            mFullScreen.getProgram().setTexSize(mIncomingWidth, mIncomingHeight);
+            mFullScreenCamera.getProgram().setTexSize(mIncomingWidth, mIncomingHeight);
+            //mFullScreenOverlay.getProgram().setTexSize(mIncomingWidth, mIncomingHeight);
             mIncomingSizeUpdated = false;
             Log.i(TAG, "setTexSize on display Texture");
         }
@@ -105,8 +122,8 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         // Draw the video frame.
         if(mCameraEncoder.isSurfaceTextureReadyForDisplay()){
             mCameraEncoder.getSurfaceTextureForDisplay().getTransformMatrix(mSTMatrix);
-            mFullScreen.drawFrame(mTextureId, mSTMatrix);
-
+            //mFullScreenOverlay.drawFrame(mOverlayTextureId, mSTMatrix); // use mSTMatrix?
+            mFullScreenCamera.drawFrame(mCameraTextureId, mSTMatrix);
         }
 
         // Draw a flashing box if we're recording.  This only appears on screen.
@@ -133,6 +150,10 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
      */
     public void changeFilterMode(int filter) {
         mNewFilter = filter;
+    }
+
+    public void handleTouchEvent(MotionEvent ev){
+        mFullScreenCamera.handleTouchEvent(ev);
     }
 
 }

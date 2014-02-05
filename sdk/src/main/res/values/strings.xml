@@ -14,6 +14,14 @@
         <item>Sharpen</item>
         <item>Edge detect</item>
         <item>Emboss</item>
+        <item>Squeeze</item>
+        <item>Twirl</item>
+        <item>Tunnel</item>
+        <item>Bulge</item>
+        <item>Dent</item>
+        <item>Fisheye</item>
+        <item>Stretch</item>
+        <item>Mirror</item>
     </string-array>
 
     <!-- These strings also must be preserved in order

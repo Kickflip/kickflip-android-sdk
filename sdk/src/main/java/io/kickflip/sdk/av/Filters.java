@@ -2,8 +2,11 @@ package io.kickflip.sdk.av;
 
 import android.util.Log;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
- * Created by davidbrodsky on 1/28/14.
+ * This class matches descriptive final int
+ * variables to Texture2dProgram.ProgramType s
  */
 public class Filters {
     private static final String TAG = "Filters";
@@ -17,6 +20,23 @@ public class Filters {
     static final int FILTER_SHARPEN = 5;
     static final int FILTER_EDGE_DETECT = 6;
     static final int FILTER_EMBOSS = 7;
+    static final int FILTER_SQUEEZE = 8;
+    static final int FILTER_TWIRL = 9;
+    static final int FILTER_TUNNEL = 10;
+    static final int FILTER_BULGE = 11;
+    static final int FILTER_DENT = 12;
+    static final int FILTER_FISHEYE = 13;
+    static final int FILTER_STRETCH = 14;
+    static final int FILTER_MIRROR = 15;
+
+    /**
+     * Ensure a filter int code is valid. Update this function as
+     * more filters are defined
+     * @param filter
+     */
+    public static void checkFilterArgument(int filter){
+        checkArgument(filter >= 0 && filter <= 15);
+    }
 
     /**
      * Updates the filter on the provided FullFrameRect
@@ -43,6 +63,30 @@ public class Filters {
                 break;
             case FILTER_CHROMA_KEY:
                 programType = Texture2dProgram.ProgramType.TEXTURE_EXT_CHROMA_KEY;
+                break;
+            case FILTER_SQUEEZE:
+                programType = Texture2dProgram.ProgramType.TEXTURE_EXT_SQUEEZE;
+                break;
+            case FILTER_TWIRL:
+                programType = Texture2dProgram.ProgramType.TEXTURE_EXT_TWIRL;
+                break;
+            case FILTER_TUNNEL:
+                programType = Texture2dProgram.ProgramType.TEXTURE_EXT_TUNNEL;
+                break;
+            case FILTER_BULGE:
+                programType = Texture2dProgram.ProgramType.TEXTURE_EXT_BULGE;
+                break;
+            case FILTER_DENT:
+                programType = Texture2dProgram.ProgramType.TEXTURE_EXT_DENT;
+                break;
+            case FILTER_FISHEYE:
+                programType = Texture2dProgram.ProgramType.TEXTURE_EXT_FISHEYE;
+                break;
+            case FILTER_STRETCH:
+                programType = Texture2dProgram.ProgramType.TEXTURE_EXT_STRETCH;
+                break;
+            case FILTER_MIRROR:
+                programType = Texture2dProgram.ProgramType.TEXTURE_EXT_MIRROR;
                 break;
             case FILTER_BLUR:
                 programType = Texture2dProgram.ProgramType.TEXTURE_EXT_FILT;

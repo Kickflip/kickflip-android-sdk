@@ -8,11 +8,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import io.kickflip.sdk.GLCameraEncoderView;
 import io.kickflip.sdk.GLCameraView;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -25,6 +27,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private static final String TAG = "CameraEncoder";
     private static final boolean VERBOSE = false;
 
+    // EncoderHandler Message types (Message#what)
     private static final int MSG_STOP_RECORDING = 1;
     private static final int MSG_FRAME_AVAILABLE = 2;
     private static final int MSG_SET_SURFACE_TEXTURE = 3;
@@ -62,7 +65,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private boolean mEncodedFirstFrame;
     private long mStartTimeNs;
 
-    private GLCameraView mDisplayView;
+    private GLSurfaceView mDisplayView;
     private CameraSurfaceRenderer mDisplayRenderer;
 
     private int mCurrentCamera;
@@ -99,8 +102,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         int otherCamera = 0;
         if(mCurrentCamera == 0)
             otherCamera = 1;
-        else
-            otherCamera = 0;
         requestCamera(otherCamera);
     }
 
@@ -161,7 +162,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     public void setPreviewDisplay(GLCameraView display) {
         checkNotNull(display);
-        mDisplayRenderer = new CameraSurfaceRenderer(this);
+        mDisplayRenderer = new CameraSurfaceRenderer(display, this);
         // Prep GLSurfaceView and attach Renderer
         display.setEGLContextClientVersion(2);
         display.setRenderer(mDisplayRenderer);
@@ -201,11 +202,22 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * @param filter
      */
     public void applyFilter(int filter){
-        checkArgument(filter >= 0 && filter <= 7);
+        Filters.checkFilterArgument(filter);
         mDisplayRenderer.changeFilterMode(filter);
         synchronized (mReadyForFrameFence) {
             mNewFilter = filter;
         }
+    }
+
+    /**
+     * Notify the preview and encoder programs
+     * of a touch event. Used by
+     * GLCameraEncoderView
+     * @param ev onTouchEvent event to handle
+     */
+    public void handleCameraPreviewTouchEvent(MotionEvent ev){
+        mFullScreen.handleTouchEvent(ev);
+        mDisplayRenderer.handleTouchEvent(ev);
     }
 
     /**
@@ -232,7 +244,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private void startEncodingThread() {
         synchronized (mReadyFence) {
             if (mRunning) {
-                Log.w(TAG, "Encoder thread already running");
+                Log.w(TAG, "Encoder thread running when start requested");
                 return;
             }
             mRunning = true;
@@ -288,7 +300,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 return;
             }
             mFrameNum++;
-            if(mFrameNum % 30 == 0) Log.i(TAG, "handleFrameAvailable");
+            if(VERBOSE && (mFrameNum % 30 == 0)) Log.i(TAG, "handleFrameAvailable");
             if (!surfaceTexture.equals(mSurfaceTexture))
                 Log.w(TAG, "SurfaceTexture from OnFrameAvailable does not match saved SurfaceTexture!");
             mInputWindowSurface.makeCurrent();
@@ -329,7 +341,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             // Release camera if we're not recording
             if(!mRecordingRequested && mSurfaceTexture != null){
                 Log.i("CameraRelease", "Releasing camera");
-                if(mDisplayView != null) mDisplayView.releaseCamera();
+                if(mDisplayView != null)
+                    releaseDisplayView();
                 mHandler.sendMessage(mHandler.obtainMessage(MSG_RELEASE_CAMERA));
             }
         }
@@ -482,7 +495,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             mCamera.setPreviewTexture(mSurfaceTexture);
             mCamera.startPreview();
             Log.i("CameraRelease", "Opened / Started Camera preview. mDisplayView ready? " + (mDisplayView == null ? " no" : " yes"));
-            if(mDisplayView != null) mDisplayView.setCamera(mCamera);
+            if(mDisplayView != null) configureDisplayView();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -551,19 +564,41 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         Log.i(TAG, "Camera preview set: " + previewFacts);
     }
 
+    public Camera getCamera(){
+        return mCamera;
+    }
+
     /**
      * Stops camera preview, and releases the camera to the system.
      */
     private void releaseCamera() {
         if(mDisplayView != null)
-            mDisplayView.releaseCamera();
+            releaseDisplayView();
         if (mCamera != null) {
             if (VERBOSE) Log.d(TAG, "releasing camera");
             mCamera.stopPreview();
             mCamera.release();
             mCamera = null;
-            //mReadyForFrames = false;
         }
+    }
+
+
+    /**
+     * Communicate camera-ready state to our display view.
+     * This method allows us to handle custom subclasses
+     */
+    private void configureDisplayView(){
+        if(mDisplayView instanceof GLCameraEncoderView)
+            ((GLCameraEncoderView) mDisplayView).setCameraEncoder(this);
+        else if(mDisplayView instanceof GLCameraView)
+            ((GLCameraView) mDisplayView).setCamera(mCamera);
+    }
+
+    private void releaseDisplayView(){
+        if(mDisplayView instanceof GLCameraEncoderView){
+            ((GLCameraEncoderView) mDisplayView).setCameraEncoder(this);
+        }else if(mDisplayView instanceof GLCameraView)
+            ((GLCameraView) mDisplayView).setCamera(mCamera);
     }
 
     /**
@@ -610,7 +645,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     encoder.releaseCamera();
                     break;
                 default:
-                    throw new RuntimeException("Unhandled msg what=" + what);
+                    throw new RuntimeException("Unexpected msg what=" + what);
             }
         }
     }

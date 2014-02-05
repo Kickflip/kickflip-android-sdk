@@ -19,6 +19,7 @@ package io.kickflip.sdk.av;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import java.nio.FloatBuffer;
 
@@ -29,7 +30,10 @@ public class Texture2dProgram {
     private static final String TAG ="Texture2dProgram";
 
     public enum ProgramType {
-        TEXTURE_2D, TEXTURE_EXT, TEXTURE_EXT_BW, TEXTURE_EXT_NIGHT, TEXTURE_EXT_CHROMA_KEY, TEXTURE_EXT_FILT
+        TEXTURE_2D, TEXTURE_EXT, TEXTURE_EXT_BW, TEXTURE_EXT_NIGHT, TEXTURE_EXT_CHROMA_KEY,
+        TEXTURE_EXT_SQUEEZE, TEXTURE_EXT_TWIRL, TEXTURE_EXT_TUNNEL, TEXTURE_EXT_BULGE,
+        TEXTURE_EXT_DENT, TEXTURE_EXT_FISHEYE, TEXTURE_EXT_STRETCH, TEXTURE_EXT_MIRROR,
+        TEXTURE_EXT_FILT
     }
 
     // Simple vertex shader, used for all programs.
@@ -97,12 +101,152 @@ public class Texture2dProgram {
                     "void main() {\n" +
                     "    vec4 tc = texture2D(sTexture, vTextureCoord);\n" +
                     "    float color = ((tc.r * 0.3 + tc.g * 0.59 + tc.b * 0.11) - 0.5 * 1.5) + 0.8;\n" +
-                    "    if(tc.g > 0.7 && tc.b < 0.5 && tc.r < 0.5){ \n" +
+                    "    if(tc.g > 0.6 && tc.b < 0.6 && tc.r < 0.6){ \n" +
                     "        gl_FragColor = vec4(0, 0, 0, 0.0);\n" +
                     "    }else{ \n" +
                     "        gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
                     "    }\n" +
                     "}\n";
+
+    private static final String FRAGMENT_SHADER_SQUEEZE =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform vec2 uPosition;\n" +
+                    "void main() {\n" +
+                    "    vec2 texCoord = vTextureCoord.xy;\n" +
+                    "    vec2 normCoord = 2.0 * texCoord - 1.0;\n"+
+                    "    float r = length(normCoord); // to polar coords \n" +
+                    "    float phi = atan(normCoord.y + uPosition.y, normCoord.x + uPosition.x); // to polar coords \n"+
+                    "    r = pow(r, 1.0/1.8) * 0.8;\n"+  // Squeeze it
+                    "    normCoord.x = r * cos(phi); \n" +
+                    "    normCoord.y = r * sin(phi); \n" +
+                    "    texCoord = normCoord / 2.0 + 0.5;\n"+
+                    "    gl_FragColor = texture2D(sTexture, texCoord);\n"+
+                    "}\n";
+
+    private static final String FRAGMENT_SHADER_TWIRL =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform vec2 uPosition;\n" +
+                    "void main() {\n" +
+                    "    vec2 texCoord = vTextureCoord.xy;\n" +
+                    "    vec2 normCoord = 2.0 * texCoord - 1.0;\n"+
+                    "    float r = length(normCoord); // to polar coords \n" +
+                    "    float phi = atan(normCoord.y + uPosition.y, normCoord.x + uPosition.x); // to polar coords \n"+
+                    "    phi = phi + (1.0 - smoothstep(-0.5, 0.5, r)) * 4.0;\n"+ // Twirl it
+                    "    normCoord.x = r * cos(phi); \n" +
+                    "    normCoord.y = r * sin(phi); \n" +
+                    "    texCoord = normCoord / 2.0 + 0.5;\n"+
+                    "    gl_FragColor = texture2D(sTexture, texCoord);\n"+
+                    "}\n";
+
+    private static final String FRAGMENT_SHADER_TUNNEL =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform vec2 uPosition;\n" +
+                    "void main() {\n" +
+                    "    vec2 texCoord = vTextureCoord.xy;\n" +
+                    "    vec2 normCoord = 2.0 * texCoord - 1.0;\n"+
+                    "    float r = length(normCoord); // to polar coords \n" +
+                    "    float phi = atan(normCoord.y + uPosition.y, normCoord.x + uPosition.x); // to polar coords \n"+
+                    "    if (r > 0.5) r = 0.5;\n"+ // Tunnel
+                    "    normCoord.x = r * cos(phi); \n" +
+                    "    normCoord.y = r * sin(phi); \n" +
+                    "    texCoord = normCoord / 2.0 + 0.5;\n"+
+                    "    gl_FragColor = texture2D(sTexture, texCoord);\n"+
+                    "}\n";
+
+    private static final String FRAGMENT_SHADER_BULGE =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform vec2 uPosition;\n" +
+                    "void main() {\n" +
+                    "    vec2 texCoord = vTextureCoord.xy;\n" +
+                    "    vec2 normCoord = 2.0 * texCoord - 1.0;\n"+
+                    "    float r = length(normCoord); // to polar coords \n" +
+                    "    float phi = atan(normCoord.y + uPosition.y, normCoord.x + uPosition.x); // to polar coords \n"+
+                    "    r = r * smoothstep(-0.1, 0.5, r);\n"+ // Bulge
+                    "    normCoord.x = r * cos(phi); \n" +
+                    "    normCoord.y = r * sin(phi); \n" +
+                    "    texCoord = normCoord / 2.0 + 0.5;\n"+
+                    "    gl_FragColor = texture2D(sTexture, texCoord);\n"+
+                    "}\n";
+
+    private static final String FRAGMENT_SHADER_DENT =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform vec2 uPosition;\n" +
+                    "void main() {\n" +
+                    "    vec2 texCoord = vTextureCoord.xy;\n" +
+                    "    vec2 normCoord = 2.0 * texCoord - 1.0;\n"+
+                    "    float r = length(normCoord); // to polar coords \n" +
+                    "    float phi = atan(normCoord.y + uPosition.y, normCoord.x + uPosition.x); // to polar coords \n"+
+                    "    r = 2.0 * r - r * smoothstep(0.0, 0.7, r);\n"+ // Dent
+                    "    normCoord.x = r * cos(phi); \n" +
+                    "    normCoord.y = r * sin(phi); \n" +
+                    "    texCoord = normCoord / 2.0 + 0.5;\n"+
+                    "    gl_FragColor = texture2D(sTexture, texCoord);\n"+
+                    "}\n";
+
+    private static final String FRAGMENT_SHADER_FISHEYE =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform vec2 uPosition;\n" +
+                    "void main() {\n" +
+                    "    vec2 texCoord = vTextureCoord.xy;\n" +
+                    "    vec2 normCoord = 2.0 * texCoord - 1.0;\n"+
+                    "    float r = length(normCoord); // to polar coords \n" +
+                    "    float phi = atan(normCoord.y + uPosition.y, normCoord.x + uPosition.x); // to polar coords \n"+
+                    "    r = r * r / sqrt(2.0);\n"+ // Fisheye
+                    "    normCoord.x = r * cos(phi); \n" +
+                    "    normCoord.y = r * sin(phi); \n" +
+                    "    texCoord = normCoord / 2.0 + 0.5;\n"+
+                    "    gl_FragColor = texture2D(sTexture, texCoord);\n"+
+                    "}\n";
+
+    private static final String FRAGMENT_SHADER_STRETCH =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform vec2 uPosition;\n" +
+                    "void main() {\n" +
+                    "    vec2 texCoord = vTextureCoord.xy;\n" +
+                    "    vec2 normCoord = 2.0 * texCoord - 1.0;\n"+
+                    "    vec2 s = sign(normCoord + uPosition);\n"+
+                    "    normCoord = abs(normCoord);\n"+
+                    "    normCoord = 0.5 * normCoord + 0.5 * smoothstep(0.25, 0.5, normCoord) * normCoord;\n"+
+                    "    normCoord = s * normCoord;\n"+
+                    "    texCoord = normCoord / 2.0 + 0.5;\n"+
+                    "    gl_FragColor = texture2D(sTexture, texCoord);\n"+
+                    "}\n";
+
+    private static final String FRAGMENT_SHADER_MIRROR =
+            "#extension GL_OES_EGL_image_external : require\n" +
+                    "precision mediump float;\n" +
+                    "varying vec2 vTextureCoord;\n" +
+                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform vec2 uPosition;\n" +
+                    "void main() {\n" +
+                    "    vec2 texCoord = vTextureCoord.xy;\n" +
+                    "    vec2 normCoord = 2.0 * texCoord - 1.0;\n"+
+                    "    normCoord.x = normCoord.x * sign(normCoord.x + uPosition.x);\n"+
+                    "    texCoord = normCoord / 2.0 + 0.5;\n"+
+                    "    gl_FragColor = texture2D(sTexture, texCoord);\n"+
+                    "}\n";
+
 
 
 
@@ -139,6 +283,9 @@ public class Texture2dProgram {
 
     private ProgramType mProgramType;
 
+    private float mTexWidth;
+    private float mTexHeight;
+
     // Handles to the GL program and various components of it.
     private int mProgramHandle;
     private int muMVPMatrixLoc;
@@ -148,10 +295,13 @@ public class Texture2dProgram {
     private int muColorAdjustLoc;
     private int maPositionLoc;
     private int maTextureCoordLoc;
+    private int muTouchPositionLoc;
 
     private int mTextureTarget;
 
-    private float[] mKernel = new float[KERNEL_SIZE];
+    private float[] mKernel = new float[KERNEL_SIZE];       // Inputs for convolution filter based shaders
+    private float[] mSummedTouchPosition = new float[2];    // Summed touch event delta
+    private float[] mLastTouchPosition = new float[2];      // Raw location of last touch event
     private float[] mTexOffset;
     private float mColorAdjust;
 
@@ -182,6 +332,38 @@ public class Texture2dProgram {
             case TEXTURE_EXT_CHROMA_KEY:
                 mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
                 mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_EXT_CHROMA_KEY);
+                break;
+            case TEXTURE_EXT_SQUEEZE:
+                mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+                mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_SQUEEZE);
+                break;
+            case TEXTURE_EXT_TWIRL:
+                mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+                mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_TWIRL);
+                break;
+            case TEXTURE_EXT_TUNNEL:
+                mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+                mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_TUNNEL);
+                break;
+            case TEXTURE_EXT_BULGE:
+                mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+                mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_BULGE);
+                break;
+            case TEXTURE_EXT_FISHEYE:
+                mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+                mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_FISHEYE);
+                break;
+            case TEXTURE_EXT_DENT:
+                mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+                mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_DENT);
+                break;
+            case TEXTURE_EXT_MIRROR:
+                mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+                mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_MIRROR);
+                break;
+            case TEXTURE_EXT_STRETCH:
+                mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+                mProgramHandle = GlUtil.createProgram(VERTEX_SHADER, FRAGMENT_SHADER_STRETCH);
                 break;
             case TEXTURE_EXT_FILT:
                 mTextureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
@@ -221,6 +403,15 @@ public class Texture2dProgram {
             // initialize default values
             setKernel(new float[] {0f, 0f, 0f,  0f, 1f, 0f,  0f, 0f, 0f}, 0f);
             setTexSize(256, 256);
+        }
+
+        muTouchPositionLoc = GLES20.glGetUniformLocation(mProgramHandle, "uPosition");
+        if(muTouchPositionLoc < 0){
+            // Shader doesn't use position
+            muTouchPositionLoc = -1;
+        }else{
+            // initialize default values
+            //handleTouchEvent(new float[]{0f, 0f});
         }
     }
 
@@ -268,7 +459,33 @@ public class Texture2dProgram {
     }
 
     /**
+     * Configures the effect offset
+     * values[0] = x offset
+     * values[1] = y offset
+     *
+     * This only has an effect for programs that
+     * use positional effects like SQUEEZE and MIRROR
+     */
+    public void handleTouchEvent(MotionEvent ev){
+        if(ev.getAction() == MotionEvent.ACTION_MOVE){
+            // A finger is dragging about
+            if(mTexHeight != 0 && mTexWidth != 0){
+                mSummedTouchPosition[0] += (2 * (ev.getX() - mLastTouchPosition[0])) / mTexWidth;
+                mSummedTouchPosition[1] += (2 * (ev.getY() - mLastTouchPosition[1])) / -mTexHeight;
+                mLastTouchPosition[0] = ev.getX();
+                mLastTouchPosition[1] = ev.getY();
+            }
+        }else if(ev.getAction() == MotionEvent.ACTION_DOWN){
+            // The primary finger has landed
+            mLastTouchPosition[0] = ev.getX();
+            mLastTouchPosition[1] = ev.getY();
+        }
+    }
+
+    /**
      * Configures the convolution filter values.
+     * This only has an effect for programs that use the
+     * FRAGMENT_SHADER_EXT_FILT Fragment shader.
      *
      * @param values Normalized filter values; must be KERNEL_SIZE elements.
      */
@@ -286,6 +503,8 @@ public class Texture2dProgram {
      * Sets the size of the texture.  This is used to find adjacent texels when filtering.
      */
     public void setTexSize(int width, int height) {
+        mTexHeight = height;
+        mTexWidth = width;
         float rw = 1.0f / width;
         float rh = 1.0f / height;
 
@@ -356,6 +575,11 @@ public class Texture2dProgram {
             GLES20.glUniform1fv(muKernelLoc, KERNEL_SIZE, mKernel, 0);
             GLES20.glUniform2fv(muTexOffsetLoc, KERNEL_SIZE, mTexOffset, 0);
             GLES20.glUniform1f(muColorAdjustLoc, mColorAdjust);
+        }
+
+        // Populate touch position data, if present
+        if (muTouchPositionLoc >= 0){
+            GLES20.glUniform2fv(muTouchPositionLoc, 1, mSummedTouchPosition, 0);
         }
 
         // Draw the rect.

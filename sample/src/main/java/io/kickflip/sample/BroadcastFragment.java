@@ -15,6 +15,7 @@ import android.widget.Spinner;
 
 import java.io.File;
 
+import io.kickflip.sdk.GLCameraEncoderView;
 import io.kickflip.sdk.GLCameraView;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.av.RecorderConfig;
@@ -27,7 +28,7 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
     private static final String TAG = "BroadcastFragment";
 
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
-    private GLCameraView mGLSurfaceView;
+    private GLCameraEncoderView mCameraView;
 
 
     public BroadcastFragment() {
@@ -56,10 +57,12 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         // on your Fragment/Activity's onStop()
         if(mBroadcaster == null){
 
-            File root = new File(Environment.getExternalStorageDirectory(), "Kickflip");
-            root.mkdirs();
+//            File root = new File(Environment.getExternalStorageDirectory(), "Kickflip");
+//            root.mkdirs();
+//            File hlsOutput = new File(root, "hls.m3u8");
+            String url = "rtmp://live29.us-va.zencoder.io:1935/live/847b285b23ce21985284d9a4759d24f6";
 
-            RecorderConfig config = new RecorderConfig.Builder(root)
+            RecorderConfig config = new RecorderConfig.Builder(url)
                     .withVideoResolution(1280, 720)
                     .withVideoBitrate(2 * 1000 * 1000)
                     .withAudioBitrate(96 * 1000)
@@ -104,8 +107,8 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_broadcast, container, false);
-        mGLSurfaceView = (GLCameraView) root.findViewById(R.id.cameraPreview);
-        mBroadcaster.setPreviewDisplay(mGLSurfaceView);
+        mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
+        mBroadcaster.setPreviewDisplay(mCameraView);
         Button recordButton = (Button) root.findViewById(R.id.recordButton);
         recordButton.setOnClickListener(new View.OnClickListener() {
             @Override

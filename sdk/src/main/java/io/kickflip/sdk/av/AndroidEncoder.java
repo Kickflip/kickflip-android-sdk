@@ -79,14 +79,15 @@ public abstract class AndroidEncoder {
                         encodedData.position(mBufferInfo.offset);
                         encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
 
-                        mMuxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
+                        mMuxer.writeSampleData(mEncoder, mTrackIndex, encoderStatus, encodedData, mBufferInfo);
                         if (VERBOSE) {
                             Log.d(TAG, "sent " + mBufferInfo.size + " bytes to muxer, ts=" +
                                     mBufferInfo.presentationTimeUs);
                         }
                     }
 
-                    mEncoder.releaseOutputBuffer(encoderStatus, false);
+                    // This is now the responsibility of the Muxer
+                    //mEncoder.releaseOutputBuffer(encoderStatus, false);
 
                     if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         if (!endOfStream) {

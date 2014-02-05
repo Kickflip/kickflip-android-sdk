@@ -17,6 +17,7 @@
 package io.kickflip.sdk.av;
 
 import android.opengl.Matrix;
+import android.view.MotionEvent;
 
 import java.nio.FloatBuffer;
 
@@ -95,5 +96,14 @@ public class FullFrameRect {
                 mRectDrawable.getVertexCount(), mRectDrawable.getCoordsPerVertex(),
                 mRectDrawable.getVertexStride(),
                 texMatrix, TEX_COORDS_BUF, textureId, TEX_COORDS_STRIDE);
+    }
+
+    /**
+     * Pass touch event down to the
+     * texture's shader program
+     * @param ev
+     */
+    public void handleTouchEvent(MotionEvent ev){
+        mProgram.handleTouchEvent(ev);
     }
 }

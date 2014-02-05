@@ -1,7 +1,5 @@
 package io.kickflip.sdk.av;
 
-import android.media.MediaFormat;
-import android.media.MediaMuxer;
 import android.os.Environment;
 
 import java.io.File;
@@ -93,18 +91,47 @@ public class RecorderConfig {
         private UUID mUUID;
 
         /**
-         * Use this builder to have the file structure automatically managed
-         * by recording UUID
-         * @param rootOutputDir recordings will be stored at <rootOutputDir>/<UUID>/
+         * Configure a RecorderConfig quickly with intelligent path interpretation.
+         * Valid inputs are "/path/to/name.m3u8", "/path/to/name.mp4", "rtmp://path/to/endpoint"
+         *
+         * For file-based outputs (.m3u8, .mp4) the file structure is managed
+         * by a recording UUID.
+         *
+         * Given an absolute file-based outputLocation like:
+         *
+         * /sdcard/test.m3u8
+         *
+         * the output will be available in:
+         *
+         * /sdcard/<UUID>/test.m3u8
+         * /sdcard/<UUID>/test0.ts
+         * /sdcard/<UUID>/test1.ts
+         * ...
+         *
+         * You can query the final outputLocation after building with
+         * RecorderConfig.getOutputPath()
+         *
+         * @param outputLocation desired output location. For file based recording,
+         *                       recordings will be stored at <outputLocationParent>/<UUID>/<outputLocationFileName>
          */
-        public Builder(File rootOutputDir){
-            //TODO: Make this HLS / RTMP Agnostic
-            setDefaults();
+        public Builder(String outputLocation){
+            setAVDefaults();
             mUUID = UUID.randomUUID();
-            File outputDir = new File(rootOutputDir, mUUID.toString());
-            outputDir.mkdir();
-            File outputFile = new File(outputDir, "hls.m3u8");
-            mMuxer = FFmpegMuxer.create(outputFile.getAbsolutePath(), Muxer.FORMAT.MPEG4);
+
+            if(outputLocation.contains("rtmp://")){
+                mMuxer = FFmpegMuxer.create(outputLocation, Muxer.FORMAT.RTMP);
+            }else if(outputLocation.contains(".m3u8")){
+                File desiredFile = new File(outputLocation);
+                String desiredFilename = desiredFile.getName();
+                File outputDir = new File(desiredFile.getParent(), mUUID.toString());
+                outputDir.mkdirs();
+                File outputFile = new File(outputDir, desiredFilename);
+                mMuxer = FFmpegMuxer.create(outputFile.getAbsolutePath(), Muxer.FORMAT.HLS);
+            }else if(outputLocation.contains(".mp4")){
+                mMuxer = AndroidMuxer.create(outputLocation, Muxer.FORMAT.MPEG4);
+            }else
+                throw new RuntimeException("Unexpected muxer output. Expected a .mp4, .m3u8, or rtmp url: " + outputLocation);
+
         }
 
         /**
@@ -113,12 +140,12 @@ public class RecorderConfig {
          * @param muxer
          */
         public Builder(Muxer muxer) {
-            setDefaults();
+            setAVDefaults();
             mMuxer = checkNotNull(muxer);
             mUUID = UUID.randomUUID();
         }
 
-        private void setDefaults(){
+        private void setAVDefaults(){
             mWidth = 1280;
             mHeight = 720;
             mVideoBitrate = 2 * 1000 * 1000;
