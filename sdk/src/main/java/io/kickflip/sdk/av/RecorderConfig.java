@@ -120,15 +120,13 @@ public class RecorderConfig {
 
             if(outputLocation.contains("rtmp://")){
                 mMuxer = FFmpegMuxer.create(outputLocation, Muxer.FORMAT.RTMP);
+            }else if(outputLocation.contains(".flv") /*|| outputLocation.contains("f4v") */){
+                mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.RTMP);
             }else if(outputLocation.contains(".m3u8")){
-                File desiredFile = new File(outputLocation);
-                String desiredFilename = desiredFile.getName();
-                File outputDir = new File(desiredFile.getParent(), mUUID.toString());
-                outputDir.mkdirs();
-                File outputFile = new File(outputDir, desiredFilename);
-                mMuxer = FFmpegMuxer.create(outputFile.getAbsolutePath(), Muxer.FORMAT.HLS);
+                mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.HLS);
             }else if(outputLocation.contains(".mp4")){
-                mMuxer = AndroidMuxer.create(outputLocation, Muxer.FORMAT.MPEG4);
+                //mMuxer = AndroidMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
+                mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
             }else
                 throw new RuntimeException("Unexpected muxer output. Expected a .mp4, .m3u8, or rtmp url: " + outputLocation);
 
@@ -143,6 +141,21 @@ public class RecorderConfig {
             setAVDefaults();
             mMuxer = checkNotNull(muxer);
             mUUID = UUID.randomUUID();
+        }
+
+        /**
+         * Inserts a directory into the given path based on the
+         * value of mUUID.
+         *
+         * @param outputPath a desired storage location like /path/filename.ext
+         * @return a File pointing to /path/UUID/filename.ext
+         */
+        private String createRecordingPath(String outputPath){
+            File desiredFile = new File(outputPath);
+            String desiredFilename = desiredFile.getName();
+            File outputDir = new File(desiredFile.getParent(), mUUID.toString());
+            outputDir.mkdirs();
+            return new File(outputDir, desiredFilename).getAbsolutePath();
         }
 
         private void setAVDefaults(){

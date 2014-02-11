@@ -56,19 +56,16 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         // If you don't want this behavior, call stopRecording
         // on your Fragment/Activity's onStop()
         if(mBroadcaster == null){
+            String path = "/sdcard/Kickflip/zen_test.flv";
+            //String path = "rtmp://live29.us-va.zencoder.io:1935/live/419c13fa7b1ef38326b3aa02dda3af7c";
 
-//            File root = new File(Environment.getExternalStorageDirectory(), "Kickflip");
-//            root.mkdirs();
-//            File hlsOutput = new File(root, "hls.m3u8");
-            String url = "rtmp://live29.us-va.zencoder.io:1935/live/847b285b23ce21985284d9a4759d24f6";
-
-            RecorderConfig config = new RecorderConfig.Builder(url)
+            Context context = getActivity().getApplicationContext();
+            RecorderConfig config = new RecorderConfig.Builder(path)
                     .withVideoResolution(1280, 720)
                     .withVideoBitrate(2 * 1000 * 1000)
                     .withAudioBitrate(96 * 1000)
                     .build();
 
-            Context context = getActivity().getApplicationContext();
             mBroadcaster = new Broadcaster(context, config, SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
         }
         Log.i(TAG, String.format("Client Key (%s) Secret (%s)", getClientKey(), getClientSecret()));

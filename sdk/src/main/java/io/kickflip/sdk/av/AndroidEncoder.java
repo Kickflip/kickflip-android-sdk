@@ -19,6 +19,8 @@ public abstract class AndroidEncoder {
     protected int mTrackIndex;
 
     public void release(){
+        if(mMuxer != null)
+            mMuxer.onEncoderReleased(mTrackIndex);
         if (mEncoder != null) {
             mEncoder.stop();
             mEncoder.release();
@@ -62,7 +64,6 @@ public abstract class AndroidEncoder {
                     mTrackIndex = mMuxer.addTrack(newFormat);
                     // Muxer is responsible for starting/stopping itself
                     // based on knowledge of expected # tracks
-                    //mMuxer.start();
                 } else if (encoderStatus < 0) {
                     Log.w(TAG, "unexpected result from encoder.dequeueOutputBuffer: " +
                             encoderStatus);
@@ -79,15 +80,13 @@ public abstract class AndroidEncoder {
                         encodedData.position(mBufferInfo.offset);
                         encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
 
+                        // It is the muxer's responsibility to release encodedData
                         mMuxer.writeSampleData(mEncoder, mTrackIndex, encoderStatus, encodedData, mBufferInfo);
                         if (VERBOSE) {
                             Log.d(TAG, "sent " + mBufferInfo.size + " bytes to muxer, ts=" +
                                     mBufferInfo.presentationTimeUs);
                         }
                     }
-
-                    // This is now the responsibility of the Muxer
-                    //mEncoder.releaseOutputBuffer(encoderStatus, false);
 
                     if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         if (!endOfStream) {

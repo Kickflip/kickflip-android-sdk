@@ -460,8 +460,6 @@ public class Texture2dProgram {
 
     /**
      * Configures the effect offset
-     * values[0] = x offset
-     * values[1] = y offset
      *
      * This only has an effect for programs that
      * use positional effects like SQUEEZE and MIRROR

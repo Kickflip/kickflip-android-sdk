@@ -25,6 +25,7 @@ public abstract class Muxer {
     protected int mNumTracksFinished;
 
     protected Muxer(String outputPath, FORMAT format){
+        Log.i(TAG, "Created muxer for output: " + outputPath);
         mOutputPath = checkNotNull(outputPath);
         mFormat = format;
         mNumTracks = 0;
@@ -64,7 +65,7 @@ public abstract class Muxer {
      * longer assume the Encoder resources are available.
      *
      */
-    public void onEncoderReleased(){
+    public void onEncoderReleased(int trackIndex){
     }
 
     public void release(){
@@ -86,8 +87,6 @@ public abstract class Muxer {
     public void writeSampleData(MediaCodec encoder, int trackIndex, int bufferIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo){
         if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             signalEndOfTrack();
-        }
-        if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) {
         }
     }
 

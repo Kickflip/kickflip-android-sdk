@@ -13,12 +13,16 @@ import java.nio.ByteBuffer;
  * Created by davidbrodsky on 1/23/14.
  */
 public class MicrophoneEncoder implements Runnable{
-    private static final boolean TRACE = false;
+    private static final boolean TRACE = true;
     private static final boolean VERBOSE = false;
     private static final String TAG = "MicrophoneEncoder";
 
     protected static final int SAMPLES_PER_FRAME = 1024;                            // AAC frame size. Audio encoder input size is a multiple of this
     protected static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+
+    private final Object mReadyFence = new Object();    // Synchronize audio thread readiness
+    private boolean mReady;                             // Is audio thread ready
+    private boolean mRunning;                           // Is audio thread running
 
     private AudioRecord mAudioRecord;
     private AudioEncoderCore mEncoderCore;
@@ -33,6 +37,8 @@ public class MicrophoneEncoder implements Runnable{
                 config.getAudioBitrate(),
                 config.getAudioSamplerate(),
                 config.getMuxer());
+        mReady = false;
+        mRunning = false;
         mRecordingRequested = false;
         setupAudioRecord();
     }
@@ -52,7 +58,6 @@ public class MicrophoneEncoder implements Runnable{
                 AUDIO_FORMAT,                        // audio format
                 bufferSize);                         // buffer size (bytes)
 
-        mAudioRecord.getState();
     }
 
     public void stopRecording(){
@@ -70,10 +75,21 @@ public class MicrophoneEncoder implements Runnable{
 
 
     private void startAudioRecord(){
-        if(mAudioRecord != null){
-            Thread audioEncodingThread = new Thread(this, "MicrophoneEncoder");
-            audioEncodingThread.setPriority(Thread.MAX_PRIORITY);
-            audioEncodingThread.start();
+        synchronized (mReadyFence){
+            if(mRunning){
+                Log.w(TAG, "Audio thread running when start requested");
+                return;
+            }
+            Thread audioThread = new Thread(this, "MicrophoneEncoder");
+            audioThread.setPriority(Thread.MAX_PRIORITY);
+            audioThread.start();
+            while(!mReady){
+                try {
+                    mReadyFence.wait();
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
         }
     }
 
@@ -81,6 +97,10 @@ public class MicrophoneEncoder implements Runnable{
     public void run() {
         mAudioRecord.startRecording();
         mStartTimeNs = System.nanoTime();
+        synchronized (mReadyFence){
+            mReady = true;
+            mReadyFence.notify();
+        }
         Log.i(TAG, "Begin Audio transmission to encoder");
         while(mRecordingRequested){
 
@@ -93,14 +113,17 @@ public class MicrophoneEncoder implements Runnable{
             if (TRACE) Trace.endSection();
 
         }
-
+        mReady = false;
         Log.i(TAG, "Exiting audio encode loop. Draining Audio Encoder");
         if (TRACE) Trace.beginSection("sendAudio");
         sendAudioToEncoder(true);
         if (TRACE) Trace.endSection();
         mAudioRecord.stop();
+        if (TRACE) Trace.beginSection("drainAudioFinal");
         mEncoderCore.drainEncoder(true);
+        if (TRACE) Trace.endSection();
         mEncoderCore.release();
+        mRunning = false;
     }
 
     // Variables recycled between calls to sendAudioToEncoder
@@ -123,7 +146,9 @@ public class MicrophoneEncoder implements Runnable{
                 audioRelativePresentationTimeUs = (System.nanoTime() - mStartTimeNs) / 1000;
                 audioRelativePresentationTimeUs -= (audioInputLength / mEncoderCore.mSampleRate ) / 1000000;
                 if(audioInputLength == AudioRecord.ERROR_INVALID_OPERATION)
-                    Log.e(TAG, "Audio read error");
+                    Log.e(TAG, "Audio read error: invalid operation");
+                if(audioInputLength == AudioRecord.ERROR_BAD_VALUE)
+                    Log.e(TAG, "Audio read error: bad value");
                 //Log.i(TAG, "queueing " + audioInputLength + " audio bytes with pts " + audioRelativePresentationTimeUs);
                 if (VERBOSE) Log.i(TAG, "queueing " + audioInputLength + " audio bytes with pts " + audioRelativePresentationTimeUs);
                 if (endOfStream) {

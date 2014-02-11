@@ -5,8 +5,13 @@ import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Trace;
 import android.util.Log;
 
+import com.google.common.io.Files;
+
+import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -14,23 +19,27 @@ import java.nio.ByteBuffer;
 import pro.dbro.ffmpegwrapper.FFmpegWrapper;
 import pro.dbro.ffmpegwrapper.FFmpegWrapper.AVOptions;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Created by davidbrodsky on 1/23/14.
  */
 //TODO: Remove hard-coded track indexes
 public class FFmpegMuxer extends Muxer implements Runnable{
     private static final String TAG = "FFmpegMuxer";
-    private static final boolean VERBOSE = false;
+    private static final boolean VERBOSE = false;        // Lots of logging
+    private static final boolean TRACE = true;           // Systrace logs
+    private static final boolean DEBUG_PKTS = false;     // Write each raw packet to file
 
     // MuxerHandler message types
     private static final int MSG_WRITE_FRAME = 1;
     private static final int MSG_ADD_TRACK = 2;
-    private static final int MSG_STOP = 3;
 
     private final Object mReadyFence = new Object();    // Synchronize muxing thread readiness
     private boolean mReady;                             // Is muxing thread ready
     private boolean mRunning;                           // Is muxer thread running
     private FFmpegHandler mHandler;
+    private final Object mEncoderReleasedSync = new Object();
     private boolean mEncoderReleased;
 
     private final int mVideoTrackIndex = 0;
@@ -46,11 +55,10 @@ public class FFmpegMuxer extends Muxer implements Runnable{
     private byte[] mCachedAudioPacket;
 
     // Related to extracting H264 SPS + PPS from MediaCodec
-    private static final int PTS_PAD = 10;      // Ensure some padding between SPS + PPS and keyframe packets to please FFmpeg
-    private ByteBuffer h264SPSandPPS;
+    private ByteBuffer mH264Keyframe;
+    private int mH264MetaSize = 0;                   // Size of SPS + PPS data
     private FFmpegWrapper mFFmpeg;
     private boolean mStarted;
-
 
     private FFmpegMuxer(String outputFile, FORMAT format) {
         super(outputFile, format);
@@ -103,15 +111,19 @@ public class FFmpegMuxer extends Muxer implements Runnable{
     public void handleAddTrack(MediaFormat trackFormat){
         super.addTrack(trackFormat);
         if(!mStarted){
+            Log.i(TAG, "PrepareAVFormatContext");
             mFFmpeg.prepareAVFormatContext(getOutputPath());
             mStarted = true;
         }
     }
 
     @Override
-    public void onEncoderReleased(){
-        // Technically should be synchronized
-        mEncoderReleased = true;
+    public void onEncoderReleased(int trackIndex){
+        // For now assume both tracks will be
+        // released in close proximity
+        synchronized (mEncoderReleasedSync){
+            mEncoderReleased = true;
+        }
     }
 
     @Override
@@ -135,20 +147,39 @@ public class FFmpegMuxer extends Muxer implements Runnable{
 
     @Override
     public void writeSampleData(MediaCodec encoder, int trackIndex, int bufferIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_WRITE_FRAME,
-                new WritePacketData(encoder, trackIndex, bufferIndex, encodedData, bufferInfo)));
+        synchronized (mReadyFence){
+            if(mReady){
+                if (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)) {
+                    Log.i(TAG, "saw BUFFER_FLAG_CODEC_CONFIG for track " + trackIndex);
+                }
+                if((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
+                    Log.i(TAG, "saw BUFFER_FLAG_END_OF_STREAM");
+                mHandler.sendMessage(mHandler.obtainMessage(MSG_WRITE_FRAME,
+                    new WritePacketData(encoder, trackIndex, bufferIndex, encodedData, bufferInfo)));
+            }else{
+                Log.w(TAG, "Dropping frame because Muxer not ready!");
+                releaseOutputBufer(encoder, bufferIndex);
+            }
+        }
     }
 
     public void handleWriteSampleData(MediaCodec encoder, int trackIndex, int bufferIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
         super.writeSampleData(encoder, trackIndex, bufferIndex, encodedData, bufferInfo);
+        mPacketCount++;
 
         if (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)) {
-            if (trackIndex == 0) {
+            Log.i(TAG, "handling BUFFER_FLAG_CODEC_CONFIG for track " + trackIndex);
+            if (trackIndex == mVideoTrackIndex) {
                 // Capture H.264 SPS + PPS Data
                 if (VERBOSE) Log.i(TAG, "Capture SPS + PPS");
                 captureH264MetaData(encodedData, bufferInfo);
+                releaseOutputBufer(encoder, bufferIndex);
+                return;
+            }else{
+                if (VERBOSE) Log.i(TAG, "Ignoring audio CODEC_CONFIG");
+                releaseOutputBufer(encoder, bufferIndex);
+                return;
             }
-            return; // Don't write CODEC_CONFIG data as ordinary packet
         }
 
         if (trackIndex == mAudioTrackIndex && formatRequiresADTS()) {
@@ -156,30 +187,52 @@ public class FFmpegMuxer extends Muxer implements Runnable{
             addAdtsToByteBuffer(encodedData, bufferInfo);
         }
 
-        if (trackIndex == mVideoTrackIndex && ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) && h264SPSandPPS != null) {
-            // Precede H.264 Keyframe with SPS + PPS Data
-            if (VERBOSE) Log.i(TAG, "SPS + PPS pre-keyframe. PTS " + (bufferInfo.presentationTimeUs - 10) + " size: " + h264SPSandPPS.capacity());
-            // FFmpeg's packet interleaver requires monotonically increasing PTS though it isn't meaningful for SPS/PPS packets
-            if (bufferInfo.presentationTimeUs < PTS_PAD) bufferInfo.presentationTimeUs += PTS_PAD;
-            mFFmpeg.writeAVPacketFromEncodedData(h264SPSandPPS, 1, 0, h264SPSandPPS.capacity(), bufferInfo.flags, (bufferInfo.presentationTimeUs - PTS_PAD));
-        }
-
         // adjust the ByteBuffer values to match BufferInfo (not needed?)
         encodedData.position(bufferInfo.offset);
         encodedData.limit(bufferInfo.offset + bufferInfo.size);
 
-        if (VERBOSE) Log.i(TAG, "PTS " + bufferInfo.presentationTimeUs + " size: " + bufferInfo.size + " " + (trackIndex == mVideoTrackIndex ? "video " : "audio ") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ? " keyframe" : ""));
-        mFFmpeg.writeAVPacketFromEncodedData(encodedData, (trackIndex == mVideoTrackIndex ? 1 : 0), bufferInfo.offset, bufferInfo.size, bufferInfo.flags, bufferInfo.presentationTimeUs);
+        if((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
+            Log.i(TAG, "BUFFER_FLAG_END_OF_STREAM");
 
-        // If a stop request was received
-        // It's possible the encoder is no longer started, and
-        // may even be released
-        if(!mEncoderReleased)
-            encoder.releaseOutputBuffer(bufferIndex, false);
+        if (VERBOSE) Log.i(TAG, mPacketCount + " PTS " + bufferInfo.presentationTimeUs + " size: " + bufferInfo.size + " " + (trackIndex == mVideoTrackIndex ? "video " : "audio ") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ? "keyframe" : ""));
+        if (DEBUG_PKTS) writePacketToFile(encodedData, bufferInfo);
+        if( !(trackIndex == mAudioTrackIndex && ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0))){
+            // Don't write Audio END_OF_STREAM packet. It causes a crash in av_dup_packet
+            if (trackIndex == mVideoTrackIndex && ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ){
+                packageH264Keyframe(encodedData, bufferInfo);
+                mFFmpeg.writeAVPacketFromEncodedData(mH264Keyframe, 1, bufferInfo.offset, bufferInfo.size + mH264MetaSize, bufferInfo.flags, bufferInfo.presentationTimeUs);
+            }else
+                mFFmpeg.writeAVPacketFromEncodedData(encodedData, (trackIndex == mVideoTrackIndex ? 1 : 0), bufferInfo.offset, bufferInfo.size, bufferInfo.flags, bufferInfo.presentationTimeUs);
+        }else{
+            Log.i(TAG, "Skipping last audio packet");
+        }
+
+        releaseOutputBufer(encoder, bufferIndex);
 
         if (allTracksFinished()){
+            if (VERBOSE) Log.i(TAG, "Shutting down");
             mFFmpeg.finalizeAVFormatContext();
             shutdown();
+        }
+    }
+
+    private void releaseOutputBufer(MediaCodec encoder, int bufferIndex){
+        synchronized (mEncoderReleasedSync){
+            if(!mEncoderReleased)
+                encoder.releaseOutputBuffer(bufferIndex, false);
+        }
+    }
+
+    //DEBUGGING USE ONLY
+    private int mPacketCount = 0;
+    private void writePacketToFile(ByteBuffer buffer, MediaCodec.BufferInfo bufferInfo){
+        byte[] samples = new byte[bufferInfo.size];
+        buffer.get(samples, bufferInfo.offset, bufferInfo.size);
+        buffer.position(bufferInfo.offset);
+        try {
+            Files.write(samples, new File("/sdcard/Kickflip/packet_" + mPacketCount));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -195,12 +248,24 @@ public class FFmpegMuxer extends Muxer implements Runnable{
      * @param bufferInfo
      */
     private void captureH264MetaData(ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
-        h264SPSandPPS = ByteBuffer.allocateDirect(bufferInfo.size);
+        mH264MetaSize = bufferInfo.size;
+        mH264Keyframe = ByteBuffer.allocateDirect(encodedData.capacity()); // TODO: Get max buffer size from VideoEncoderCore
         byte[] videoConfig = new byte[bufferInfo.size];
-        encodedData.get(videoConfig, 0, bufferInfo.size);
+        encodedData.get(videoConfig, bufferInfo.offset, bufferInfo.size);
         encodedData.position(bufferInfo.offset);
         encodedData.put(videoConfig, 0, bufferInfo.size);
-        h264SPSandPPS.put(videoConfig, 0, bufferInfo.size);
+        encodedData.position(bufferInfo.offset);
+        mH264Keyframe.put(videoConfig, 0, bufferInfo.size);
+    }
+
+    /**
+     * Adds the SPS + PPS data to the ByteBuffer containing a h264 keyframe
+     * @param encodedData
+     * @param bufferInfo
+     */
+    private void packageH264Keyframe(ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo){
+        mH264Keyframe.position(mH264MetaSize);
+        mH264Keyframe.put(encodedData); // BufferOverflow
     }
 
     private void addAdtsToByteBuffer(ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
@@ -294,15 +359,19 @@ public class FFmpegMuxer extends Muxer implements Runnable{
 
             switch(what){
                 case MSG_ADD_TRACK:
+                    if (TRACE) Trace.beginSection("addTrack");
                     muxer.handleAddTrack((MediaFormat) obj);
+                    if (TRACE) Trace.endSection();
                     break;
                 case MSG_WRITE_FRAME:
+                    if (TRACE) Trace.beginSection("writeSampleData");
                     WritePacketData data = (WritePacketData) obj;
                     muxer.handleWriteSampleData(data.mEncoder,
                             data.mTrackIndex,
                             data.mBufferIndex,
                             data.mData,
-                            data.mBufferInfo);
+                            data.getBufferInfo());
+                    if (TRACE) Trace.endSection();
                     break;
                 default:
                     throw new RuntimeException("Unexpected msg what=" + what);
@@ -318,18 +387,33 @@ public class FFmpegMuxer extends Muxer implements Runnable{
      */
     public static class WritePacketData {
 
+        private static MediaCodec.BufferInfo mBufferInfo;        // Used as singleton since muxer writes only one packet at a time
+
         public MediaCodec mEncoder;
         public int mTrackIndex;
         public int mBufferIndex;
         public ByteBuffer mData;
-        public MediaCodec.BufferInfo mBufferInfo;
+        public int offset;
+        public int size;
+        public long presentationTimeUs;
+        public int flags;
 
         public WritePacketData(MediaCodec encoder, int trackIndex, int bufferIndex, ByteBuffer data, MediaCodec.BufferInfo bufferInfo){
             mEncoder = encoder;
             mTrackIndex = trackIndex;
             mBufferIndex = bufferIndex;
             mData = data;
-            mBufferInfo = bufferInfo;
+            offset = bufferInfo.offset;
+            size = bufferInfo.size;
+            presentationTimeUs = bufferInfo.presentationTimeUs;
+            flags = bufferInfo.flags;
+        }
+
+        public MediaCodec.BufferInfo getBufferInfo(){
+            if(mBufferInfo == null)
+                mBufferInfo = new MediaCodec.BufferInfo();
+            mBufferInfo.set(offset, size, presentationTimeUs, flags);
+            return mBufferInfo;
         }
     }
 }

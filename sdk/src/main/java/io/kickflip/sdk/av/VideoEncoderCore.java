@@ -22,6 +22,8 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * This class wraps up the core components used for surface-input video encoding.
  * <p/>
