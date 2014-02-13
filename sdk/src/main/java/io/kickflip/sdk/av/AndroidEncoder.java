@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
  */
 public abstract class AndroidEncoder {
     private final static String TAG = "AndroidEncoder";
-    private final static boolean VERBOSE = false;
+    private final static boolean VERBOSE = true;
 
     protected Muxer mMuxer;
     protected MediaCodec mEncoder;
@@ -31,14 +31,13 @@ public abstract class AndroidEncoder {
     public void drainEncoder(boolean endOfStream) {
         synchronized (mMuxer){
             final int TIMEOUT_USEC = 1000;
-            if (VERBOSE) Log.d(TAG, "drainEncoder(" + endOfStream + ")");
+            if (VERBOSE) Log.d(TAG, "drainEncoder(" + endOfStream + ") track: " + mTrackIndex);
 
             if (endOfStream) {
-                if (VERBOSE) Log.d(TAG, "sending EOS to encoder");
+                if (VERBOSE) Log.d(TAG, "sending EOS to encoder for track " + mTrackIndex);
                 if(isSurfaceInputEncoder()){
-                    Log.i("STREAMFLOW", "signalEndOfInputStream");
+                    Log.i(TAG, "signalEndOfInputStream for track " + mTrackIndex);
                     mEncoder.signalEndOfInputStream();
-                    mMuxer.signalEndOfTrack();
                 }
             }
 
@@ -55,7 +54,7 @@ public abstract class AndroidEncoder {
                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     // not expected for an encoder
                     encoderOutputBuffers = mEncoder.getOutputBuffers();
-                } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     // should happen before receiving buffers, and should only happen once
                     MediaFormat newFormat = mEncoder.getOutputFormat();
                     Log.d(TAG, "encoder output format changed: " + newFormat);
@@ -75,7 +74,7 @@ public abstract class AndroidEncoder {
                                 " was null");
                     }
 
-                    if (mBufferInfo.size != 0) {
+                    if (mBufferInfo.size >= 0) {    // Allow zero length buffer for purpose of sending 0 size video EOS Flag
                         // adjust the ByteBuffer values to match BufferInfo (not needed?)
                         encodedData.position(mBufferInfo.offset);
                         encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
@@ -84,7 +83,7 @@ public abstract class AndroidEncoder {
                         mMuxer.writeSampleData(mEncoder, mTrackIndex, encoderStatus, encodedData, mBufferInfo);
                         if (VERBOSE) {
                             Log.d(TAG, "sent " + mBufferInfo.size + " bytes to muxer, ts=" +
-                                    mBufferInfo.presentationTimeUs);
+                                    mBufferInfo.presentationTimeUs + "track " + mTrackIndex);
                         }
                     }
 
@@ -92,8 +91,7 @@ public abstract class AndroidEncoder {
                         if (!endOfStream) {
                             Log.w(TAG, "reached end of stream unexpectedly");
                         } else {
-                            Log.i("STREAMFLOW", "drainEncoder finished with end of stream");
-                            if (VERBOSE) Log.d(TAG, "end of stream reached");
+                            if (VERBOSE) Log.d(TAG, "end of stream reached for track " + mTrackIndex);
                         }
                         break;      // out of while
                     }

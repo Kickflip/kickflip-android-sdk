@@ -77,13 +77,20 @@ public class AndroidMuxer extends Muxer {
         if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
             // MediaMuxer gets the codec config info via the addTrack command
             if (VERBOSE) Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
+            encoder.releaseOutputBuffer(bufferIndex, false);
+            return;
+        }
+
+        if(bufferInfo.size == 0){
+            if(VERBOSE) Log.d(TAG, "ignoring zero size buffer");
+            encoder.releaseOutputBuffer(bufferIndex, false);
             return;
         }
 
         if (!mStarted) {
-            Log.e(TAG, "writeSampleData called before muxer started. Track index: " + trackIndex + " tracks added: " + mNumTracks);
+            Log.e(TAG, "writeSampleData called before muxer started. Ignoring packet. Track index: " + trackIndex + " tracks added: " + mNumTracks);
+            encoder.releaseOutputBuffer(bufferIndex, false);
             return;
-            //throw new RuntimeException("muxer hasn't started");
         }
 
         mMuxer.writeSampleData(trackIndex, encodedData, bufferInfo);

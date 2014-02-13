@@ -57,9 +57,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     private final Object mSurfaceTextureFence = new Object();   // guards mSurfaceTexture shared with GLSurfaceView.Renderer
     private SurfaceTexture mSurfaceTexture;
-    private final Object mReadyForFrameFence = new Object();    // guards mReadyForFrames/mRecordingRequested
+    private final Object mReadyForFrameFence = new Object();    // guards mReadyForFrames/mRecording
     private boolean mReadyForFrames;                            // Is the SurfaceTexture et all created
-    private boolean mRecordingRequested;                        // Is Recording desired
+    private boolean mRecording;                                 // Are frames being recorded
+    private boolean mEosRequested;                              // Should an EOS be sent on next frame. Used to stop encoder
     private final Object mReadyFence = new Object();            // guards ready/running
     private boolean mReady;                                     // mHandler created on Encoder thread
     private boolean mRunning;                                   // Encoder thread running
@@ -76,7 +77,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     public CameraEncoder(RecorderConfig config) {
         mEncodedFirstFrame = false;
         mReadyForFrames = false;
-        mRecordingRequested = false;
+        mRecording = false;
+        mEosRequested = false;
 
         mCurrentCamera = -1;
         mDesiredCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
@@ -231,7 +233,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      */
     public boolean isRecording() {
         synchronized (mReadyFence) {
-            return mRecordingRequested;
+            return mRecording;
         }
     }
 
@@ -241,7 +243,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     public void startRecording() {
         synchronized (mReadyForFrameFence) {
             mFrameNum = 0;
-            mRecordingRequested = true;
+            mRecording = true;
         }
     }
 
@@ -270,13 +272,28 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mHandler.sendMessage(mHandler.obtainMessage(MSG_STOP_RECORDING));
     }
 
+    /**
+     * Called on Encoder thread
+     */
     private void handleStopRecording() {
         synchronized (mReadyForFrameFence) {
-            mRecordingRequested = false;
-            mVideoEncoder.drainEncoder(true);
-            releaseEncoder();
-            releaseCamera();
+            mEosRequested = true;
+            Log.i(TAG, "handleStopRecording");
         }
+    }
+
+    /**
+     * Called on next call to handleFrameAavilable
+     * following handleStopRecording. Last frame is submitted
+     * to encoder, and drainEncoder(true) has been called.
+     * Safe to release resources
+     *
+     * Called on Encoder thread
+     */
+    private void shutdown(){
+        releaseEncoder();
+        releaseCamera();
+        Looper.myLooper().quit();
     }
 
     /**
@@ -311,8 +328,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             mInputWindowSurface.makeCurrent();
             mSurfaceTexture.updateTexImage();
 
-            if (mRecordingRequested) {
+            if (mRecording) {
+                if (TRACE) Trace.beginSection("drainVEncoder");
                 mVideoEncoder.drainEncoder(false);
+                if (TRACE) Trace.endSection();
                 if (mCurrentFilter != mNewFilter) {
                     Filters.updateFilter(mFullScreen, mNewFilter);
                     mCurrentFilter = mNewFilter;
@@ -325,7 +344,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 }
 
                 surfaceTexture.getTransformMatrix(mTransform);
-                if (TRACE) Trace.beginSection("drawEncoderFrame");
+                if (TRACE) Trace.beginSection("drawVEncoderFrame");
                 mFullScreen.drawFrame(mTextureId, mTransform);
                 if (TRACE) Trace.endSection();
                 if (!mEncodedFirstFrame) {
@@ -334,6 +353,14 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 }
                 mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp() - mStartTimeNs);
                 mInputWindowSurface.swapBuffers();
+
+                if(mEosRequested){
+                    Log.i(TAG, "Sent last video frame. Draining encoder");
+                    mVideoEncoder.drainEncoder(true);
+                    mRecording = false;
+                    mEosRequested = false;
+                    shutdown();
+                }
             }
         }
 
@@ -353,7 +380,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             if (mDisplayView != null)
                 mDisplayView.onPause();
             // Release camera if we're not recording
-            if (!mRecordingRequested && mSurfaceTexture != null) {
+            if (!mRecording && mSurfaceTexture != null) {
                 Log.i("CameraRelease", "Releasing camera");
                 if (mDisplayView != null)
                     releaseDisplayView();
@@ -372,12 +399,12 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             if (mDisplayView != null)
                 mDisplayView.onResume();
             // Re-open camera if we're not recording and the SurfaceTexture has already been created
-            if (!mRecordingRequested && mSurfaceTexture != null) {
+            if (!mRecording && mSurfaceTexture != null) {
                 Log.i("CameraRelease", "Opening camera and attaching to SurfaceTexture");
                 //openAndAttachCameraToSurfaceTexture();
                 mHandler.sendMessage(mHandler.obtainMessage(MSG_REOPEN_CAMERA));
             } else {
-                Log.w("CameraRelease", "Didn't try to open camera onHAResume. rec: " + mRecordingRequested + " mSurfaceTexture ready? " + (mSurfaceTexture == null ? " no" : " yes"));
+                Log.w("CameraRelease", "Didn't try to open camera onHAResume. rec: " + mRecording + " mSurfaceTexture ready? " + (mSurfaceTexture == null ? " no" : " yes"));
             }
         }
     }
@@ -651,7 +678,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     break;
                 case MSG_STOP_RECORDING:
                     encoder.handleStopRecording();
-                    Looper.myLooper().quit();
                     break;
                 case MSG_FRAME_AVAILABLE:
                     encoder.handleFrameAvailable((SurfaceTexture) obj);

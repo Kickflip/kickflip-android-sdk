@@ -48,17 +48,6 @@ public abstract class Muxer {
         return 0;
     }
 
-    /* Deprecated
-       Starting and stopping should be handled internally
-       by the muxer based on knowledge of expected number of tracks,
-       and the number of tracks already added / finalized
-    public void start(){
-    }
-
-    public void stop(){
-    }
-    */
-
     /**
      * Called by the hosting Encoder
      * to notify the Muxer that it should no
@@ -101,8 +90,7 @@ public abstract class Muxer {
 
     /**
      * Muxer will call this itself if it detects BUFFER_FLAG_END_OF_STREAM
-     * in writeSampleData. However Video encoders with Surface input
-     * are responsible for calling this themselves
+     * in writeSampleData.
      */
     public void signalEndOfTrack(){
         mNumTracksFinished++;
@@ -115,13 +103,25 @@ public abstract class Muxer {
      */
     protected boolean formatRequiresADTS(){
         switch(mFormat){
-            case MPEG4:
-                break;
             case HLS:
                 return true;
-            case RTMP:
-                break;
+            default:
+                return false;
         }
-        return false;
+    }
+
+    /**
+     * Does this Muxer's format require
+     * copying and buffering encoder output buffers.
+     * Generally speaking, Is the output a Socket or File?
+     * @return
+     */
+    protected boolean formatRequiresBuffering(){
+        switch(mFormat){
+            case RTMP:
+               return true;
+            default:
+                return false;
+        }
     }
 }

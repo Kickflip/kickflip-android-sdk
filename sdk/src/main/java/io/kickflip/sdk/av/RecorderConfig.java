@@ -125,8 +125,8 @@ public class RecorderConfig {
             }else if(outputLocation.contains(".m3u8")){
                 mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.HLS);
             }else if(outputLocation.contains(".mp4")){
-                //mMuxer = AndroidMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
-                mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
+                mMuxer = AndroidMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
+                //mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
             }else
                 throw new RuntimeException("Unexpected muxer output. Expected a .mp4, .m3u8, or rtmp url: " + outputLocation);
 

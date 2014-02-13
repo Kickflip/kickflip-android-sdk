@@ -56,8 +56,8 @@ public class BroadcastFragment extends OAuthTestFragment implements AdapterView.
         // If you don't want this behavior, call stopRecording
         // on your Fragment/Activity's onStop()
         if(mBroadcaster == null){
-            String path = "/sdcard/Kickflip/zen_test.flv";
-            //String path = "rtmp://live29.us-va.zencoder.io:1935/live/419c13fa7b1ef38326b3aa02dda3af7c";
+            String path = "/sdcard/Kickflip/zen_test.mp4";
+            //String path = "rtmp://live15.us-va.zencoder.io:1935/live/755f48db1a055734ce33a9da8ac5558e";
 
             Context context = getActivity().getApplicationContext();
             RecorderConfig config = new RecorderConfig.Builder(path)

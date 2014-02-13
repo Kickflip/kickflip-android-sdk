@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 
 import pro.dbro.ffmpegwrapper.FFmpegWrapper;
 import pro.dbro.ffmpegwrapper.FFmpegWrapper.AVOptions;
@@ -25,9 +27,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Created by davidbrodsky on 1/23/14.
  */
 //TODO: Remove hard-coded track indexes
+//      Remove 2 track assumption
 public class FFmpegMuxer extends Muxer implements Runnable{
     private static final String TAG = "FFmpegMuxer";
-    private static final boolean VERBOSE = false;        // Lots of logging
+    private static final boolean VERBOSE = true;        // Lots of logging
     private static final boolean TRACE = true;           // Systrace logs
     private static final boolean DEBUG_PKTS = false;     // Write each raw packet to file
 
@@ -40,7 +43,7 @@ public class FFmpegMuxer extends Muxer implements Runnable{
     private boolean mRunning;                           // Is muxer thread running
     private FFmpegHandler mHandler;
     private final Object mEncoderReleasedSync = new Object();
-    private boolean mEncoderReleased;
+    private boolean mEncoderReleased;                   // TODO: Account for both encoders
 
     private final int mVideoTrackIndex = 0;
     private final int mAudioTrackIndex = 1;
@@ -60,13 +63,16 @@ public class FFmpegMuxer extends Muxer implements Runnable{
     private FFmpegWrapper mFFmpeg;
     private boolean mStarted;
 
+    // Queue encoded buffers when muxing to stream
+    ArrayList<ArrayDeque<ByteBuffer>> mMuxerInputQueue;
+
     private FFmpegMuxer(String outputFile, FORMAT format) {
         super(outputFile, format);
         mReady = false;
         mFFmpeg = new FFmpegWrapper();
 
         AVOptions opts = new AVOptions();
-        switch(format){
+        switch(mFormat){
             case MPEG4:
                 opts.outputFormatName = "mp4";
                 break;
@@ -75,6 +81,7 @@ public class FFmpegMuxer extends Muxer implements Runnable{
                 break;
             case RTMP:
                 opts.outputFormatName = "flv";
+                mMuxerInputQueue = new ArrayList<>();
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized format!");
@@ -102,10 +109,19 @@ public class FFmpegMuxer extends Muxer implements Runnable{
         // Whereas with MediaMuxer this call handles that.
         // TODO: Ensure addTrack isn't called more times than it should be...
         // TODO: Make an FFmpegWrapper API that sets mVideo/AudioTrackIndex instead of hard-code
+        int trackIndex;
         if (trackFormat.getString(MediaFormat.KEY_MIME).compareTo("video/avc") == 0)
-            return mVideoTrackIndex;
+            trackIndex = mVideoTrackIndex;
         else
-            return mAudioTrackIndex;
+            trackIndex = mAudioTrackIndex;
+
+        if(formatRequiresBuffering()){
+            synchronized (mMuxerInputQueue){
+            while(mMuxerInputQueue.size() < trackIndex + 1)
+                mMuxerInputQueue.add(new ArrayDeque<ByteBuffer>());
+            }
+        }
+        return trackIndex;
     }
 
     public void handleAddTrack(MediaFormat trackFormat){
@@ -149,16 +165,27 @@ public class FFmpegMuxer extends Muxer implements Runnable{
     public void writeSampleData(MediaCodec encoder, int trackIndex, int bufferIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
         synchronized (mReadyFence){
             if(mReady){
-                if (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)) {
-                    Log.i(TAG, "saw BUFFER_FLAG_CODEC_CONFIG for track " + trackIndex);
-                }
-                if((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
-                    Log.i(TAG, "saw BUFFER_FLAG_END_OF_STREAM");
+                ByteBuffer muxerInput;
+                if(formatRequiresBuffering()){
+                    // Copy encodedData into another ByteBuffer, recycling if possible
+                    synchronized (mMuxerInputQueue){
+                        muxerInput = mMuxerInputQueue.get(trackIndex).isEmpty() ?
+                                ByteBuffer.allocateDirect(encodedData.capacity()) : mMuxerInputQueue.get(trackIndex).remove();
+                    }
+                    muxerInput.put(encodedData);
+                    muxerInput.position(0);
+                    encoder.releaseOutputBuffer(bufferIndex, false);
+                }else
+                    muxerInput = encodedData;
+
                 mHandler.sendMessage(mHandler.obtainMessage(MSG_WRITE_FRAME,
-                    new WritePacketData(encoder, trackIndex, bufferIndex, encodedData, bufferInfo)));
+                        new WritePacketData(encoder, trackIndex, bufferIndex, muxerInput, bufferInfo)));
             }else{
                 Log.w(TAG, "Dropping frame because Muxer not ready!");
-                releaseOutputBufer(encoder, bufferIndex);
+                releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
+                if(formatRequiresBuffering())
+                    encoder.releaseOutputBuffer(bufferIndex, false);
+                decrementRetainedBufferCount(trackIndex);
             }
         }
     }
@@ -173,17 +200,16 @@ public class FFmpegMuxer extends Muxer implements Runnable{
                 // Capture H.264 SPS + PPS Data
                 if (VERBOSE) Log.i(TAG, "Capture SPS + PPS");
                 captureH264MetaData(encodedData, bufferInfo);
-                releaseOutputBufer(encoder, bufferIndex);
+                releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
                 return;
             }else{
                 if (VERBOSE) Log.i(TAG, "Ignoring audio CODEC_CONFIG");
-                releaseOutputBufer(encoder, bufferIndex);
+                releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
                 return;
             }
         }
 
         if (trackIndex == mAudioTrackIndex && formatRequiresADTS()) {
-            // If Audio packet requires ADTS, add it
             addAdtsToByteBuffer(encodedData, bufferInfo);
         }
 
@@ -191,13 +217,10 @@ public class FFmpegMuxer extends Muxer implements Runnable{
         encodedData.position(bufferInfo.offset);
         encodedData.limit(bufferInfo.offset + bufferInfo.size);
 
-        if((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0)
-            Log.i(TAG, "BUFFER_FLAG_END_OF_STREAM");
-
-        if (VERBOSE) Log.i(TAG, mPacketCount + " PTS " + bufferInfo.presentationTimeUs + " size: " + bufferInfo.size + " " + (trackIndex == mVideoTrackIndex ? "video " : "audio ") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ? "keyframe" : ""));
+        if (VERBOSE) Log.i(TAG, mPacketCount + " PTS " + bufferInfo.presentationTimeUs + " size: " + bufferInfo.size + " " + (trackIndex == mVideoTrackIndex ? "video " : "audio ") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ? "keyframe" : "") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) ? " EOS" : ""));
         if (DEBUG_PKTS) writePacketToFile(encodedData, bufferInfo);
         if( !(trackIndex == mAudioTrackIndex && ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0))){
-            // Don't write Audio END_OF_STREAM packet. It causes a crash in av_dup_packet
+            // Don't write Audio END_OF_STREAM packet. It causes a crash in av_dup_packet. TODO: Check if this is resolved...
             if (trackIndex == mVideoTrackIndex && ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ){
                 packageH264Keyframe(encodedData, bufferInfo);
                 mFFmpeg.writeAVPacketFromEncodedData(mH264Keyframe, 1, bufferInfo.offset, bufferInfo.size + mH264MetaSize, bufferInfo.flags, bufferInfo.presentationTimeUs);
@@ -207,7 +230,8 @@ public class FFmpegMuxer extends Muxer implements Runnable{
             Log.i(TAG, "Skipping last audio packet");
         }
 
-        releaseOutputBufer(encoder, bufferIndex);
+        releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
+        decrementRetainedBufferCount(trackIndex);
 
         if (allTracksFinished()){
             if (VERBOSE) Log.i(TAG, "Shutting down");
@@ -216,10 +240,18 @@ public class FFmpegMuxer extends Muxer implements Runnable{
         }
     }
 
-    private void releaseOutputBufer(MediaCodec encoder, int bufferIndex){
+    private void releaseOutputBufer(MediaCodec encoder, ByteBuffer encodedData, int bufferIndex, int trackIndex){
         synchronized (mEncoderReleasedSync){
-            if(!mEncoderReleased)
-                encoder.releaseOutputBuffer(bufferIndex, false);
+            if(!mEncoderReleased){
+                if(formatRequiresBuffering()){
+                    encodedData.clear();
+                    synchronized (mMuxerInputQueue){
+                        mMuxerInputQueue.get(trackIndex).add(encodedData);
+                    }
+                }else{
+                    encoder.releaseOutputBuffer(bufferIndex, false);
+                }
+            }
         }
     }
 
@@ -235,6 +267,7 @@ public class FFmpegMuxer extends Muxer implements Runnable{
             e.printStackTrace();
         }
     }
+    // END DEBUGGING USE ONLY
 
     /**
      * Should only be called once, when the encoder produces
@@ -249,7 +282,7 @@ public class FFmpegMuxer extends Muxer implements Runnable{
      */
     private void captureH264MetaData(ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
         mH264MetaSize = bufferInfo.size;
-        mH264Keyframe = ByteBuffer.allocateDirect(encodedData.capacity()); // TODO: Get max buffer size from VideoEncoderCore
+        mH264Keyframe = ByteBuffer.allocateDirect(encodedData.capacity());
         byte[] videoConfig = new byte[bufferInfo.size];
         encodedData.get(videoConfig, bufferInfo.offset, bufferInfo.size);
         encodedData.position(bufferInfo.offset);
