@@ -13,6 +13,9 @@ public class KickflipAwsResponse {
     @Key
     private String aws_secret_key;
 
+    public KickflipAwsResponse(){
+    }
+
     public KickflipAwsResponse(String app, String name, String aws_access_key, String aws_secret_key) {
         this.aws_secret_key = aws_secret_key;
         this.aws_access_key = aws_access_key;

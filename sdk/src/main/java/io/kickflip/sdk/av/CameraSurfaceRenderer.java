@@ -9,6 +9,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import io.kickflip.sdk.GLCameraView;
+import io.kickflip.sdk.R;
 
 
 class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
@@ -18,7 +19,8 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
     private CameraEncoder mCameraEncoder;
 
     private FullFrameRect mFullScreenCamera;
-    private FullFrameRect mFullScreenOverlay;
+    //private SizeableFrameRect mFullScreenOverlay;     // For texture overlay
+
 
     // Experimenting: May be most sensical way to get handle on Context for loading texture bitmaps
     private GLCameraView mCameraView;
@@ -76,17 +78,19 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
         Log.d(TAG, "onSurfaceCreated");
-        //GLES20.glEnable(GLES20.GL_BLEND);
-        //GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         // Set up the texture blitter that will be used for on-screen display.  This
         // is *not* applied to the recording, because that uses a separate shader.
         mFullScreenCamera = new FullFrameRect(
                 new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
-        //mFullScreenOverlay = new FullFrameRect(
-        //        new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D));
-        mCameraTextureId = mFullScreenCamera.createTextureObject();
+        // For texture overlay:
+        //GLES20.glEnable(GLES20.GL_BLEND);
+        //GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        //mFullScreenOverlay = new SizeableFrameRect(
+        //          new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D), mSizeableOverlayCoords);
         //mOverlayTextureId = GlUtil.createTextureWithTextContent("hello!");
-        //mOverlayTextureId = GlUtil.createTextureFromImage(mCameraView.getContext(), R.drawable.football);
+        //mOverlayTextureId = GlUtil.createTextureFromImage(mCameraView.getContext(), R.drawable.red_dot);
+        mCameraTextureId = mFullScreenCamera.createTextureObject();
+
 
         mCameraEncoder.onSurfaceCreated(mCameraTextureId);
         mFrameCount = 0;
@@ -122,27 +126,11 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         // Draw the video frame.
         if(mCameraEncoder.isSurfaceTextureReadyForDisplay()){
             mCameraEncoder.getSurfaceTextureForDisplay().getTransformMatrix(mSTMatrix);
-            //mFullScreenOverlay.drawFrame(mOverlayTextureId, mSTMatrix); // use mSTMatrix?
+            //Drawing texture overlay:
+            //mFullScreenOverlay.drawFrame(mOverlayTextureId, mSTMatrix);
             mFullScreenCamera.drawFrame(mCameraTextureId, mSTMatrix);
         }
-
-        // Draw a flashing box if we're recording.  This only appears on screen.
-        showBox = (mCameraEncoder.isRecording());
-        if (showBox && (++mFrameCount & 0x04) == 0) {
-            drawBox();
-        }
         mFrameCount++;
-    }
-
-    /**
-     * Draws a red box in the corner.
-     */
-    private void drawBox() {
-        GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-        GLES20.glScissor(50, 50, 100, 100);
-        GLES20.glClearColor(1.0f, 0.0f, 0.0f, 0.7f);
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
     }
 
     /**

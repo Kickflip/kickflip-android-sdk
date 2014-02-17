@@ -1,30 +1,26 @@
 package io.kickflip.sample;
 
-import android.net.Uri;
+import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
-import android.view.WindowManager;
 
-/**
- * OAuth test
- */
-public class MainActivity extends FragmentActivity implements OAuthTestFragment.TestFragmentListener {
+import io.kickflip.sdk.BroadcastListener;
+import io.kickflip.sdk.fragment.BroadcastFragment;
+
+
+public class MainActivity extends Activity implements BroadcastListener, MainFragmentInteractionListener {
+    private String mRecordingOutputPath = "/sdcard/Kickflip/434test.flv";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    //.replace(R.id.container, OAuthTestFragment.newInstance(SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET))
-                    .replace(R.id.container, BroadcastFragment.newInstance(SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET))
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.container, MainFragment.newInstance())
                     .commit();
         }
     }
@@ -32,7 +28,7 @@ public class MainActivity extends FragmentActivity implements OAuthTestFragment.
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
@@ -50,8 +46,37 @@ public class MainActivity extends FragmentActivity implements OAuthTestFragment.
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onFragmentInteraction(Uri uri) {
+    // BroadcastListener methods
 
+    @Override
+    public void onBroadcastStart() {
+
+    }
+
+    @Override
+    public void onBroadcastLive() {
+
+    }
+
+    @Override
+    public void onBroadcastStop() {
+        // Show main fragment
+        getFragmentManager().beginTransaction()
+                .replace(R.id.container, MainFragment.newInstance())
+                .setCustomAnimations(R.anim.fade_out, R.anim.fade_in, R.anim.fade_out, R.anim.fade_in)
+                .commit();
+    }
+
+    @Override
+    public void onBroadcastError() {
+
+    }
+
+    @Override
+    public void onFragmentEvent(MainFragment.EVENT event) {
+        getFragmentManager().beginTransaction()
+                .replace(R.id.container, BroadcastFragment.newInstance(SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET, mRecordingOutputPath))
+                .setCustomAnimations(R.anim.fade_out, R.anim.fade_in, R.anim.fade_out, R.anim.fade_in)
+                .commit();
     }
 }

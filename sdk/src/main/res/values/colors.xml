@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="kickflip_green">#47a447</color>
+    <color name="kickflip_green_shadow">#ff397b39</color>
+    <color name="kickflip_white">#ffffffff</color>
+</resources>

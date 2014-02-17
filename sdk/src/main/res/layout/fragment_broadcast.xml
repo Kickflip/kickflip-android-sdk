@@ -1,0 +1,47 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="io.kickflip.sdk.fragment.BroadcastFragment">
+
+    <io.kickflip.sdk.GLCameraEncoderView
+        android:id="@+id/cameraPreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <Spinner
+        android:id="@+id/filterSpinner"
+        android:background="@android:drawable/btn_default"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="10dp"
+        android:padding="10dp"
+        android:tag="filter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <ImageButton
+        android:id="@+id/cameraFlipper"
+        android:tag="camera"
+        android:background="@android:drawable/btn_default"
+        android:src="@drawable/ic_camflip"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/status_bar_margin"
+        android:layout_marginRight="@dimen/nav_bar_margin"
+        android:layout_marginBottom="10dp"/>
+
+    <Button
+        android:id="@+id/recordButton"
+        android:padding="15dp"
+        android:text="@string/record"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"/>
+
+</RelativeLayout>

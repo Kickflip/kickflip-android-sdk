@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
  */
 public abstract class AndroidEncoder {
     private final static String TAG = "AndroidEncoder";
-    private final static boolean VERBOSE = true;
+    private final static boolean VERBOSE = false;
 
     protected Muxer mMuxer;
     protected MediaCodec mEncoder;
@@ -36,7 +36,7 @@ public abstract class AndroidEncoder {
             if (endOfStream) {
                 if (VERBOSE) Log.d(TAG, "sending EOS to encoder for track " + mTrackIndex);
                 if(isSurfaceInputEncoder()){
-                    Log.i(TAG, "signalEndOfInputStream for track " + mTrackIndex);
+                    if (VERBOSE) Log.i(TAG, "signalEndOfInputStream for track " + mTrackIndex);
                     mEncoder.signalEndOfInputStream();
                 }
             }
@@ -57,7 +57,7 @@ public abstract class AndroidEncoder {
                  } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     // should happen before receiving buffers, and should only happen once
                     MediaFormat newFormat = mEncoder.getOutputFormat();
-                    Log.d(TAG, "encoder output format changed: " + newFormat);
+                    if (VERBOSE) Log.d(TAG, "encoder output format changed: " + newFormat);
 
                     // now that we have the Magic Goodies, start the muxer
                     mTrackIndex = mMuxer.addTrack(newFormat);

@@ -34,4 +34,8 @@
         <item>Front</item>
     </string-array>
 
+    <!-- BroadcastFragment -->
+    <string name="record">Record</string>
+    <string name="stop">Stop</string>
+
 </resources>

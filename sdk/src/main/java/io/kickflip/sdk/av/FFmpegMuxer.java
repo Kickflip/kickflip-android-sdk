@@ -30,8 +30,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 //      Remove 2 track assumption
 public class FFmpegMuxer extends Muxer implements Runnable{
     private static final String TAG = "FFmpegMuxer";
-    private static final boolean VERBOSE = true;        // Lots of logging
-    private static final boolean TRACE = true;           // Systrace logs
+    private static final boolean VERBOSE = false;        // Lots of logging
+    private static final boolean TRACE = false;           // Systrace logs
     private static final boolean DEBUG_PKTS = false;     // Write each raw packet to file
 
     // MuxerHandler message types
@@ -185,7 +185,6 @@ public class FFmpegMuxer extends Muxer implements Runnable{
                 releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
                 if(formatRequiresBuffering())
                     encoder.releaseOutputBuffer(bufferIndex, false);
-                decrementRetainedBufferCount(trackIndex);
             }
         }
     }
@@ -195,7 +194,7 @@ public class FFmpegMuxer extends Muxer implements Runnable{
         mPacketCount++;
 
         if (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)) {
-            Log.i(TAG, "handling BUFFER_FLAG_CODEC_CONFIG for track " + trackIndex);
+            if (VERBOSE) Log.i(TAG, "handling BUFFER_FLAG_CODEC_CONFIG for track " + trackIndex);
             if (trackIndex == mVideoTrackIndex) {
                 // Capture H.264 SPS + PPS Data
                 if (VERBOSE) Log.i(TAG, "Capture SPS + PPS");
@@ -231,7 +230,6 @@ public class FFmpegMuxer extends Muxer implements Runnable{
         }
 
         releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
-        decrementRetainedBufferCount(trackIndex);
 
         if (allTracksFinished()){
             if (VERBOSE) Log.i(TAG, "Shutting down");

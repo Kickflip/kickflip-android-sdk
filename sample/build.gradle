@@ -9,6 +9,7 @@ android {
         targetSdkVersion 19
         versionCode 1
         versionName "1.0"
+        packageName "io.kickflip.sample"
     }
 
     signingConfigs {
@@ -44,6 +45,6 @@ if (project.hasProperty('keyPassword')) {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:+'
     compile project(':sdk')
+
 }
