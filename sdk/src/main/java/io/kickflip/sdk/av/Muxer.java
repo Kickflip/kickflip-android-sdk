@@ -4,7 +4,11 @@ import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.util.Log;
 
+import com.google.common.eventbus.EventBus;
+
 import java.nio.ByteBuffer;
+
+import io.kickflip.sdk.events.MuxerFinishedEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -24,12 +28,18 @@ public abstract class Muxer {
     protected int mNumTracks;
     protected int mNumTracksFinished;
 
+    private EventBus mEventBus;
+
     protected Muxer(String outputPath, FORMAT format){
         Log.i(TAG, "Created muxer for output: " + outputPath);
         mOutputPath = checkNotNull(outputPath);
         mFormat = format;
         mNumTracks = 0;
         mNumTracksFinished = 0;
+    }
+
+    public void setEventBus(EventBus eventBus){
+        mEventBus = eventBus;
     }
 
     public String getOutputPath(){
@@ -58,6 +68,8 @@ public abstract class Muxer {
     }
 
     public void release(){
+        if(mEventBus != null)
+            mEventBus.post(new MuxerFinishedEvent());
     }
 
     public boolean isStarted(){

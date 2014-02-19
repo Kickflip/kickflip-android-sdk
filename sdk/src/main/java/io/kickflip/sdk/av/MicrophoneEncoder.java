@@ -30,8 +30,6 @@ public class MicrophoneEncoder implements Runnable{
     private long mStartTimeNs;
     private boolean mRecordingRequested;
 
-    private SyncEvent mSyncEvent;        // Optional object to wait on before submitting frames
-
     public MicrophoneEncoder(RecorderConfig config){
         mEncoderCore = new AudioEncoderCore(config.getNumAudioChannels(),
                 config.getAudioBitrate(),
@@ -42,7 +40,6 @@ public class MicrophoneEncoder implements Runnable{
         mRecordingRequested = false;
         setupAudioRecord();
     }
-
 
     private void setupAudioRecord(){
         int minBufferSize = AudioRecord.getMinBufferSize(mEncoderCore.mSampleRate,

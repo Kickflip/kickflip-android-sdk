@@ -11,6 +11,8 @@ import android.os.Trace;
 import android.util.Log;
 import android.view.MotionEvent;
 
+import com.google.common.eventbus.EventBus;
+
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -42,11 +44,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private int mTextureId;
     private int mFrameNum;
     private VideoEncoderCore mVideoEncoder;
-
     private Camera mCamera;
     private RecorderConfig mRecorderConfig;
     private float[] mTransform = new float[16];
-
     private int mCurrentFilter;
     private int mNewFilter;
     private boolean mIncomingSizeUpdated;

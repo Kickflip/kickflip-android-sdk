@@ -22,7 +22,8 @@ import io.kickflip.sdk.av.RecorderConfig;
 import io.kickflip.sdk.R;
 
 /**
- * This is the base
+ * This is a drop-in video-streaming fragment.
+ * Currently, only one BroadcastFragment may be instantiated at a time.
  */
 public class BroadcastFragment extends KickflipFragment implements AdapterView.OnItemSelectedListener{
     private static final String TAG = "BroadcastFragment";
@@ -42,6 +43,8 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
 
     public static BroadcastFragment newInstance(String clientKey, String clientSecret, String outputPath) {
         Log.i(TAG, "newInstance");
+        // Ensure we're creating a new Broadcaster for each new Fragment
+        mBroadcaster = null;
         BroadcastFragment fragment = new BroadcastFragment();
         Bundle args = new Bundle();
         // KickflipFragment args:

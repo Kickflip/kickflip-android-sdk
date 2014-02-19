@@ -16,6 +16,9 @@ import io.kickflip.sdk.api.KickflipApiClient;
 import io.kickflip.sdk.api.json.HlsStream;
 import io.kickflip.sdk.api.json.Response;
 import io.kickflip.sdk.api.json.User;
+import io.kickflip.sdk.api.s3.S3Manager;
+import io.kickflip.sdk.api.s3.S3Upload;
+import io.kickflip.sdk.events.MuxerFinishedEvent;
 import io.kickflip.sdk.events.HlsManifestWrittenEvent;
 import io.kickflip.sdk.events.HlsSegmentWrittenEvent;
 import io.kickflip.sdk.events.UploadedEvent;
@@ -35,20 +38,20 @@ public class Broadcaster extends AVRecorder {
     private KickflipApiClient mKickflip;
     private User mUser;
     private HlsStream mStream;
-    private EventBus mEventBus;
     private HlsFileObserver mFileObserver;
     private S3Client mS3Client;
-    private ArrayDeque<Pair<String, String>> mUploadQueue;
+    private ArrayDeque<Pair<String, File>> mUploadQueue;
     private RecorderConfig mConfig;
+    private EventBus mEventBus;
     private boolean mReadyToBroadcast;                      // Kickflip user registered and endpoint ready
 
 
     public Broadcaster(Context context, RecorderConfig config, String API_KEY, String API_SECRET) {
         super(config);
         checkArgument(API_KEY != null && API_SECRET != null);
+        mEventBus = new EventBus("Broadcaster");
         mConfig = config;
-        mEventBus = new EventBus("BroadcastBus");
-        mEventBus.register(this);
+        mConfig.getMuxer().setEventBus(mEventBus);
 
         String watchDir = config.getOutputPath().substring(0, config.getOutputPath().lastIndexOf(File.separator)+1);
         mFileObserver = new HlsFileObserver(watchDir, mEventBus);
@@ -128,6 +131,14 @@ public class Broadcaster extends AVRecorder {
         queueOrSubmitUpload(keyForFile(fileName), e.getSegmentLocation());
     }
 
+    @Subscribe
+    public void onMuxerFinished(MuxerFinishedEvent e){
+        // TODO: Broadcaster uses AVRecorder reset()
+        // this seems better than nulling and recreating Broadcaster
+        // since it should be usable as a static object for
+        // bg recording
+    }
+
     private String keyForFile(String fileName){
         return mUser.getName() + File.separator
                 + mStream.getStreamId() + File.separator
@@ -142,8 +153,7 @@ public class Broadcaster extends AVRecorder {
      */
     private void queueOrSubmitUpload(String key, String fileLocation){
         if(mReadyToBroadcast){
-            Log.i(TAG, "uploading " + key);
-            mS3Client.upload(key, new File(fileLocation));
+            S3Manager.queueUpload(new S3Upload(mS3Client, new File(fileLocation), key));
         }else{
             Log.i(TAG, "queueing " + key);
             queueUpload(key, fileLocation);
@@ -158,7 +168,7 @@ public class Broadcaster extends AVRecorder {
     private void queueUpload(String key, String fileLocation){
         if(mUploadQueue == null)
             mUploadQueue = new ArrayDeque<>();
-        mUploadQueue.add(new Pair<>(key, fileLocation));
+        mUploadQueue.add(new Pair<>(key, new File(fileLocation)));
     }
 
     /**
@@ -166,8 +176,8 @@ public class Broadcaster extends AVRecorder {
      */
     private void submitQueuedUploadsToS3(){
         if(mUploadQueue == null) return;
-        for(Pair<String, String> pair : mUploadQueue){
-            mS3Client.upload(pair.first, new File(pair.second));
+        for(Pair<String, File> pair : mUploadQueue){
+            S3Manager.queueUpload(new S3Upload(mS3Client, pair.second, pair.first));
         }
     }
 

@@ -147,17 +147,13 @@ public class FFmpegMuxer extends Muxer implements Runnable{
         }
     }
 
-    @Override
-    public void release() {
-        // Not needed?
-    }
-
     /**
      * Shutdown this Muxer
      * Must be called from Muxer thread
      */
     private void shutdown(){
         mStarted = false;
+        release();
         if(formatRequiresBuffering())
             Looper.myLooper().quit();
     }

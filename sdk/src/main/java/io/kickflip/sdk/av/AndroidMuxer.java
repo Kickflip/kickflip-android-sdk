@@ -63,6 +63,7 @@ public class AndroidMuxer extends Muxer {
 
     @Override
     public void release() {
+        super.release();
         mMuxer.release();
     }
 
