@@ -4,41 +4,48 @@ import android.content.Context;
 import android.util.Log;
 import android.util.Pair;
 
-import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import java.io.File;
 import java.util.ArrayDeque;
 
-import io.kickflip.sdk.KickflipAuthCallback;
+import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.HlsFileObserver;
-import io.kickflip.sdk.KickflipApiClient;
+import io.kickflip.sdk.api.KickflipApiClient;
+import io.kickflip.sdk.api.json.HlsStream;
+import io.kickflip.sdk.api.json.Response;
+import io.kickflip.sdk.api.json.User;
 import io.kickflip.sdk.events.HlsManifestWrittenEvent;
 import io.kickflip.sdk.events.HlsSegmentWrittenEvent;
 import io.kickflip.sdk.events.UploadedEvent;
-import io.kickflip.sdk.json.KickflipAwsResponse;
-import io.kickflip.sdk.s3.S3Client;
+import io.kickflip.sdk.api.s3.S3Client;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Broadcaster is an AVRecorder that broadcasts its output
  * to Kickflip.
  */
+// TODO: Make HLS / RTMP Agnostic
 public class Broadcaster extends AVRecorder {
     private static final String TAG = "Broadcaster";
 
     private KickflipApiClient mKickflip;
-    private KickflipAwsResponse mKickflipCredentials;
+    private User mUser;
+    private HlsStream mStream;
     private EventBus mEventBus;
     private HlsFileObserver mFileObserver;
     private S3Client mS3Client;
     private ArrayDeque<Pair<String, String>> mUploadQueue;
     private RecorderConfig mConfig;
-    private boolean mKickFlipCredentialsReceived;
+    private boolean mReadyToBroadcast;                      // Kickflip user registered and endpoint ready
 
 
     public Broadcaster(Context context, RecorderConfig config, String API_KEY, String API_SECRET) {
         super(config);
+        checkArgument(API_KEY != null && API_SECRET != null);
         mConfig = config;
         mEventBus = new EventBus("BroadcastBus");
         mEventBus.register(this);
@@ -47,16 +54,13 @@ public class Broadcaster extends AVRecorder {
         mFileObserver = new HlsFileObserver(watchDir, mEventBus);
         mFileObserver.startWatching();
 
-        mKickFlipCredentialsReceived = false;
-        mKickflip = new KickflipApiClient(context, API_KEY, API_SECRET, new KickflipAuthCallback() {
+        mReadyToBroadcast = false;
+        mKickflip = new KickflipApiClient(context, API_KEY, API_SECRET, new KickflipCallback() {
             @Override
-            public void onSuccess(KickflipAwsResponse response) {
-                mKickflipCredentials = response;
-                mS3Client = new S3Client(response.asBasicAWSCredentials(), mEventBus);
-                mS3Client.setBucket(response.getAppName());
-                mKickFlipCredentialsReceived = true;
+            public void onSuccess(Response response) {
+                User user = (User) response;
+                mUser = user;
                 Log.i(TAG, "Got storage credentials " + response);
-                emptyQueue();
             }
 
             @Override
@@ -66,9 +70,44 @@ public class Broadcaster extends AVRecorder {
         });
     }
 
-    @Subscribe
-    public void onDeadEvent(DeadEvent e){
-        Log.i(TAG, "Dead event!");
+    @Override
+    public void startRecording(){
+        super.startRecording();
+        mKickflip.startStream(new KickflipCallback() {
+            @Override
+            public void onSuccess(Response response) {
+                checkArgument(response instanceof HlsStream);
+                mStream = (HlsStream) response;
+                Log.i(TAG, "Got hls start stream response " + response);
+                mS3Client = new S3Client(mStream.getBasicAWSCredentials(), mEventBus);
+                mS3Client.setBucket(mStream.getBucket());
+                mReadyToBroadcast = true;
+                submitQueuedUploadsToS3();
+            }
+
+            @Override
+            public void onError(Object response) {
+                Log.w(TAG, "Error getting start stream response! " + response);
+            }
+        });
+    }
+
+    @Override
+    public void stopRecording(){
+        super.stopRecording();
+        if(mStream != null){
+            mKickflip.stopStream(mUser, mStream, new KickflipCallback() {
+                @Override
+                public void onSuccess(Response response) {
+                    Log.i(TAG, "Got stop stream response " + response);
+                }
+
+                @Override
+                public void onError(Object response) {
+                    Log.w(TAG, "Error getting stop stream response! " + response);
+                }
+            });
+        }
     }
 
     @Subscribe
@@ -90,8 +129,8 @@ public class Broadcaster extends AVRecorder {
     }
 
     private String keyForFile(String fileName){
-        return mKickflipCredentials.getName() + File.separator
-                + mConfig.getUUID().toString() + File.separator
+        return mUser.getName() + File.separator
+                + mStream.getStreamId() + File.separator
                 + fileName;
     }
 
@@ -102,7 +141,7 @@ public class Broadcaster extends AVRecorder {
      * @param fileLocation local file
      */
     private void queueOrSubmitUpload(String key, String fileLocation){
-        if(mKickFlipCredentialsReceived){
+        if(mReadyToBroadcast){
             Log.i(TAG, "uploading " + key);
             mS3Client.upload(key, new File(fileLocation));
         }else{
@@ -125,7 +164,7 @@ public class Broadcaster extends AVRecorder {
     /**
      * Submit all queued uploads to the S3 client
      */
-    private void emptyQueue(){
+    private void submitQueuedUploadsToS3(){
         if(mUploadQueue == null) return;
         for(Pair<String, String> pair : mUploadQueue){
             mS3Client.upload(pair.first, new File(pair.second));

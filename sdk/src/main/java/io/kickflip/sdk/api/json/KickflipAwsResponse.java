@@ -1,9 +1,11 @@
-package io.kickflip.sdk.json;
+package io.kickflip.sdk.api.json;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.api.client.util.Key;
 
 /**
+ * Deprecated. To be replaced with HlsStream
+ *
  * KFAPI Response for a new user
  * e.g /api/new/user
  * Created by davidbrodsky on 1/15/14.

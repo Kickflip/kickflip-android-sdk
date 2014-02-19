@@ -37,9 +37,11 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
 
     public BroadcastFragment() {
         // Required empty public constructor
+        Log.i(TAG, "construct");
     }
 
     public static BroadcastFragment newInstance(String clientKey, String clientSecret, String outputPath) {
+        Log.i(TAG, "newInstance");
         BroadcastFragment fragment = new BroadcastFragment();
         Bundle args = new Bundle();
         // KickflipFragment args:
@@ -53,46 +55,34 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         if(getArguments() != null && getArguments().containsKey(ARG_OUTPUT_PATH)){
             mOutputPath = getArguments().getString(ARG_OUTPUT_PATH);
-            Log.i(TAG, "set outputPath " + mOutputPath);
-        }else
+            Log.i(TAG, "set outputPath " + mOutputPath + " key " + getClientKey() + " secret " + getClientSecret());
+        }else{
             Log.w(TAG, "No output path specified! This fragment won't do anything!. " +
                     "Did you call BroadcastFragment#newinstance(KEY, SECRET, outputPath)?");
+        }
+        setupBroadcaster();
+    }
 
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        Log.i(TAG, "onDestroy");
     }
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-
+        Log.i(TAG, "onAttach");
         try {
             mListener = (BroadcastListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement MainFragmentInteractionListener");
-        }
-
-        // By making the recorder static we can allow
-        // recording to continue beyond this fragment's
-        // lifecycle! That means the user can minimize the app
-        // or even turn off the screen without interrupting the recording!
-        // If you don't want this behavior, call stopRecording
-        // on your Fragment/Activity's onStop()
-        if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
-            if(mBroadcaster == null){
-                Log.i(TAG, "Setting up Broadcaster for output " + mOutputPath);
-                Context context = getActivity().getApplicationContext();
-                RecorderConfig config = new RecorderConfig.Builder(mOutputPath)
-                        .withVideoResolution(1280, 720)
-                        .withVideoBitrate(2 * 1000 * 1000)
-                        .withAudioBitrate(96 * 1000)
-                        .build();
-
-                mBroadcaster = new Broadcaster(context, config, getClientKey(), getClientSecret());
-            }
         }
     }
 
@@ -114,8 +104,10 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.i(TAG, "onCreateView");
+
         View root;
-        if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+        if(mBroadcaster != null && getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
             root = inflater.inflate(R.layout.fragment_broadcast, container, false);
             mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
             mBroadcaster.setPreviewDisplay(mCameraView);
@@ -140,6 +132,29 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
         }else
             root = new View(container.getContext());
         return root;
+    }
+
+    private void setupBroadcaster(){
+        // By making the recorder static we can allow
+        // recording to continue beyond this fragment's
+        // lifecycle! That means the user can minimize the app
+        // or even turn off the screen without interrupting the recording!
+        // If you don't want this behavior, call stopRecording
+        // on your Fragment/Activity's onStop()
+        if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+            if(mBroadcaster == null){
+                Log.i(TAG, "Is frag attached: " + isAdded());
+                Log.i(TAG, "Setting up Broadcaster for output " + mOutputPath + " client key: " + getClientKey() + " secret: " + getClientSecret());
+                Context context = getActivity().getApplicationContext();
+                RecorderConfig config = new RecorderConfig.Builder(mOutputPath)
+                        .withVideoResolution(1280, 720)
+                        .withVideoBitrate(2 * 1000 * 1000)
+                        .withAudioBitrate(96 * 1000)
+                        .build();
+
+                mBroadcaster = new Broadcaster(context, config, getClientKey(), getClientSecret());
+            }
+        }
     }
 
     private void setupFilterSpinner(View root){

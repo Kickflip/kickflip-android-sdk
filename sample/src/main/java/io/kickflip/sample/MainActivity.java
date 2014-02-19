@@ -10,7 +10,7 @@ import io.kickflip.sdk.fragment.BroadcastFragment;
 
 
 public class MainActivity extends Activity implements BroadcastListener, MainFragmentInteractionListener {
-    private String mRecordingOutputPath = "/sdcard/Kickflip/434test.flv";
+    private String mRecordingOutputPath = "/sdcard/Kickflip/index.m3u8";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

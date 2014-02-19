@@ -1,4 +1,4 @@
-package io.kickflip.sdk;
+package io.kickflip.sdk.api;
 
 import com.google.api.client.http.HttpRequestFactory;
 

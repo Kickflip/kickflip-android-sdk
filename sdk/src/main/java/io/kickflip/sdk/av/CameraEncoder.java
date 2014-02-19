@@ -639,11 +639,14 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             ((GLCameraView) mDisplayView).setCamera(mCamera);
     }
 
+    /**
+     * Communicate camera-released state to our display view.
+     */
     private void releaseDisplayView() {
         if (mDisplayView instanceof GLCameraEncoderView) {
-            ((GLCameraEncoderView) mDisplayView).setCameraEncoder(this);
+            ((GLCameraEncoderView) mDisplayView).releaseCamera();
         } else if (mDisplayView instanceof GLCameraView)
-            ((GLCameraView) mDisplayView).setCamera(mCamera);
+            ((GLCameraView) mDisplayView).releaseCamera();
     }
 
     /**

@@ -1,14 +1,8 @@
 package io.kickflip.sdk.fragment;
 
 import android.app.Fragment;
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
-
-import io.kickflip.sdk.KickflipApiClient;
-import io.kickflip.sdk.KickflipAuthCallback;
-import io.kickflip.sdk.json.KickflipAwsResponse;
 
 
 /**
@@ -26,6 +20,7 @@ public class KickflipFragment extends Fragment {
 
     public KickflipFragment() {
         // Required empty public constructor
+        Log.i(TAG, "construct");
     }
 
     @Override
@@ -34,6 +29,7 @@ public class KickflipFragment extends Fragment {
         if (getArguments() != null) {
             mClientKey = getArguments().getString(ARG_CLIENT_KEY);
             mClientSecret = getArguments().getString(ARG_CLIENT_SECRET);
+            Log.i(TAG, "onCreate. Set Client key/secret: " + mClientKey + " " + mClientSecret);
         } else {
             Log.w(TAG, "No client credentials provided! This fragment won't do anything");
         }

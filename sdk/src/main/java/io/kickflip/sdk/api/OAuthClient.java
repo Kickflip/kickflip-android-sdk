@@ -1,4 +1,4 @@
-package io.kickflip.sdk;
+package io.kickflip.sdk.api;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -23,6 +23,7 @@ import java.io.IOException;
  */
 public abstract class OAuthClient {
     private static final String TAG = "OAuthClient";
+    private static final boolean VERBOSE = true;
 
     // For SharedPreferences storage
     private final String ACCESS_TOKEN_KEY = "AT";
@@ -92,6 +93,7 @@ public abstract class OAuthClient {
             return;
         }
 
+        // TODO: Replace with new Thread()
         new AsyncTask<Void, Void, Void>(){
 
             @Override
@@ -148,6 +150,7 @@ public abstract class OAuthClient {
     }
 
     protected boolean isSuccessResponse(HttpResponse response){
+        Log.i(TAG, "Response status code: " + response.getStatusCode());
         return response.getStatusCode() == 200;
     }
 

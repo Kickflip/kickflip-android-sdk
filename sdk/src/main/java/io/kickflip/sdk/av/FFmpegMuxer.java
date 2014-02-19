@@ -81,7 +81,6 @@ public class FFmpegMuxer extends Muxer implements Runnable{
                 break;
             case RTMP:
                 opts.outputFormatName = "flv";
-                mMuxerInputQueue = new ArrayList<>();
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized format!");
@@ -94,7 +93,11 @@ public class FFmpegMuxer extends Muxer implements Runnable{
         if(formatRequiresADTS())
             mCachedAudioPacket = new byte[1024];
 
-        startMuxingThread();
+        if(formatRequiresBuffering()){
+            mMuxerInputQueue = new ArrayList<>();
+            startMuxingThread();
+        }else
+            mReady = true;
     }
 
     public static FFmpegMuxer create(String outputFile, FORMAT format) {
@@ -103,7 +106,6 @@ public class FFmpegMuxer extends Muxer implements Runnable{
 
     @Override
     public int addTrack(MediaFormat trackFormat) {
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_ADD_TRACK, trackFormat));
         // With FFmpeg, we want to write the encoder's
         // BUFFER_FLAG_CODEC_CONFIG buffer directly via writeSampleData
         // Whereas with MediaMuxer this call handles that.
@@ -116,10 +118,13 @@ public class FFmpegMuxer extends Muxer implements Runnable{
             trackIndex = mAudioTrackIndex;
 
         if(formatRequiresBuffering()){
+            mHandler.sendMessage(mHandler.obtainMessage(MSG_ADD_TRACK, trackFormat));
             synchronized (mMuxerInputQueue){
             while(mMuxerInputQueue.size() < trackIndex + 1)
                 mMuxerInputQueue.add(new ArrayDeque<ByteBuffer>());
             }
+        } else{
+            handleAddTrack(trackFormat);
         }
         return trackIndex;
     }
@@ -153,7 +158,8 @@ public class FFmpegMuxer extends Muxer implements Runnable{
      */
     private void shutdown(){
         mStarted = false;
-        Looper.myLooper().quit();
+        if(formatRequiresBuffering())
+            Looper.myLooper().quit();
     }
 
     @Override
@@ -175,11 +181,13 @@ public class FFmpegMuxer extends Muxer implements Runnable{
                     muxerInput.put(encodedData);
                     muxerInput.position(0);
                     encoder.releaseOutputBuffer(bufferIndex, false);
-                }else
+                    mHandler.sendMessage(mHandler.obtainMessage(MSG_WRITE_FRAME,
+                            new WritePacketData(encoder, trackIndex, bufferIndex, muxerInput, bufferInfo)));
+                }else{
                     muxerInput = encodedData;
+                    handleWriteSampleData(encoder, trackIndex, bufferIndex, encodedData, bufferInfo);
+                }
 
-                mHandler.sendMessage(mHandler.obtainMessage(MSG_WRITE_FRAME,
-                        new WritePacketData(encoder, trackIndex, bufferIndex, muxerInput, bufferInfo)));
             }else{
                 Log.w(TAG, "Dropping frame because Muxer not ready!");
                 releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
