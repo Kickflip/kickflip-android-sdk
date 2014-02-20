@@ -101,16 +101,19 @@ public abstract class OAuthClient {
             protected Void doInBackground(Void... params) {
                 TokenResponse response = null;
                 try {
+                    if (VERBOSE) Log.i(TAG, "Fetching OAuth " + mConfig.getAccessTokenRequestUrl());
                     response = new ClientCredentialsTokenRequest(new NetHttpTransport(), new JacksonFactory(), new GenericUrl(mConfig.getAccessTokenRequestUrl()))
                             .setGrantType("client_credentials")
                             .setClientAuthentication(new BasicAuthentication(mConfig.getClientId(), mConfig.getClientSecret()))
                             .execute();
                 } catch (IOException e) {
+                    // TODO: Alert user Kickflip down
+                    //       or client credentials invalid
                     e.printStackTrace();
                 }
 
                 if (response != null) {
-                    Log.i(TAG, "Got Access Token " + response.getAccessToken());
+                    if (VERBOSE) Log.i(TAG, "Got Access Token " + response.getAccessToken());
                     storeAccessToken(response.getAccessToken());
                     if(cb != null)
                         cb.ready(httpRequestFactoryFromAccessToken(mStorage.getString(ACCESS_TOKEN_KEY, null)));
@@ -156,7 +159,7 @@ public abstract class OAuthClient {
     }
 
     protected boolean isSuccessResponse(HttpResponse response){
-        Log.i(TAG, "Response status code: " + response.getStatusCode());
+        if (VERBOSE) Log.i(TAG, "Response status code: " + response.getStatusCode());
         return response.getStatusCode() == 200;
     }
 

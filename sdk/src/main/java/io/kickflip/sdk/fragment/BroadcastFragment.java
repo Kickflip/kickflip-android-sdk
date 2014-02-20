@@ -2,6 +2,7 @@ package io.kickflip.sdk.fragment;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.hardware.Camera;
@@ -16,11 +17,14 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.common.eventbus.Subscribe;
 
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.GLCameraEncoderView;
+import io.kickflip.sdk.Share;
+import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.av.RecorderConfig;
 import io.kickflip.sdk.R;
@@ -123,19 +127,9 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
             mLiveBanner = (TextView) root.findViewById(R.id.liveLabel);
             mBroadcaster.setPreviewDisplay(mCameraView);
             Button recordButton = (Button) root.findViewById(R.id.recordButton);
-            recordButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mBroadcaster.isRecording()) {
-                        mBroadcaster.stopRecording();
-                        hideLiveBanner();
-                        if(mListener != null)
-                            mListener.onBroadcastStop();
-                    } else {
-                        mBroadcaster.startRecording();
-                    }
-                }
-            });
+
+            recordButton.setOnClickListener(mRecordButtonClickListener);
+            mLiveBanner.setOnClickListener(mLiveBannerClickListener);
 
             if(mBroadcaster.isLive())
                 mLiveBanner.setVisibility(View.VISIBLE);
@@ -204,19 +198,26 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
     public void onNothingSelected(AdapterView<?> parent) {}
 
     @Subscribe
-    public void onBroadcastIsLive(BroadcastIsLiveEvent liveEvent){
+    public void onBroadcastIsLive(final BroadcastIsLiveEvent liveEvent){
+        try{
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                showLiveBanner();
+                showLiveBanner(liveEvent.getWatchUrl());
             }
         });
+        } catch(Exception exp){
+            Log.e(TAG, "Exception runOnUiThread:");
+            exp.printStackTrace();
+        }
 
     }
 
-    private void showLiveBanner(){
+    private void showLiveBanner(String watchUrl){
         try{
+            mLiveBanner.bringToFront();
             mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_from_left));
+            mLiveBanner.setTag(watchUrl);
             mLiveBanner.setVisibility(View.VISIBLE);
         } catch (Exception excp){
             excp.printStackTrace();
@@ -226,5 +227,33 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
     private void hideLiveBanner(){
         mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_to_left));
         mLiveBanner.setVisibility(View.INVISIBLE);
+        mLiveBanner.setTag(null);
     }
+
+    View.OnClickListener mRecordButtonClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mBroadcaster.isRecording()) {
+                mBroadcaster.stopRecording();
+                hideLiveBanner();
+                if(mListener != null)
+                    mListener.onBroadcastStop();
+            } else {
+                mBroadcaster.startRecording();
+                v.setBackgroundResource(R.drawable.red_dot_stop);
+            }
+        }
+    };
+
+    View.OnClickListener mLiveBannerClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mLiveBanner.getTag() != null){
+                Intent shareIntent = Share.createShareChooserIntentWithTitleAndUrl(getActivity(), getString(R.string.share_broadcast), (String) mLiveBanner.getTag());
+                startActivity(shareIntent);
+            }
+        }
+    };
+
+
 }

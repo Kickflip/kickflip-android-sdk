@@ -37,13 +37,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class KickflipApiClient extends OAuthClient {
     private static final String TAG = "KickflipApiClient";
-    public static final boolean VERBOSE = true;
+    public static final boolean VERBOSE = false;
+    public static final boolean DEV_ENDPOINT = false;
 
-    public static final String BASE_URL = "http://funkcity.ngrok.com";
+    public static String BASE_URL;
     public static final String NEW_USER = "/api/new/user";
     public static final String START_STREAM = "/api/stream/start";
     public static final String STOP_STREAM = "/api/stream/stop";
     public static enum METHOD {GET, POST}
+
+    static {
+        if(DEV_ENDPOINT)
+            BASE_URL = "http://funkcity.ngrok.com";
+        else
+            BASE_URL = "http://api.kickflip.io";
+    }
 
     private JsonObjectParser mJsonObjectParser;         // Re-used across requests
     private JsonFactory mJsonFactory;                   // Re-used across requests
@@ -189,8 +197,8 @@ public class KickflipApiClient extends OAuthClient {
         });
     }
 
-    private void request(HttpRequestFactory requestFactory, METHOD method, final String url, HttpContent content, final Class responseClass, final KickflipCallback cb) {
-        Log.i(TAG, String.format("Attempting %S : %s body: %s", method, url, (content == null ? "" : content.toString() )));
+    private void request(HttpRequestFactory requestFactory, final METHOD method, final String url, final HttpContent content, final Class responseClass, final KickflipCallback cb) {
+        if (VERBOSE) Log.i(TAG, String.format("Attempting %S : %s body: %s", method, url, (content == null ? "" : content.toString() )));
         try {
             HttpRequest request = null;
             switch (method) {
@@ -215,7 +223,12 @@ public class KickflipApiClient extends OAuthClient {
                         // OAuth Access Token invalid
                         Log.i(TAG, "Error 403: OAuth Token appears invalid. Clearing");
                         clearAccessToken();
-                        request(requestFactory, method, url, content, responseClass, cb);
+                        acquireAccessToken(new OAuthCallback() {
+                            @Override
+                            public void ready(HttpRequestFactory oauthRequestFactory) {
+                                request(oauthRequestFactory, method, url, content, responseClass, cb);
+                            }
+                        });
                         break;
                     case 400:
                         // Bad Client Credentials

@@ -51,13 +51,13 @@ public class S3Client {
         if (VERBOSE) Log.i(TAG, "Attempting to send " + key + " to bucket " + mBucket + " from file " + source);
         PutObjectRequest por = new PutObjectRequest(mBucket, key, source);
         final long fileLength = source.length();
+        final long startTime = System.currentTimeMillis();
         por.setGeneralProgressListener(new ProgressListener() {
-            final long startTime = System.currentTimeMillis();
             @Override
             public void progressChanged(com.amazonaws.event.ProgressEvent progressEvent) {
                 if (progressEvent.getEventCode() == com.amazonaws.event.ProgressEvent.COMPLETED_EVENT_CODE) {
                     int bytesPerSecond = (int) (fileLength / ((System.currentTimeMillis() - startTime)/1000));
-                    if (VERBOSE) Log.i(TAG, "Uploaded " + fileLength + " bytes in " + (System.currentTimeMillis() - startTime) + "ms (" + bytesPerSecond + " bps)");
+                    if (VERBOSE) Log.i(TAG, "Uploaded " + fileLength + " bytes in " + (System.currentTimeMillis() - startTime) + "ms (" + bytesPerSecond + " Bps)");
                     mEventBus.post(new S3UploadEvent(url, bytesPerSecond));
                 } else if (progressEvent.getEventCode() == ProgressEvent.FAILED_EVENT_CODE) {
                     Log.w(TAG, "Upload failed for " + url);

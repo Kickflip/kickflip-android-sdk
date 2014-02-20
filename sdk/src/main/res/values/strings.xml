@@ -37,6 +37,7 @@
     <!-- BroadcastFragment -->
     <string name="record">Record</string>
     <string name="stop">Stop</string>
-    <string name="stop_char">█</string>
+    <string name="live">LIVE</string>
+    <string name="share_broadcast">Share Broadcast</string>
 
 </resources>

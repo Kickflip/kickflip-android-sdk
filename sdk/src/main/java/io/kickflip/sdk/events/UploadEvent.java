@@ -5,11 +5,6 @@ package io.kickflip.sdk.events;
  */
 public interface UploadEvent {
 
-//    public UploadEvent(String url, int bytesPerSecond) {
-//        this.mUrl = url;
-//        this.mBytesPerSecond = bytesPerSecond;
-//    }
-
     public String getUrl();
 
     /**

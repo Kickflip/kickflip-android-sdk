@@ -14,6 +14,7 @@ public class AVRecorder {
     private CameraEncoder mCamEncoder;
     private MicrophoneEncoder mMicEncoder;
     private RecorderConfig mConfig;
+    private boolean mIsRecording;
 
     public AVRecorder(RecorderConfig config){
         init(config);
@@ -23,7 +24,7 @@ public class AVRecorder {
         mCamEncoder = new CameraEncoder(config);
         mMicEncoder = new MicrophoneEncoder(config);
         mConfig = config;
-
+        mIsRecording = false;
     }
 
     public void setPreviewDisplay(GLCameraView display){
@@ -47,15 +48,17 @@ public class AVRecorder {
     }
 
     public void startRecording(){
+        mIsRecording = true;
         mMicEncoder.startRecording();
         mCamEncoder.startRecording();
     }
 
     public boolean isRecording(){
-        return mCamEncoder.isRecording();
+        return mIsRecording;
     }
 
     public void stopRecording(){
+        mIsRecording = false;
         mCamEncoder.stopRecording();
         mMicEncoder.stopRecording();
     }

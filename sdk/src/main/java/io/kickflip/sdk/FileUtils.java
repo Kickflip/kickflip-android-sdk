@@ -160,14 +160,66 @@ public class FileUtils {
         out.close();
     }
     
-    public static void writeStringToFile(String source, File dest){
+    public static void writeStringToFile(String source, File dest, boolean append){
 		try {
-			FileWriter writer = new FileWriter(dest);
+			FileWriter writer = new FileWriter(dest, append);
 			writer.write(source);
 	    	writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+    }
+
+    /**
+     * Read the last few lines of a file
+     * @param file the source file
+     * @param lines the number of lines to read
+     * @return the String result
+     */
+    public static String tail2( File file, int lines) {
+        lines++;    // Read # lines inclusive
+        java.io.RandomAccessFile fileHandler = null;
+        try {
+            fileHandler =
+                    new java.io.RandomAccessFile( file, "r" );
+            long fileLength = fileHandler.length() - 1;
+            StringBuilder sb = new StringBuilder();
+            int line = 0;
+
+            for(long filePointer = fileLength; filePointer != -1; filePointer--){
+                fileHandler.seek( filePointer );
+                int readByte = fileHandler.readByte();
+
+                if( readByte == 0xA ) {
+                    line = line + 1;
+                    if (line == lines) {
+                        if (filePointer == fileLength - 1) {
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                sb.append( ( char ) readByte );
+            }
+
+            String lastLine = sb.reverse().toString();
+            return lastLine;
+        } catch( java.io.FileNotFoundException e ) {
+            e.printStackTrace();
+            return null;
+        } catch( java.io.IOException e ) {
+            e.printStackTrace();
+            return null;
+        }
+        finally {
+            if (fileHandler != null )
+                try {
+                    fileHandler.close();
+                } catch (IOException e) {
+                /* ignore */
+                }
+        }
     }
 
 }

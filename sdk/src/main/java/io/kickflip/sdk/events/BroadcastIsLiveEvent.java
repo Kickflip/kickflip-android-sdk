@@ -1,27 +1,21 @@
 package io.kickflip.sdk.events;
 
+import io.kickflip.sdk.api.json.Stream;
+
 /**
  * Created by davidbrodsky on 2/19/14.
  */
-public class BroadcastIsLiveEvent extends BroadcastEvent implements UploadEvent {
+public class BroadcastIsLiveEvent extends BroadcastEvent {
 
-    private String mUrl;
+    private String mWatchUrl;
 
-    private int mBytesPerSecond;
-
-    public BroadcastIsLiveEvent(String url, int bytesPerSecond) {
+    public BroadcastIsLiveEvent(String watchurl) {
         super();
-        mUrl = url;
-        mBytesPerSecond = bytesPerSecond;
+        mWatchUrl = watchurl;
     }
 
-    @Override
-    public String getUrl() {
-        return mUrl;
+    public String getWatchUrl(){
+        return mWatchUrl;
     }
 
-    @Override
-    public int getUploadByteRate() {
-        return mBytesPerSecond;
-    }
 }
