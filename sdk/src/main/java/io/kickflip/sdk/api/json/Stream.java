@@ -7,7 +7,7 @@ import com.google.api.client.util.Key;
  */
 public class Stream extends Response {
 
-    @Key("streamID")
+    @Key("stream_id")
     private String mStreamId;
 
     @Key("stream_type")

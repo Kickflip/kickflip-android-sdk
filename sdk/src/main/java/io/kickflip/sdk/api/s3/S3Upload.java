@@ -16,8 +16,8 @@ public class S3Upload {
     private S3Client mS3;
 
     public S3Upload(S3Client s3, File file, String key) {
-        mFile = mFile;
-        mKey = mKey;
+        mFile = file;
+        mKey = key;
         mS3 = s3;
     }
 

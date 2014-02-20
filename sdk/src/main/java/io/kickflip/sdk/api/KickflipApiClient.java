@@ -12,12 +12,10 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.UrlEncodedContent;
-import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.GenericData;
-import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -293,15 +291,17 @@ public class KickflipApiClient extends OAuthClient {
                 .putString("app_name", response.getApp())
                 .putString("name", response.getName())
                 .putString("uuid", response.getUUID())
+                .putString("uuid", response.getUUID())
                 .apply();
     }
 
     public boolean credentialsAcquired() {
         //TODO: Detect account type: HLS or RTMP
-        return userCached();
+        return isUserCached();
     }
 
-    private boolean userCached() {
+    private boolean isUserCached() {
+        //TODO: Ensure this use belongs to the current app
         return getStorage().contains("uuid");
     }
 

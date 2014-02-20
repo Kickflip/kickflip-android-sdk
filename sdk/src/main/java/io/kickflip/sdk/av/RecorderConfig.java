@@ -52,6 +52,10 @@ public class RecorderConfig {
         return mMuxer.getOutputPath();
     }
 
+    public int getTotalBitrate(){
+        return mVideoConfig.getBitRate() + mAudioConfig.getBitrate();
+    }
+
     public int getVideoWidth(){
         return mVideoConfig.getWidth();
     }
@@ -61,7 +65,7 @@ public class RecorderConfig {
     }
 
     public int getVideoBitrate(){
-        return mVideoConfig.getmBitRate();
+        return mVideoConfig.getBitRate();
     }
 
     public int getNumAudioChannels(){

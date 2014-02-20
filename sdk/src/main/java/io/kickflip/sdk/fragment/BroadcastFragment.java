@@ -10,16 +10,21 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.TextView;
+
+import com.google.common.eventbus.Subscribe;
 
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.GLCameraEncoderView;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.av.RecorderConfig;
 import io.kickflip.sdk.R;
+import io.kickflip.sdk.events.BroadcastIsLiveEvent;
 
 /**
  * This is a drop-in video-streaming fragment.
@@ -27,6 +32,7 @@ import io.kickflip.sdk.R;
  */
 public class BroadcastFragment extends KickflipFragment implements AdapterView.OnItemSelectedListener{
     private static final String TAG = "BroadcastFragment";
+    private static final boolean VERBOSE = false;
 
     protected static final String ARG_OUTPUT_PATH = "output_path";
 
@@ -34,15 +40,16 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
     private static String mOutputPath;
     private GLCameraEncoderView mCameraView;
+    private TextView mLiveBanner;
 
 
     public BroadcastFragment() {
         // Required empty public constructor
-        Log.i(TAG, "construct");
+        if (VERBOSE) Log.i(TAG, "construct");
     }
 
     public static BroadcastFragment newInstance(String clientKey, String clientSecret, String outputPath) {
-        Log.i(TAG, "newInstance");
+        if (VERBOSE) Log.i(TAG, "newInstance");
         // Ensure we're creating a new Broadcaster for each new Fragment
         mBroadcaster = null;
         BroadcastFragment fragment = new BroadcastFragment();
@@ -58,11 +65,11 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "onCreate");
+        if (VERBOSE) Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         if(getArguments() != null && getArguments().containsKey(ARG_OUTPUT_PATH)){
             mOutputPath = getArguments().getString(ARG_OUTPUT_PATH);
-            Log.i(TAG, "set outputPath " + mOutputPath + " key " + getClientKey() + " secret " + getClientSecret());
+            if (VERBOSE) Log.i(TAG, "set outputPath " + mOutputPath + " key " + getClientKey() + " secret " + getClientSecret());
         }else{
             Log.w(TAG, "No output path specified! This fragment won't do anything!. " +
                     "Did you call BroadcastFragment#newinstance(KEY, SECRET, outputPath)?");
@@ -73,14 +80,14 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
     @Override
     public void onDestroy(){
         super.onDestroy();
-        Log.i(TAG, "onDestroy");
+        if (VERBOSE) Log.i(TAG, "onDestroy");
     }
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        Log.i(TAG, "onAttach");
+        if (VERBOSE) Log.i(TAG, "onAttach");
         try {
             mListener = (BroadcastListener) activity;
         } catch (ClassCastException e) {
@@ -107,12 +114,13 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.i(TAG, "onCreateView");
+        if (VERBOSE) Log.i(TAG, "onCreateView");
 
         View root;
         if(mBroadcaster != null && getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
             root = inflater.inflate(R.layout.fragment_broadcast, container, false);
             mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
+            mLiveBanner = (TextView) root.findViewById(R.id.liveLabel);
             mBroadcaster.setPreviewDisplay(mCameraView);
             Button recordButton = (Button) root.findViewById(R.id.recordButton);
             recordButton.setOnClickListener(new View.OnClickListener() {
@@ -120,16 +128,17 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
                 public void onClick(View v) {
                     if (mBroadcaster.isRecording()) {
                         mBroadcaster.stopRecording();
-                        ((Button) v).setText(R.string.record);
+                        hideLiveBanner();
                         if(mListener != null)
                             mListener.onBroadcastStop();
                     } else {
                         mBroadcaster.startRecording();
-                        ((Button) v).setText(R.string.stop);
                     }
                 }
             });
 
+            if(mBroadcaster.isLive())
+                mLiveBanner.setVisibility(View.VISIBLE);
             setupFilterSpinner(root);
             setupCameraFlipper(root);
         }else
@@ -146,8 +155,7 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
         // on your Fragment/Activity's onStop()
         if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
             if(mBroadcaster == null){
-                Log.i(TAG, "Is frag attached: " + isAdded());
-                Log.i(TAG, "Setting up Broadcaster for output " + mOutputPath + " client key: " + getClientKey() + " secret: " + getClientSecret());
+                if (VERBOSE) Log.i(TAG, "Setting up Broadcaster for output " + mOutputPath + " client key: " + getClientKey() + " secret: " + getClientSecret());
                 Context context = getActivity().getApplicationContext();
                 RecorderConfig config = new RecorderConfig.Builder(mOutputPath)
                         .withVideoResolution(1280, 720)
@@ -156,6 +164,7 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
                         .build();
 
                 mBroadcaster = new Broadcaster(context, config, getClientKey(), getClientSecret());
+                mBroadcaster.getEventBus().register(this);
             }
         }
     }
@@ -193,4 +202,29 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
+
+    @Subscribe
+    public void onBroadcastIsLive(BroadcastIsLiveEvent liveEvent){
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                showLiveBanner();
+            }
+        });
+
+    }
+
+    private void showLiveBanner(){
+        try{
+            mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_from_left));
+            mLiveBanner.setVisibility(View.VISIBLE);
+        } catch (Exception excp){
+            excp.printStackTrace();
+        }
+    }
+
+    private void hideLiveBanner(){
+        mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_to_left));
+        mLiveBanner.setVisibility(View.INVISIBLE);
+    }
 }

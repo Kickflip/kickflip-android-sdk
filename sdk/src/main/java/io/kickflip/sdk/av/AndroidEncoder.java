@@ -1,7 +1,10 @@
 package io.kickflip.sdk.av;
 
+import android.annotation.TargetApi;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -26,6 +29,16 @@ public abstract class AndroidEncoder {
             mEncoder.release();
             mEncoder = null;
         }
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    public void adjustBitrate(int targetBitrate){
+        if(Build.VERSION.SDK_INT >= 19){
+            Bundle bitrate = new Bundle();
+            bitrate.putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, targetBitrate);
+            mEncoder.setParameters(bitrate);
+        }else
+            Log.w(TAG, "Ignoring adjustBitrate call. This functionality is only available on Android API 19+");
     }
 
     public void drainEncoder(boolean endOfStream) {

@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
  * Created by davidbrodsky on 1/23/14.
  */
 public class MicrophoneEncoder implements Runnable{
-    private static final boolean TRACE = true;
+    private static final boolean TRACE = false;
     private static final boolean VERBOSE = false;
     private static final String TAG = "MicrophoneEncoder";
 
@@ -98,7 +98,7 @@ public class MicrophoneEncoder implements Runnable{
             mReady = true;
             mReadyFence.notify();
         }
-        Log.i(TAG, "Begin Audio transmission to encoder");
+        if (VERBOSE) Log.i(TAG, "Begin Audio transmission to encoder");
         while(mRecordingRequested){
 
             if (TRACE) Trace.beginSection("drainAudio");
@@ -111,7 +111,7 @@ public class MicrophoneEncoder implements Runnable{
 
         }
         mReady = false;
-        Log.i(TAG, "Exiting audio encode loop. Draining Audio Encoder");
+        if (VERBOSE) Log.i(TAG, "Exiting audio encode loop. Draining Audio Encoder");
         if (TRACE) Trace.beginSection("sendAudio");
         sendAudioToEncoder(true);
         if (TRACE) Trace.endSection();
@@ -146,10 +146,9 @@ public class MicrophoneEncoder implements Runnable{
                     Log.e(TAG, "Audio read error: invalid operation");
                 if(audioInputLength == AudioRecord.ERROR_BAD_VALUE)
                     Log.e(TAG, "Audio read error: bad value");
-                //Log.i(TAG, "queueing " + audioInputLength + " audio bytes with pts " + audioRelativePresentationTimeUs);
                 if (VERBOSE) Log.i(TAG, "queueing " + audioInputLength + " audio bytes with pts " + audioRelativePresentationTimeUs);
                 if (endOfStream) {
-                    Log.i(TAG, "EOS received in sendAudioToEncoder");
+                    if (VERBOSE) Log.i(TAG, "EOS received in sendAudioToEncoder");
                     mMediaCodec.queueInputBuffer(audioInputBufferIndex, 0, audioInputLength, audioRelativePresentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
                 } else {
                     mMediaCodec.queueInputBuffer(audioInputBufferIndex, 0, audioInputLength, audioRelativePresentationTimeUs, 0);

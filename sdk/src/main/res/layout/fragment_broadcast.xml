@@ -9,6 +9,22 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <TextView
+        android:id="@+id/liveLabel"
+        android:layout_width="110dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="@dimen/status_bar_margin"
+        android:background="@drawable/live_bg"
+        android:fontFamily="sans-serif-condensed"
+        android:gravity="center"
+        android:text="LIVE"
+        android:clickable="true"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:textStyle="bold|italic"
+        android:visibility="invisible" />
+
+
     <Spinner
         android:id="@+id/filterSpinner"
         android:background="@android:drawable/btn_default"
@@ -21,10 +37,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
+
     <ImageButton
         android:id="@+id/cameraFlipper"
         android:tag="camera"
-        android:background="@android:drawable/btn_default"
+        android:background="@drawable/transparent_button_bg"
         android:src="@drawable/ic_camflip"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
@@ -36,12 +53,13 @@
 
     <Button
         android:id="@+id/recordButton"
+        android:background="@drawable/red_dot"
         android:padding="15dp"
-        android:text="@string/record"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:gravity="center"
         android:layout_marginBottom="10dp"/>
 
 </RelativeLayout>

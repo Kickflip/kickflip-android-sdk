@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, Runnable {
     private static final String TAG = "CameraEncoder";
-    private static final boolean TRACE = true;         // Systrace
+    private static final boolean TRACE = false;         // Systrace
     private static final boolean VERBOSE = false;       // Lots of logging
 
     // EncoderHandler Message types (Message#what)
@@ -141,7 +141,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         // We should make sure that the requested MPEG size is less than the preferred
         // size, and has the same aspect ratio.
         Camera.Size ppsfv = parms.getPreferredPreviewSizeForVideo();
-        if (ppsfv != null) {
+        if (ppsfv != null && VERBOSE) {
             Log.d(TAG, "Camera preferred preview size for video is " +
                     ppsfv.width + "x" + ppsfv.height);
         }
@@ -160,6 +160,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         // else use whatever the default size is
     }
 
+    public void adjustBitrate(int targetBitrate){
+        mVideoEncoder.adjustBitrate(targetBitrate);
+    }
+
     public void logSavedEglState() {
         mEglSaver.logState();
     }
@@ -170,7 +174,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         // Prep GLSurfaceView and attach Renderer
         display.setEGLContextClientVersion(2);
         display.setRenderer(mDisplayRenderer);
-        display.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR | GLSurfaceView.DEBUG_LOG_GL_CALLS);
+        //display.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR | GLSurfaceView.DEBUG_LOG_GL_CALLS);
         display.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         display.setPreserveEGLContextOnPause(true);
         mDisplayView = display;
@@ -278,7 +282,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private void handleStopRecording() {
         synchronized (mReadyForFrameFence) {
             mEosRequested = true;
-            Log.i(TAG, "handleStopRecording");
+            if (VERBOSE) Log.i(TAG, "handleStopRecording");
         }
     }
 
@@ -318,7 +322,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         if (TRACE) Trace.beginSection("handleFrameAvail");
         synchronized (mReadyForFrameFence) {
             if (!mReadyForFrames) {
-                Log.i(TAG, "Ignoring available frame, not ready");
+                if (VERBOSE) Log.i(TAG, "Ignoring available frame, not ready");
                 return;
             }
             mFrameNum++;
@@ -355,7 +359,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mInputWindowSurface.swapBuffers();
 
                 if(mEosRequested){
-                    Log.i(TAG, "Sent last video frame. Draining encoder");
+                    if (VERBOSE) Log.i(TAG, "Sent last video frame. Draining encoder");
                     mVideoEncoder.drainEncoder(true);
                     mRecording = false;
                     mEosRequested = false;
@@ -381,7 +385,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mDisplayView.onPause();
             // Release camera if we're not recording
             if (!mRecording && mSurfaceTexture != null) {
-                Log.i("CameraRelease", "Releasing camera");
+                if (VERBOSE) Log.i("CameraRelease", "Releasing camera");
                 if (mDisplayView != null)
                     releaseDisplayView();
                 mHandler.sendMessage(mHandler.obtainMessage(MSG_RELEASE_CAMERA));
@@ -400,8 +404,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mDisplayView.onResume();
             // Re-open camera if we're not recording and the SurfaceTexture has already been created
             if (!mRecording && mSurfaceTexture != null) {
-                Log.i("CameraRelease", "Opening camera and attaching to SurfaceTexture");
-                //openAndAttachCameraToSurfaceTexture();
+                if (VERBOSE) Log.i("CameraRelease", "Opening camera and attaching to SurfaceTexture");
                 mHandler.sendMessage(mHandler.obtainMessage(MSG_REOPEN_CAMERA));
             } else {
                 Log.w("CameraRelease", "Didn't try to open camera onHAResume. rec: " + mRecording + " mSurfaceTexture ready? " + (mSurfaceTexture == null ? " no" : " yes"));
@@ -420,7 +423,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * @param textureId the id of the texture bound to the new display surface
      */
     public void onSurfaceCreated(int textureId) {
-        Log.i(TAG, "onSurfaceCreated. Saving EGL State");
+        if (VERBOSE) Log.i(TAG, "onSurfaceCreated. Saving EGL State");
         synchronized (mReadyFence) {
             // The Host Activity lifecycle may go through a OnDestroy ... OnCreate ... OnSurfaceCreated ... OnPause ... OnStop...
             // on it's way out, so our real sense of bearing should come from whether the EncoderThread is running
@@ -468,7 +471,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                         mRecorderConfig.getMuxer());
                 mTextureId = textureId;
                 mSurfaceTexture = new SurfaceTexture(mTextureId);
-                Log.i(TAG + "-SurfaceTexture", " SurfaceTexture created. pre setOnFrameAvailableListener");
+                if (VERBOSE) Log.i(TAG + "-SurfaceTexture", " SurfaceTexture created. pre setOnFrameAvailableListener");
                 mSurfaceTexture.setOnFrameAvailableListener(this);
                 openAndAttachCameraToSurfaceTexture();
                 mReadyForFrames = true;
@@ -486,7 +489,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         }
         Looper.loop();
 
-        Log.d(TAG, "Encoder thread exiting");
+        if (VERBOSE) Log.d(TAG, "Encoder thread exiting");
         synchronized (mReadyFence) {
             mReady = mRunning = false;
             mHandler = null;
@@ -539,7 +542,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         try {
             mCamera.setPreviewTexture(mSurfaceTexture);
             mCamera.startPreview();
-            Log.i("CameraRelease", "Opened / Started Camera preview. mDisplayView ready? " + (mDisplayView == null ? " no" : " yes"));
+            if (VERBOSE) Log.i("CameraRelease", "Opened / Started Camera preview. mDisplayView ready? " + (mDisplayView == null ? " no" : " yes"));
             if (mDisplayView != null) configureDisplayView();
         } catch (IOException e) {
             e.printStackTrace();
@@ -606,7 +609,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         } else {
             previewFacts += " @" + (fpsRange[0] / 1000.0) + " - " + (fpsRange[1] / 1000.0) + "fps";
         }
-        Log.i(TAG, "Camera preview set: " + previewFacts);
+        if (VERBOSE) Log.i(TAG, "Camera preview set: " + previewFacts);
     }
 
     public Camera getCamera() {

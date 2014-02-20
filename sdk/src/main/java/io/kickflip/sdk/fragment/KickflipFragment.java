@@ -11,6 +11,7 @@ import android.util.Log;
  */
 public class KickflipFragment extends Fragment {
     private static final String TAG = "KickflipFragment";
+    private static final boolean VERBOSE = false;
 
     protected static final String ARG_CLIENT_KEY = "key";
     protected static final String ARG_CLIENT_SECRET = "secret";
@@ -20,7 +21,7 @@ public class KickflipFragment extends Fragment {
 
     public KickflipFragment() {
         // Required empty public constructor
-        Log.i(TAG, "construct");
+        if (VERBOSE) Log.i(TAG, "construct");
     }
 
     @Override
@@ -29,7 +30,7 @@ public class KickflipFragment extends Fragment {
         if (getArguments() != null) {
             mClientKey = getArguments().getString(ARG_CLIENT_KEY);
             mClientSecret = getArguments().getString(ARG_CLIENT_SECRET);
-            Log.i(TAG, "onCreate. Set Client key/secret: " + mClientKey + " " + mClientSecret);
+            if (VERBOSE) Log.i(TAG, "onCreate. Set Client key/secret: " + mClientKey + " " + mClientSecret);
         } else {
             Log.w(TAG, "No client credentials provided! This fragment won't do anything");
         }

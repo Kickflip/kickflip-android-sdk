@@ -21,7 +21,7 @@ public class VideoEncoderConfig {
         return mHeight;
     }
 
-    public int getmBitRate() {
+    public int getBitRate() {
         return mBitRate;
     }
 

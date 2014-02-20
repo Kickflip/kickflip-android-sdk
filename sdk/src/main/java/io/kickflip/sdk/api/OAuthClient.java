@@ -27,6 +27,7 @@ public abstract class OAuthClient {
 
     // For SharedPreferences storage
     private final String ACCESS_TOKEN_KEY = "AT";
+    private final String CLIENT_ID = "CID";
 
     private HttpRequestFactory mRequestFactory;         // RequestFactory cached for life of mOAuthAccessToken
     private String mOAuthAccessToken;
@@ -79,7 +80,7 @@ public abstract class OAuthClient {
      *           on a background thread suitable for networking.
      */
     protected void acquireAccessToken(final OAuthCallback cb) {
-        if (mStorage.contains(ACCESS_TOKEN_KEY)) {
+        if (isAccessTokenCached()) {
             Log.d(TAG, "Access token cached");
             if(cb != null){
                 new Thread(new Runnable() {
@@ -133,19 +134,24 @@ public abstract class OAuthClient {
         return mRequestFactory;
     }
 
-    protected boolean isAccessTokenAcquired() {
-        return mStorage.contains(ACCESS_TOKEN_KEY);
+    protected boolean isAccessTokenCached() {
+        // An Access Token is stored along with a Client ID that matches what's currently provided
+        boolean validCredentialsStored = (mStorage.contains(ACCESS_TOKEN_KEY) && mStorage.getString(CLIENT_ID, "").equals(mConfig.getClientId()));
+        if(!validCredentialsStored)
+            clearAccessToken();
+        return validCredentialsStored;
     }
 
     protected void storeAccessToken(String accessToken){
         getContext().getSharedPreferences(mConfig.getCredentialStoreName(), mContext.MODE_PRIVATE).edit()
             .putString(ACCESS_TOKEN_KEY, accessToken)
+            .putString(CLIENT_ID, mConfig.getClientId())
             .apply();
     }
 
     protected void clearAccessToken(){
         getContext().getSharedPreferences(mConfig.getCredentialStoreName(), mContext.MODE_PRIVATE).edit()
-            .remove(ACCESS_TOKEN_KEY)
+            .clear()
             .apply();
     }
 

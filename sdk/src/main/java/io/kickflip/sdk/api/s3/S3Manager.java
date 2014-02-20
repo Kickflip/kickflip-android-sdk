@@ -1,5 +1,7 @@
 package io.kickflip.sdk.api.s3;
 
+import android.util.Log;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -10,6 +12,7 @@ import java.util.concurrent.Executors;
  * to span multiple sets of AWSCredentials
  */
 public class S3Manager {
+    private static final String TAG = "S3Manager";
 
     private static ExecutorService mExecutorService;
 

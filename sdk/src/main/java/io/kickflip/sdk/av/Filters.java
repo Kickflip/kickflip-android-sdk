@@ -10,6 +10,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class Filters {
     private static final String TAG = "Filters";
+    private static final boolean VERBOSE = false;
 
     // Camera filters; must match up with camera_filter_names in strings.xml
     static final int FILTER_NONE = 0;
@@ -47,7 +48,7 @@ public class Filters {
         float[] kernel = null;
         float colorAdj = 0.0f;
 
-        Log.d(TAG, "Updating filter to " + newFilter);
+        if (VERBOSE) Log.d(TAG, "Updating filter to " + newFilter);
         switch (newFilter) {
             case FILTER_NONE:
                 programType = Texture2dProgram.ProgramType.TEXTURE_EXT;

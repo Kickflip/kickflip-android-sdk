@@ -37,5 +37,6 @@
     <!-- BroadcastFragment -->
     <string name="record">Record</string>
     <string name="stop">Stop</string>
+    <string name="stop_char">█</string>
 
 </resources>

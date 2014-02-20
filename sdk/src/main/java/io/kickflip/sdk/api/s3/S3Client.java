@@ -8,15 +8,15 @@ import com.amazonaws.event.ProgressListener;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.transfer.TransferManager;
 import com.google.common.eventbus.EventBus;
 
 import java.io.File;
 
-import io.kickflip.sdk.events.UploadedEvent;
+import io.kickflip.sdk.events.S3UploadEvent;
 
 public class S3Client {
     private static final String TAG = "S3Client";
+    private static final boolean VERBOSE = false;
 
     private AmazonS3Client mS3;
     private BasicAWSCredentials mCredentials;
@@ -48,13 +48,17 @@ public class S3Client {
             return;
         }
         final String url = "https://" + mBucket + ".s3.amazonaws.com/" + key;
-        Log.i(TAG, "Attempting to send " + key + " to bucket " + mBucket + " from file " + source);
+        if (VERBOSE) Log.i(TAG, "Attempting to send " + key + " to bucket " + mBucket + " from file " + source);
         PutObjectRequest por = new PutObjectRequest(mBucket, key, source);
+        final long fileLength = source.length();
         por.setGeneralProgressListener(new ProgressListener() {
+            final long startTime = System.currentTimeMillis();
             @Override
             public void progressChanged(com.amazonaws.event.ProgressEvent progressEvent) {
                 if (progressEvent.getEventCode() == com.amazonaws.event.ProgressEvent.COMPLETED_EVENT_CODE) {
-                    mEventBus.post(new UploadedEvent(url));
+                    int bytesPerSecond = (int) (fileLength / ((System.currentTimeMillis() - startTime)/1000));
+                    if (VERBOSE) Log.i(TAG, "Uploaded " + fileLength + " bytes in " + (System.currentTimeMillis() - startTime) + "ms (" + bytesPerSecond + " bps)");
+                    mEventBus.post(new S3UploadEvent(url, bytesPerSecond));
                 } else if (progressEvent.getEventCode() == ProgressEvent.FAILED_EVENT_CODE) {
                     Log.w(TAG, "Upload failed for " + url);
                 }
@@ -62,6 +66,7 @@ public class S3Client {
         });
         por.setCannedAcl(CannedAccessControlList.PublicRead);
         mS3.putObject(por);
+
     }
 
 

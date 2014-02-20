@@ -5,7 +5,6 @@ import android.app.Fragment;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -72,7 +71,6 @@ public class MainFragment extends Fragment {
     }
 
     void fadeInTitleAndSub(){
-        Log.i(TAG, "Fading in title & sub");
         Animation fadeInAnimation = AnimationUtils.loadAnimation(getActivity(), R.anim.fadein);
         fadeInAnimation.setStartOffset(50);
         mTitleView.startAnimation(fadeInAnimation);
