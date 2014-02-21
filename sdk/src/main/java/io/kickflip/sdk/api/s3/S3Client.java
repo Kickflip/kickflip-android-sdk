@@ -55,13 +55,18 @@ public class S3Client {
         por.setGeneralProgressListener(new ProgressListener() {
             @Override
             public void progressChanged(com.amazonaws.event.ProgressEvent progressEvent) {
+            try{
                 if (progressEvent.getEventCode() == com.amazonaws.event.ProgressEvent.COMPLETED_EVENT_CODE) {
-                    int bytesPerSecond = (int) (fileLength / ((System.currentTimeMillis() - startTime)/1000));
-                    if (VERBOSE) Log.i(TAG, "Uploaded " + fileLength + " bytes in " + (System.currentTimeMillis() - startTime) + "ms (" + bytesPerSecond + " Bps)");
+                    int bytesPerSecond = (int) (fileLength / ((System.currentTimeMillis() - startTime)/1000.0));
+                    if (VERBOSE) Log.i(TAG, "Uploaded " + fileLength / 1000.0 + " KB in " + (System.currentTimeMillis() - startTime) + "ms (" + bytesPerSecond / 10000 + " KBps)");
                     mEventBus.post(new S3UploadEvent(url, bytesPerSecond));
                 } else if (progressEvent.getEventCode() == ProgressEvent.FAILED_EVENT_CODE) {
                     Log.w(TAG, "Upload failed for " + url);
                 }
+            } catch (Exception excp){
+                Log.e(TAG, "ProgressListener error");
+                excp.printStackTrace();
+            }
             }
         });
         por.setCannedAcl(CannedAccessControlList.PublicRead);

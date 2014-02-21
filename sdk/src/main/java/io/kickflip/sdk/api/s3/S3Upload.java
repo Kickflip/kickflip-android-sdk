@@ -24,4 +24,8 @@ public class S3Upload {
     public void upload(){
         mS3.upload(mKey, mFile);
     }
+
+    public String getKey(){
+        return mKey;
+    }
 }

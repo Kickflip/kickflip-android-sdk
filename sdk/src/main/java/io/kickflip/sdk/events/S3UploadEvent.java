@@ -25,7 +25,6 @@ public class S3UploadEvent extends BroadcastEvent implements UploadEvent {
     public S3UploadEvent(String url, int bytesPerSecond) {
         this.mUrl = url;
         this.mBytesPerSecond = bytesPerSecond;
-        Log.i(TAG, this.toString());
     }
 
     public String toString(){

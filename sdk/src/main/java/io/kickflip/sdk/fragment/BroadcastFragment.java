@@ -199,29 +199,19 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
 
     @Subscribe
     public void onBroadcastIsLive(final BroadcastIsLiveEvent liveEvent){
-        try{
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 showLiveBanner(liveEvent.getWatchUrl());
             }
         });
-        } catch(Exception exp){
-            Log.e(TAG, "Exception runOnUiThread:");
-            exp.printStackTrace();
-        }
-
     }
 
     private void showLiveBanner(String watchUrl){
-        try{
-            mLiveBanner.bringToFront();
-            mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_from_left));
-            mLiveBanner.setTag(watchUrl);
-            mLiveBanner.setVisibility(View.VISIBLE);
-        } catch (Exception excp){
-            excp.printStackTrace();
-        }
+        mLiveBanner.bringToFront();
+        mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_from_left));
+        mLiveBanner.setTag(watchUrl);
+        mLiveBanner.setVisibility(View.VISIBLE);
     }
 
     private void hideLiveBanner(){

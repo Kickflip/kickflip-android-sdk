@@ -9,34 +9,27 @@ import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayDeque;
 
 import io.kickflip.sdk.FileUtils;
-import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.HlsFileObserver;
 import io.kickflip.sdk.api.KickflipApiClient;
+import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.HlsStream;
 import io.kickflip.sdk.api.json.Response;
 import io.kickflip.sdk.api.json.User;
+import io.kickflip.sdk.api.s3.S3Client;
 import io.kickflip.sdk.api.s3.S3Manager;
 import io.kickflip.sdk.api.s3.S3Upload;
 import io.kickflip.sdk.events.BroadcastIsLiveEvent;
-import io.kickflip.sdk.events.MuxerFinishedEvent;
 import io.kickflip.sdk.events.HlsManifestWrittenEvent;
 import io.kickflip.sdk.events.HlsSegmentWrittenEvent;
+import io.kickflip.sdk.events.MuxerFinishedEvent;
 import io.kickflip.sdk.events.S3UploadEvent;
-import io.kickflip.sdk.events.UploadEvent;
-import io.kickflip.sdk.api.s3.S3Client;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Broadcaster is an AVRecorder that broadcasts its output
@@ -165,13 +158,13 @@ public class Broadcaster extends AVRecorder {
         try{
             if(Build.VERSION.SDK_INT >= 19){
                 // Adjust video encoder bitrate per bandwidth of just-completed upload
-                if (VERBOSE) Log.i(TAG, "Bandwidth: " + uploadEvent.getUploadByteRate() + " Bps Birate: " + ((mVideoBitrate + mConfig.getAudioBitrate()) / 8) + " Bps");
+                if (VERBOSE) Log.i(TAG, "Bandwidth: " + uploadEvent.getUploadByteRate() / 1000.0 + " KBps Birate: " + ((mVideoBitrate + mConfig.getAudioBitrate()) / 8*1000.0) + " KBps");
                 if( uploadEvent.getUploadByteRate() < (((mVideoBitrate + mConfig.getAudioBitrate()) / 8) )){
                     // The new bitrate is equal to the last upload bandwidth, never exceeding MIN_BITRATE, or the
                     // bitrate intially provided in RecorderConfig
                     mVideoBitrate = Math.max(Math.min(uploadEvent.getUploadByteRate(), mConfig.getVideoBitrate()), MIN_BITRATE);
-                    if (VERBOSE) Log.i(TAG, String.format("Adjusting encoder bitrate. Bandwidth: %d, Bitrate: %d, New Bitrate: %d",
-                            uploadEvent.getUploadByteRate(), mConfig.getTotalBitrate(), mVideoBitrate ));
+                    if (VERBOSE) Log.i(TAG, String.format("Adjusting encoder bitrate. Bandwidth: %f KBps, Bitrate: %f KBps, New Bitrate: %f KBps",
+                            uploadEvent.getUploadByteRate() / 1000.0, mConfig.getTotalBitrate() / 1000.0, mVideoBitrate / 1000.0 ));
                     adjustBitrate(mVideoBitrate);
                 }
             }
@@ -207,7 +200,6 @@ public class Broadcaster extends AVRecorder {
             e1.printStackTrace();
         }
         appendLastManifestEntryToMasterManifest(orig, !isRecording());
-        Log.i(TAG, "m3u8 dst: " + copy.getAbsolutePath());
         queueOrSubmitUpload(keyForFilename("index.m3u8"), copy.getAbsolutePath());
         mNumSegmentsWritten++;
     }
@@ -270,14 +262,13 @@ public class Broadcaster extends AVRecorder {
     }
 
     private void writeMasterManifestHeader(){
+        // TODO: Dynamically set EXT-X-TARGETDURATION
         FileUtils.writeStringToFile("#EXTM3U\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXT-X-VERSION:3\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-TARGETDURATION:12\n",
                 mMasterManifest, false);
     }
 
     private void appendLastManifestEntryToMasterManifest(File sourceManifest, boolean lastEntry){
         String result = FileUtils.tail2(sourceManifest, lastEntry ? 3: 2);
-        if(lastEntry) Log.i(TAG, "Appending last manifest entry");
-        Log.i(TAG, "Appending to Master Manifest: " + result);
         FileUtils.writeStringToFile(result, mMasterManifest, true);
         if(lastEntry)
             S3Manager.queueUpload(new S3Upload(mS3Client, mMasterManifest, keyForFilename("index.m3u8")));
