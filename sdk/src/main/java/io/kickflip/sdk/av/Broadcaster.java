@@ -23,6 +23,7 @@ import io.kickflip.sdk.api.json.User;
 import io.kickflip.sdk.api.s3.S3Client;
 import io.kickflip.sdk.api.s3.S3Manager;
 import io.kickflip.sdk.api.s3.S3Upload;
+import io.kickflip.sdk.events.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.events.BroadcastIsLiveEvent;
 import io.kickflip.sdk.events.HlsManifestWrittenEvent;
 import io.kickflip.sdk.events.HlsSegmentWrittenEvent;
@@ -113,6 +114,7 @@ public class Broadcaster extends AVRecorder {
                 mS3Client.setBucket(mStream.getBucket());
                 mReadyToBroadcast = true;
                 submitQueuedUploadsToS3();
+                mEventBus.post(new BroadcastIsBufferingEvent());
             }
 
             @Override
@@ -129,6 +131,7 @@ public class Broadcaster extends AVRecorder {
     @Override
     public void stopRecording(){
         super.stopRecording();
+        mSentBroadcastLiveEvent = false;
         if(mStream != null){
             mKickflip.stopStream(mUser, mStream, new KickflipCallback() {
                 @Override
@@ -199,9 +202,9 @@ public class Broadcaster extends AVRecorder {
         } catch (IOException e1) {
             e1.printStackTrace();
         }
-        appendLastManifestEntryToMasterManifest(orig, !isRecording());
         queueOrSubmitUpload(keyForFilename("index.m3u8"), copy.getAbsolutePath());
-        mNumSegmentsWritten++;
+        appendLastManifestEntryToMasterManifest(orig, !isRecording());
+            mNumSegmentsWritten++;
     }
 
     @Subscribe
@@ -270,8 +273,10 @@ public class Broadcaster extends AVRecorder {
     private void appendLastManifestEntryToMasterManifest(File sourceManifest, boolean lastEntry){
         String result = FileUtils.tail2(sourceManifest, lastEntry ? 3: 2);
         FileUtils.writeStringToFile(result, mMasterManifest, true);
-        if(lastEntry)
+        if(lastEntry){
             S3Manager.queueUpload(new S3Upload(mS3Client, mMasterManifest, keyForFilename("index.m3u8")));
+            Log.i(TAG, "Queued master manifest " + mMasterManifest.getAbsolutePath());
+        }
     }
 
 }

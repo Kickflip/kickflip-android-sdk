@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,17 +18,16 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.common.eventbus.Subscribe;
 
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.GLCameraEncoderView;
 import io.kickflip.sdk.Share;
-import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.av.RecorderConfig;
 import io.kickflip.sdk.R;
+import io.kickflip.sdk.events.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.events.BroadcastIsLiveEvent;
 
 /**
@@ -129,10 +129,13 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
             Button recordButton = (Button) root.findViewById(R.id.recordButton);
 
             recordButton.setOnClickListener(mRecordButtonClickListener);
-            mLiveBanner.setOnClickListener(mLiveBannerClickListener);
+            mLiveBanner.setOnClickListener(mShareButtonClickListener);
 
-            if(mBroadcaster.isLive())
+            if(mBroadcaster.isLive()){
                 mLiveBanner.setVisibility(View.VISIBLE);
+            }
+            if(mBroadcaster.isRecording())
+                recordButton.setBackgroundResource(R.drawable.red_dot_stop);
             setupFilterSpinner(root);
             setupCameraFlipper(root);
         }else
@@ -198,26 +201,50 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
     public void onNothingSelected(AdapterView<?> parent) {}
 
     @Subscribe
-    public void onBroadcastIsLive(final BroadcastIsLiveEvent liveEvent){
+    public void onBroadcastIsBuffering(BroadcastIsBufferingEvent event){
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                showLiveBanner(liveEvent.getWatchUrl());
+                setBannerToBufferingState();
+                showLiveBanner();
             }
         });
     }
 
-    private void showLiveBanner(String watchUrl){
+    @Subscribe
+    public void onBroadcastIsLive(final BroadcastIsLiveEvent liveEvent){
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setBannerToLiveState(liveEvent.getWatchUrl());
+            }
+        });
+    }
+
+    private void setBannerToBufferingState(){
+        mLiveBanner.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
+        mLiveBanner.setBackgroundResource(R.drawable.buffering_bg);
+        mLiveBanner.setTag(null);
+        mLiveBanner.setText(getString(R.string.buffering));
+    }
+
+    private void setBannerToLiveState(String watchUrl){
+        mLiveBanner.setBackgroundResource(R.drawable.live_bg);
+        Drawable img = getActivity().getResources().getDrawable( android.R.drawable.ic_menu_share );
+        mLiveBanner.setCompoundDrawablesWithIntrinsicBounds(img, null, null, null);
+        mLiveBanner.setTag(watchUrl);
+        mLiveBanner.setText(getString(R.string.live));
+    }
+
+    private void showLiveBanner(){
         mLiveBanner.bringToFront();
         mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_from_left));
-        mLiveBanner.setTag(watchUrl);
         mLiveBanner.setVisibility(View.VISIBLE);
     }
 
     private void hideLiveBanner(){
         mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_to_left));
         mLiveBanner.setVisibility(View.INVISIBLE);
-        mLiveBanner.setTag(null);
     }
 
     View.OnClickListener mRecordButtonClickListener = new View.OnClickListener() {
@@ -235,11 +262,11 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
         }
     };
 
-    View.OnClickListener mLiveBannerClickListener = new View.OnClickListener() {
+    View.OnClickListener mShareButtonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mLiveBanner.getTag() != null){
-                Intent shareIntent = Share.createShareChooserIntentWithTitleAndUrl(getActivity(), getString(R.string.share_broadcast), (String) mLiveBanner.getTag());
+            if (v.getTag() != null){
+                Intent shareIntent = Share.createShareChooserIntentWithTitleAndUrl(getActivity(), getString(R.string.share_broadcast), (String) v.getTag());
                 startActivity(shareIntent);
             }
         }

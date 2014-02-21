@@ -39,5 +39,6 @@
     <string name="stop">Stop</string>
     <string name="live">LIVE</string>
     <string name="share_broadcast">Share Broadcast</string>
+    <string name="buffering">BUFFERING</string>
 
 </resources>

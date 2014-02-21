@@ -12,6 +12,8 @@
 
     <Spinner
         android:id="@+id/filterSpinner"
+        android:background="@drawable/card_btn_bg"
+        android:alpha=".8"
         android:layout_alignParentLeft="true"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="10dp"
@@ -25,18 +27,20 @@
     <ImageButton
         android:id="@+id/cameraFlipper"
         android:tag="camera"
-        android:background="@drawable/transparent_button_bg"
-        android:src="@drawable/ic_camflip"
+        android:src="@drawable/camreverse_bg"
+        android:alpha=".8"
+        android:background="@android:color/transparent"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/status_bar_margin"
         android:layout_marginRight="@dimen/nav_bar_margin"
-        android:layout_marginBottom="10dp"/>
+        android:layout_marginBottom="0dp"/>
 
     <Button
         android:id="@+id/recordButton"
+        android:alpha=".8"
         android:background="@drawable/red_dot"
         android:padding="15dp"
         android:layout_alignParentBottom="true"
@@ -48,10 +52,10 @@
 
     <TextView
         android:id="@+id/liveLabel"
-        android:layout_width="110dp"
+        android:layout_width="wrap_content"
         android:layout_height="70dp"
         android:layout_marginTop="@dimen/status_bar_margin"
-        android:background="@drawable/live_bg"
+        android:background="@drawable/buffering_bg"
         android:fontFamily="sans-serif-condensed"
         android:gravity="center"
         android:text="@string/live"
