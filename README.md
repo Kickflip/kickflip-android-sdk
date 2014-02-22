@@ -7,11 +7,13 @@ The Kickflip platform is a complete video streaming solution for your Android ap
 ## Quickstart using BroadcastActivity
 0. Add `BroadcastActivity` to your `AndroidManifest.xml`:
 
+```xml
        <activity
             android:name="io.kickflip.sdk.BroadcastActivity"
             android:screenOrientation="landscape">
        </activity>
-   
+```
+
 1. Provide your Kickflip keys and start `BroadcastActivity` to instantly stream live video from your application:
 
 ```java
