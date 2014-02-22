@@ -5,34 +5,33 @@
 The Kickflip platform is a complete video streaming solution for your Android application. You can use our pre-built `BroadcastActivity` to stream live video to your Kickflip account starting with a few lines of code.
 
 ## Quickstart using BroadcastActivity
-0. Add `BroadcastActivity` to your `AndroidManifest.xml`:
-
-```xml
+1. Add `BroadcastActivity` to your `AndroidManifest.xml`:
+	
+	```xml
        <activity
             android:name="io.kickflip.sdk.BroadcastActivity"
             android:screenOrientation="landscape">
        </activity>
-```
+	```
 
-1. Provide your Kickflip keys and start `BroadcastActivity` to instantly stream live video from your application:
+2. Provide your Kickflip keys and start `BroadcastActivity` to instantly stream live video from your application:
 
-```java
-	Kickflip.initWithApiKey(API_KEY, API_SECRET);
-	Kickflip.startBroadcastActivity(this, mBroadcastListener);
-```
+	```java
+		Kickflip.initWithApiKey(API_KEY, API_SECRET);
+		Kickflip.startBroadcastActivity(this, mBroadcastListener);
+	```
     	
    BroadcastListener currently has the following definition:
 
 
-```java
-public interface BroadcastListener {
-    public void onBroadcastStart();
-    public void onBroadcastLive(String watchUrl);
-    public void onBroadcastStop();
-    public void onBroadcastError();
-}
-
-```
+	```java
+	public interface BroadcastListener {
+	    public void onBroadcastStart();
+	    public void onBroadcastLive(String watchUrl);
+	    public void onBroadcastStop();
+	    public void onBroadcastError();
+	}
+	```
    	
 `BroadcastActivity` provides a pre-built UI including a camera preview and controls for starting, stopping, and sharing the broadcast.
 
