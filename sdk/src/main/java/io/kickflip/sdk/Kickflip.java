@@ -19,7 +19,7 @@ public class Kickflip {
 
     private static BroadcastListener mBroadcastListener;
 
-    public static void initWithApiKey(String key, String secret){
+    public static void setupWithApiKey(String key, String secret){
         API_KEY = key;
         API_SECRET = secret;
         ROOT_OUTPUT_DIR = new File(Environment.getExternalStorageDirectory(), "Kickflip").getAbsolutePath();
@@ -29,13 +29,10 @@ public class Kickflip {
         ROOT_OUTPUT_DIR = outputDirectory;
     }
 
-    public static void startBroadcastActivity(Activity host, String outputPath, BroadcastListener listener){
+    public static void startBroadcastActivity(Activity host, BroadcastListener listener){
         checkNotNull(listener);
         mBroadcastListener = listener;
         Intent broadcastIntent = new Intent(host, BroadcastActivity.class);
-        broadcastIntent.putExtra(BroadcastActivity.ARG_KEY, API_KEY);
-        broadcastIntent.putExtra(BroadcastActivity.ARG_SECRET, API_SECRET);
-        broadcastIntent.putExtra(BroadcastActivity.ARG_OUTPUT_DIR, outputPath);
         host.startActivity(broadcastIntent);
     }
 

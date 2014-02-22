@@ -10,22 +10,15 @@ import io.kickflip.sdk.fragment.BroadcastFragment;
 
 public class BroadcastActivity extends Activity implements BroadcastListener{
 
-    protected static final String ARG_KEY = "key";
-    protected static final String ARG_SECRET = "secret";
-    protected static final String ARG_OUTPUT_DIR = "output";
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         setContentView(R.layout.activity_broadcast);
 
-        Bundle extras = getIntent().getExtras();
-        if (extras != null && savedInstanceState == null) {
+        if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
-                    .replace(R.id.container, BroadcastFragment.newInstance(
-                            extras.getString(ARG_OUTPUT_DIR)))
+                    .replace(R.id.container, BroadcastFragment.newInstance())
                     .commit();
         }
     }
