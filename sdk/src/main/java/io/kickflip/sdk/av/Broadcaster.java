@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
 
+import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.FileUtils;
 import io.kickflip.sdk.HlsFileObserver;
 import io.kickflip.sdk.api.KickflipApiClient;
@@ -48,6 +49,7 @@ public class Broadcaster extends AVRecorder {
     private S3Client mS3Client;
     private ArrayDeque<Pair<String, File>> mUploadQueue;
     private RecorderConfig mConfig;
+    private BroadcastListener mBroadcastListener;
     private EventBus mEventBus;
     private boolean mReadyToBroadcast;                                  // Kickflip user registered and endpoint ready
     private boolean mSentBroadcastLiveEvent;
@@ -93,8 +95,14 @@ public class Broadcaster extends AVRecorder {
             @Override
             public void onError(Object response) {
                 Log.e(TAG, "Failed to get storage credentials" + response.toString());
+                if(mBroadcastListener != null)
+                    mBroadcastListener.onBroadcastError();
             }
         });
+    }
+
+    public void setBroadcastListener(BroadcastListener listener){
+        mBroadcastListener = listener;
     }
 
     public EventBus getEventBus(){
@@ -115,6 +123,8 @@ public class Broadcaster extends AVRecorder {
                 mReadyToBroadcast = true;
                 submitQueuedUploadsToS3();
                 mEventBus.post(new BroadcastIsBufferingEvent());
+                if(mBroadcastListener != null)
+                    mBroadcastListener.onBroadcastStart();
             }
 
             @Override
@@ -181,6 +191,8 @@ public class Broadcaster extends AVRecorder {
         if(!mSentBroadcastLiveEvent){
             mEventBus.post(new BroadcastIsLiveEvent(((HlsStream) mStream).getKickflipUrl()));
             mSentBroadcastLiveEvent = true;
+            if(mBroadcastListener != null)
+                mBroadcastListener.onBroadcastLive(((HlsStream) mStream).getKickflipUrl());
         }
     }
 
@@ -204,7 +216,7 @@ public class Broadcaster extends AVRecorder {
         }
         queueOrSubmitUpload(keyForFilename("index.m3u8"), copy.getAbsolutePath());
         appendLastManifestEntryToMasterManifest(orig, !isRecording());
-            mNumSegmentsWritten++;
+        mNumSegmentsWritten++;
     }
 
     @Subscribe

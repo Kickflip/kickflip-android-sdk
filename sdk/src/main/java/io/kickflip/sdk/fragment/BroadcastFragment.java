@@ -1,6 +1,7 @@
 package io.kickflip.sdk.fragment;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -21,8 +22,11 @@ import android.widget.TextView;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.io.File;
+
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.GLCameraEncoderView;
+import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.Share;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.av.RecorderConfig;
@@ -34,15 +38,12 @@ import io.kickflip.sdk.events.BroadcastIsLiveEvent;
  * This is a drop-in video-streaming fragment.
  * Currently, only one BroadcastFragment may be instantiated at a time.
  */
-public class BroadcastFragment extends KickflipFragment implements AdapterView.OnItemSelectedListener{
+public class BroadcastFragment extends Fragment implements AdapterView.OnItemSelectedListener{
     private static final String TAG = "BroadcastFragment";
     private static final boolean VERBOSE = false;
 
-    protected static final String ARG_OUTPUT_PATH = "output_path";
-
     private BroadcastListener mListener;
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
-    private static String mOutputPath;
     private GLCameraEncoderView mCameraView;
     private TextView mLiveBanner;
 
@@ -52,33 +53,27 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
         if (VERBOSE) Log.i(TAG, "construct");
     }
 
-    public static BroadcastFragment newInstance(String clientKey, String clientSecret, String outputPath) {
+    public static BroadcastFragment newInstance(){
+        return newInstance(null);
+    }
+
+    public static BroadcastFragment newInstance(String outputPath) {
         if (VERBOSE) Log.i(TAG, "newInstance");
         // Ensure we're creating a new Broadcaster for each new Fragment
         mBroadcaster = null;
-        BroadcastFragment fragment = new BroadcastFragment();
-        Bundle args = new Bundle();
-        // KickflipFragment args:
-        args.putString(ARG_CLIENT_KEY, clientKey);
-        args.putString(ARG_CLIENT_SECRET, clientSecret);
-        // BroadcastFragment args:
-        args.putString(ARG_OUTPUT_PATH, outputPath);
-        fragment.setArguments(args);
-        return fragment;
+        if(outputPath != null)
+            Kickflip.setOutputDirectory(outputPath);
+        return new BroadcastFragment();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         if (VERBOSE) Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
-        if(getArguments() != null && getArguments().containsKey(ARG_OUTPUT_PATH)){
-            mOutputPath = getArguments().getString(ARG_OUTPUT_PATH);
-            if (VERBOSE) Log.i(TAG, "set outputPath " + mOutputPath + " key " + getClientKey() + " secret " + getClientSecret());
-        }else{
-            Log.w(TAG, "No output path specified! This fragment won't do anything!. " +
-                    "Did you call BroadcastFragment#newinstance(KEY, SECRET, outputPath)?");
-        }
-        setupBroadcaster();
+        if(!Kickflip.readyToBroadcast()){
+            Log.e(TAG, "Kickflip not properly prepared by BroadcastFragment's onCreate. Output path: " + Kickflip.getOutputDir() + " key " + Kickflip.getApiKey() + " secret " + Kickflip.getApiSecret());
+        }else
+            setupBroadcaster();
     }
 
     @Override
@@ -152,16 +147,19 @@ public class BroadcastFragment extends KickflipFragment implements AdapterView.O
         // on your Fragment/Activity's onStop()
         if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
             if(mBroadcaster == null){
-                if (VERBOSE) Log.i(TAG, "Setting up Broadcaster for output " + mOutputPath + " client key: " + getClientKey() + " secret: " + getClientSecret());
+                if (VERBOSE) Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getOutputDir() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
+                // TODO: Don't start recording until stream start response, so we can determine stream type...
+                File outputFile = new File(new File(Kickflip.getOutputDir()), "index.m3u8");
                 Context context = getActivity().getApplicationContext();
-                RecorderConfig config = new RecorderConfig.Builder(mOutputPath)
+                RecorderConfig config = new RecorderConfig.Builder(outputFile.getAbsolutePath())
                         .withVideoResolution(1280, 720)
                         .withVideoBitrate(2 * 1000 * 1000)
                         .withAudioBitrate(96 * 1000)
                         .build();
 
-                mBroadcaster = new Broadcaster(context, config, getClientKey(), getClientSecret());
+                mBroadcaster = new Broadcaster(context, config, Kickflip.getApiKey(), Kickflip.getApiSecret());
                 mBroadcaster.getEventBus().register(this);
+                mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
             }
         }
     }

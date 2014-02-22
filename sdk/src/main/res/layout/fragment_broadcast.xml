@@ -13,7 +13,7 @@
     <Spinner
         android:id="@+id/filterSpinner"
         android:background="@drawable/card_btn_bg"
-        android:alpha=".8"
+        android:alpha=".7"
         android:layout_alignParentLeft="true"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="10dp"
@@ -28,7 +28,7 @@
         android:id="@+id/cameraFlipper"
         android:tag="camera"
         android:src="@drawable/camreverse_bg"
-        android:alpha=".8"
+        android:alpha=".7"
         android:background="@android:color/transparent"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
@@ -40,15 +40,14 @@
 
     <Button
         android:id="@+id/recordButton"
-        android:alpha=".8"
+        android:alpha=".7"
         android:background="@drawable/red_dot"
-        android:padding="15dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
         android:gravity="center"
-        android:layout_marginBottom="10dp"/>
+        android:layout_marginRight="@dimen/nav_bar_margin"/>
 
     <TextView
         android:id="@+id/liveLabel"
