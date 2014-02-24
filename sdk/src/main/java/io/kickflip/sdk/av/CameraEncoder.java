@@ -592,6 +592,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
         Camera.Parameters parms = mCamera.getParameters();
 
+        List<String> focusModes = parms.getSupportedFocusModes();
+        if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO))
+            parms.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+
         List<int[]> fpsRanges = parms.getSupportedPreviewFpsRange();
         int[] maxFpsRange = fpsRanges.get(fpsRanges.size() - 1);
         parms.setPreviewFpsRange(maxFpsRange[0], maxFpsRange[1]);
