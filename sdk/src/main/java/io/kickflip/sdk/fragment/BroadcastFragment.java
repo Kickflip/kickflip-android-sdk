@@ -127,6 +127,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
             mLiveBanner.setOnClickListener(mShareButtonClickListener);
 
             if(mBroadcaster.isLive()){
+                setBannerToLiveState();
                 mLiveBanner.setVisibility(View.VISIBLE);
             }
             if(mBroadcaster.isRecording())
@@ -226,11 +227,16 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         mLiveBanner.setText(getString(R.string.buffering));
     }
 
+    private void setBannerToLiveState(){
+        setBannerToLiveState(null);
+    }
+
     private void setBannerToLiveState(String watchUrl){
         mLiveBanner.setBackgroundResource(R.drawable.live_bg);
         Drawable img = getActivity().getResources().getDrawable( android.R.drawable.ic_menu_share );
         mLiveBanner.setCompoundDrawablesWithIntrinsicBounds(img, null, null, null);
-        mLiveBanner.setTag(watchUrl);
+        if(watchUrl != null)
+            mLiveBanner.setTag(watchUrl);
         mLiveBanner.setText(getString(R.string.live));
     }
 
