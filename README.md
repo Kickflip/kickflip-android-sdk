@@ -16,7 +16,7 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
 
 ## Quickstart
 
-1. Add Kickflip to your project's `build.gradle`:
+1. Add Kickflip to your app's `build.gradle`:
 
 	```groovy
 	dependencies {
@@ -25,31 +25,30 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
 	```
 
 
-2. Add the following to your `AndroidManifest.xml`
+2. Add the following to your app's `AndroidManifest.xml`:
 
     **Permissions:**
 	```xml	       
-	   <uses-permission android:name="android.permission.INTERNET"/>
-	   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-	   <uses-permission android:name="android.permission.CAMERA"/>
-	   <uses-permission android:name="android.permission.RECORD_AUDIO"/>		   		   ion>
-	   </manifest>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 	```
 	
 	**BroadcastActivity:**
 	
 	```xml
-       <activity
-            android:name="io.kickflip.sdk.BroadcastActivity"
-            android:screenOrientation="landscape">
-       </activity>
+    <activity
+         android:name="io.kickflip.sdk.BroadcastActivity"
+         android:screenOrientation="landscape">
+    </activity>
 	```
 
-4. Provide your Kickflip keys and start `BroadcastActivity` to begin streaming live video from your Activity:
+4. Provide your Kickflip keys and start `BroadcastActivity`:
 
 	```java
-		Kickflip.setupWithApiKey(API_KEY, API_SECRET);
-		Kickflip.startBroadcastActivity(this, mBroadcastListener);
+	Kickflip.setupWithApiKey(API_KEY, API_SECRET);
+	Kickflip.startBroadcastActivity(this, mBroadcastListener);
 	```
     	
    BroadcastListener currently has the following definition:
