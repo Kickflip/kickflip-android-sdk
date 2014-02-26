@@ -2,11 +2,46 @@
 
 1. Create a file named `gradle.properties` in this directory with the following contents:
 
+		# APK Signing
+		
 		storeFile=/path/to/keystore.keystore
 		storePassword=yourStorePassword
 		keyAlias=yourKeyAlias
 		keyPassword=yourKeyPassword
 		
-2. From this directory run:
+		# Maven
+		
+		signing.keyId=gpg-id
+		signing.password=gpg-password
+		signing.secretKeyRingFile=/path/to/.gnupg/secring.gpg
+				
+		#sonatypeRepo=https://oss.sonatype.org/service/local/staging/deploy/maven2/
+		sonatypeUsername=sonaUser
+		sonatypePassword=sonaPass
+		
+		artifactGroupId=io.kickflip
+		artifactName=sdk
+		projectTitle=Kickflip SDK
+		projectDesc=Kickflip Live video broadcasting SDK for Android
+		
+		htmlUrl=https://github.com/Kickflip/kickflip-android-sdk
+		gitUrl=https://github.com/Kickflip/kickflip-android-sdk.git
+		sshUrl=scm:git@github.com:Kickflip/kickflip-android-sdk.git
+		
+		devId=devId
+		devName=Your Name
+		
 
-		$ ./gradlew assembleRelease
+## Build a Signed APK for the Play Store etc.
+
+	$ ./gradlew assembleRelease
+		
+Signed .apk will be in `./sample/build/apk/`.
+
+Signed .aar will be in `./sdk/build/libs/`.
+		
+## Publish the SDK to Maven
+
+	$ ./gradlew clean && ./gradlew build && ./gradlew uploadArchives
+	
+	
