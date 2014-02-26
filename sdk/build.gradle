@@ -1,5 +1,8 @@
 apply plugin: 'android-library'
 
+versionInt=1
+versionName="0.9"
+
 android {
     compileSdkVersion 19
         buildToolsVersion "19.0.1"
@@ -7,8 +10,8 @@ android {
     defaultConfig {
         minSdkVersion 18
         targetSdkVersion 19
-        versionCode 1
-        versionName "1.0"
+        versionCode versionInt
+        versionName versionName
 
     }
     release {
@@ -45,3 +48,6 @@ dependencies {
     // guava-libraries
     compile 'com.google.guava:guava:16.0'
 }
+
+// Maven publish task
+apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'

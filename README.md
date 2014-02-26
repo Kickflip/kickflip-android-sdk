@@ -2,10 +2,41 @@
 
 **note:** This is a pre-release preview. Consider nothing stable.
 
-The Kickflip platform is a complete video streaming solution for your Android application. You can use our pre-built `BroadcastActivity` to stream live video to your Kickflip account starting with a few lines of code.
+The Kickflip platform is a complete video streaming solution for your Android application. You can use the built-in `BroadcastActivity` to stream live HD video to your Kickflip account starting with a few lines of code.
 
-## Quickstart using BroadcastActivity
-1. Add `BroadcastActivity` to your `AndroidManifest.xml`:
+Besides live broadcasting, Kickflip supports an array of output formats beyond the capabilities of Android's [MediaRecorder](http://developer.android.com/reference/android/media/MediaRecorder.html) and [MediaMuxer](https://developer.android.com/reference/android/media/MediaMuxer.html) with a dead-simple API.
+
+## Features
+
++ **High Definition [HTTP Live Streaming](http://en.wikipedia.org/wiki/HTTP_Live_Streaming)**
++ **Background recording**
++ **OpenGL Video Effects**
+
+
+
+## Quickstart
+
+1. Add Kickflip to your project's `build.gradle`:
+
+	```groovy
+	dependencies {
+   		compile 'io.kickflip:sdk:0.9'
+	}
+	```
+
+
+2. Add the following to your `AndroidManifest.xml`
+
+    **Permissions:**
+	```xml	       
+	   <uses-permission android:name="android.permission.INTERNET"/>
+	   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+	   <uses-permission android:name="android.permission.CAMERA"/>
+	   <uses-permission android:name="android.permission.RECORD_AUDIO"/>		   		   ion>
+	   </manifest>
+	```
+	
+	**BroadcastActivity:**
 	
 	```xml
        <activity
@@ -14,10 +45,10 @@ The Kickflip platform is a complete video streaming solution for your Android ap
        </activity>
 	```
 
-2. Provide your Kickflip keys and start `BroadcastActivity` to instantly stream live video from your application:
+4. Provide your Kickflip keys and start `BroadcastActivity` to begin streaming live video from your Activity:
 
 	```java
-		Kickflip.initWithApiKey(API_KEY, API_SECRET);
+		Kickflip.setupWithApiKey(API_KEY, API_SECRET);
 		Kickflip.startBroadcastActivity(this, mBroadcastListener);
 	```
     	
@@ -72,11 +103,10 @@ The Kickflip SDK .aar will be in `./sdk/build/libs`.
 
 ## Using the library
 
-The Kickflip SDK will be available from the Maven Central Repository, and will be incorporated as a dependency in your project's `build.gradle`:
+The Kickflip SDK is available from the [Maven Central Repository](http://search.maven.org/), and can be easily added to your project's `build.gradle`:
 
-    # Coming Soon! Not yet published
     dependencies {
-	   compile 'io.kickflip:sdk:0.1'
+	   compile 'io.kickflip:sdk:0.9'
 	}
 
 
