@@ -15,7 +15,6 @@
 		signing.password=gpg-password
 		signing.secretKeyRingFile=/path/to/.gnupg/secring.gpg
 				
-		#sonatypeRepo=https://oss.sonatype.org/service/local/staging/deploy/maven2/
 		sonatypeUsername=sonaUser
 		sonatypePassword=sonaPass
 		
