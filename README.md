@@ -2,7 +2,7 @@
 
 **note:** This is a pre-release preview. Consider nothing stable.
 
-The Kickflip platform is a complete video streaming solution for your Android application. You can use the built-in `BroadcastActivity` to stream live HD video to your Kickflip account starting with a few lines of code.
+The Kickflip platform is a complete video streaming solution for your Android 4.3+ (API 18+) application. Our built-in `BroadcastActivity` makes broadcasting live HD video to your Kickflip account possible with a few lines of code.
 
 Besides live broadcasting, Kickflip supports an array of output formats beyond the capabilities of Android's [MediaRecorder](http://developer.android.com/reference/android/media/MediaRecorder.html) and [MediaMuxer](https://developer.android.com/reference/android/media/MediaMuxer.html) with a dead-simple API.
 
@@ -16,8 +16,24 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
 
 ## Quickstart
 
+0. Ensure the `minSdkVersion` of your application is **18** (Android 4.3) and the `compileSdkVersion` is **19** (Android 4.4).
+
+	```groovy
+	android {
+        compileSdkVersion 19
+        ...
+        defaultConfig {
+            minSdkVersion 18
+            targetSdkVersion 19
+            ...
+        }
+        ...
+    }
+    ```
+
 1. Add Kickflip to your app's `build.gradle`:
 
+    **Dependencies:**
 	```groovy
 	dependencies {
    		compile 'io.kickflip:sdk:0.9'
@@ -44,23 +60,31 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
     </activity>
 	```
 
-4. Provide your Kickflip keys and start `BroadcastActivity`:
+4. Provide your Kickflip keys and start `BroadcastActivity` when appropriate:
 
 	```java
 	Kickflip.setupWithApiKey(API_KEY, API_SECRET);
-	Kickflip.startBroadcastActivity(this, mBroadcastListener);
-	```
-    	
-   BroadcastListener currently has the following definition:
+	Kickflip.startBroadcastActivity(this, new BroadcastListener() {
+        @Override
+        public void onBroadcastStart() {
+        
+        }
 
+        @Override
+        public void onBroadcastLive(String watchUrl) { 
+        	Log.i("Kickflp", "This phone is live at " + watchUrl);       
+        }
 
-	```java
-	public interface BroadcastListener {
-	    public void onBroadcastStart();
-	    public void onBroadcastLive(String watchUrl);
-	    public void onBroadcastStop();
-	    public void onBroadcastError();
-	}
+        @Override
+        public void onBroadcastStop() {
+        
+        }
+
+        @Override
+        public void onBroadcastError() {
+        
+        }
+    });
 	```
    	
 `BroadcastActivity` provides a pre-built UI including a camera preview and controls for starting, stopping, and sharing the broadcast.

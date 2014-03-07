@@ -74,12 +74,12 @@ public class Broadcaster extends AVRecorder {
         mConfig.getMuxer().setEventBus(mEventBus);
         mVideoBitrate = mConfig.getVideoBitrate();
         Log.i(TAG, "Initial video bitrate : " + mVideoBitrate);
-        mManifestSnapshotDir = new File(mConfig.getOutputPath().substring(0, mConfig.getOutputPath().lastIndexOf("/")+1), "m3u8");
+        mManifestSnapshotDir = new File(mConfig.getOutputPath().substring(0, mConfig.getOutputPath().lastIndexOf("/") + 1), "m3u8");
         mManifestSnapshotDir.mkdir();
         mMasterManifest = new File(mManifestSnapshotDir, "master.m3u8");
         writeMasterManifestHeader();
 
-        String watchDir = config.getOutputPath().substring(0, config.getOutputPath().lastIndexOf(File.separator)+1);
+        String watchDir = config.getOutputPath().substring(0, config.getOutputPath().lastIndexOf(File.separator) + 1);
         mFileObserver = new HlsFileObserver(watchDir, mEventBus);
         mFileObserver.startWatching();
 
@@ -95,22 +95,22 @@ public class Broadcaster extends AVRecorder {
             @Override
             public void onError(Object response) {
                 Log.e(TAG, "Failed to get storage credentials" + response.toString());
-                if(mBroadcastListener != null)
+                if (mBroadcastListener != null)
                     mBroadcastListener.onBroadcastError();
             }
         });
     }
 
-    public void setBroadcastListener(BroadcastListener listener){
+    public void setBroadcastListener(BroadcastListener listener) {
         mBroadcastListener = listener;
     }
 
-    public EventBus getEventBus(){
+    public EventBus getEventBus() {
         return mEventBus;
     }
 
     @Override
-    public void startRecording(){
+    public void startRecording() {
         super.startRecording();
         mKickflip.startStream(new KickflipCallback() {
             @Override
@@ -123,7 +123,7 @@ public class Broadcaster extends AVRecorder {
                 mReadyToBroadcast = true;
                 submitQueuedUploadsToS3();
                 mEventBus.post(new BroadcastIsBufferingEvent());
-                if(mBroadcastListener != null)
+                if (mBroadcastListener != null)
                     mBroadcastListener.onBroadcastStart();
             }
 
@@ -134,15 +134,15 @@ public class Broadcaster extends AVRecorder {
         });
     }
 
-    public boolean isLive(){
+    public boolean isLive() {
         return mSentBroadcastLiveEvent;
     }
 
     @Override
-    public void stopRecording(){
+    public void stopRecording() {
         super.stopRecording();
         mSentBroadcastLiveEvent = false;
-        if(mStream != null){
+        if (mStream != null) {
             mKickflip.stopStream(mUser, mStream, new KickflipCallback() {
                 @Override
                 public void onSuccess(Response response) {
@@ -158,51 +158,53 @@ public class Broadcaster extends AVRecorder {
     }
 
     @Subscribe
-    public void onS3UploadComplete(S3UploadEvent uploadEvent){
+    public void onS3UploadComplete(S3UploadEvent uploadEvent) {
         if (VERBOSE) Log.i(TAG, "Upload completed for " + uploadEvent.getUrl());
-        if(uploadEvent.getUrl().contains(".m3u8")){
+        if (uploadEvent.getUrl().contains(".m3u8")) {
             onManifestUploaded(uploadEvent);
-        } else if(uploadEvent.getUrl().contains(".ts")){
+        } else if (uploadEvent.getUrl().contains(".ts")) {
             onSegmentUploaded(uploadEvent);
         }
     }
 
-    public void onSegmentUploaded(S3UploadEvent uploadEvent){
-        try{
-            if(Build.VERSION.SDK_INT >= 19){
+    public void onSegmentUploaded(S3UploadEvent uploadEvent) {
+        try {
+            if (Build.VERSION.SDK_INT >= 19) {
                 // Adjust video encoder bitrate per bandwidth of just-completed upload
-                if (VERBOSE) Log.i(TAG, "Bandwidth: " + uploadEvent.getUploadByteRate() / 1000.0 + " KBps Birate: " + ((mVideoBitrate + mConfig.getAudioBitrate()) / 8*1000.0) + " KBps");
-                if( uploadEvent.getUploadByteRate() < (((mVideoBitrate + mConfig.getAudioBitrate()) / 8) )){
+                if (VERBOSE)
+                    Log.i(TAG, "Bandwidth: " + uploadEvent.getUploadByteRate() / 1000.0 + " KBps Birate: " + ((mVideoBitrate + mConfig.getAudioBitrate()) / 8 * 1000.0) + " KBps");
+                if (uploadEvent.getUploadByteRate() < (((mVideoBitrate + mConfig.getAudioBitrate()) / 8))) {
                     // The new bitrate is equal to the last upload bandwidth, never exceeding MIN_BITRATE, or the
                     // bitrate intially provided in RecorderConfig
                     mVideoBitrate = Math.max(Math.min(uploadEvent.getUploadByteRate(), mConfig.getVideoBitrate()), MIN_BITRATE);
-                    if (VERBOSE) Log.i(TAG, String.format("Adjusting encoder bitrate. Bandwidth: %f KBps, Bitrate: %f KBps, New Bitrate: %f KBps",
-                            uploadEvent.getUploadByteRate() / 1000.0, mConfig.getTotalBitrate() / 1000.0, mVideoBitrate / 1000.0 ));
+                    if (VERBOSE)
+                        Log.i(TAG, String.format("Adjusting encoder bitrate. Bandwidth: %f KBps, Bitrate: %f KBps, New Bitrate: %f KBps",
+                                uploadEvent.getUploadByteRate() / 1000.0, mConfig.getTotalBitrate() / 1000.0, mVideoBitrate / 1000.0));
                     adjustBitrate(mVideoBitrate);
                 }
             }
-        } catch (Exception e){
-                Log.i(TAG, "OnSegUpload excep");
-                e.printStackTrace();
-            }
+        } catch (Exception e) {
+            Log.i(TAG, "OnSegUpload excep");
+            e.printStackTrace();
+        }
     }
 
-    public void onManifestUploaded(S3UploadEvent uploadEvent){
-        if(!mSentBroadcastLiveEvent){
+    public void onManifestUploaded(S3UploadEvent uploadEvent) {
+        if (!mSentBroadcastLiveEvent) {
             mEventBus.post(new BroadcastIsLiveEvent(((HlsStream) mStream).getKickflipUrl()));
             mSentBroadcastLiveEvent = true;
-            if(mBroadcastListener != null)
+            if (mBroadcastListener != null)
                 mBroadcastListener.onBroadcastLive(((HlsStream) mStream).getKickflipUrl());
         }
     }
 
     @Subscribe
-    public void onDeadEvent(DeadEvent e){
+    public void onDeadEvent(DeadEvent e) {
         if (VERBOSE) Log.i(TAG, "DeadEvent ");
     }
 
     @Subscribe
-    public void onManifestUpdated(HlsManifestWrittenEvent e){
+    public void onManifestUpdated(HlsManifestWrittenEvent e) {
         if (VERBOSE) Log.i(TAG, "onManifestUpdated");
         // Copy m3u8 at this moment and queue it to uploading
         // service
@@ -220,21 +222,21 @@ public class Broadcaster extends AVRecorder {
     }
 
     @Subscribe
-    public void onSegmentWritten(HlsSegmentWrittenEvent e){
+    public void onSegmentWritten(HlsSegmentWrittenEvent e) {
         if (VERBOSE) Log.i(TAG, "onSegmentWritten");
         String fileName = e.getSegmentLocation().substring(e.getSegmentLocation().lastIndexOf(File.separator) + 1);
         queueOrSubmitUpload(keyForFilename(fileName), e.getSegmentLocation());
     }
 
     @Subscribe
-    public void onMuxerFinished(MuxerFinishedEvent e){
+    public void onMuxerFinished(MuxerFinishedEvent e) {
         // TODO: Broadcaster uses AVRecorder reset()
         // this seems better than nulling and recreating Broadcaster
         // since it should be usable as a static object for
         // bg recording
     }
 
-    private String keyForFilename(String fileName){
+    private String keyForFilename(String fileName) {
         return mUser.getName() + File.separator
                 + mStream.getStreamId() + File.separator
                 + fileName;
@@ -243,13 +245,14 @@ public class Broadcaster extends AVRecorder {
     /**
      * Handle an upload, either submitting to the S3 client
      * or queueing for submission once credentials are ready
-     * @param key destination key
+     *
+     * @param key          destination key
      * @param fileLocation local file
      */
-    private void queueOrSubmitUpload(String key, String fileLocation){
-        if(mReadyToBroadcast){
+    private void queueOrSubmitUpload(String key, String fileLocation) {
+        if (mReadyToBroadcast) {
             S3Manager.queueUpload(new S3Upload(mS3Client, new File(fileLocation), key));
-        }else{
+        } else {
             if (VERBOSE) Log.i(TAG, "queueing " + key);
             queueUpload(key, fileLocation);
         }
@@ -257,11 +260,12 @@ public class Broadcaster extends AVRecorder {
 
     /**
      * Queue an upload for later submission to S3
-     * @param key destination key
+     *
+     * @param key          destination key
      * @param fileLocation local file
      */
-    private void queueUpload(String key, String fileLocation){
-        if(mUploadQueue == null)
+    private void queueUpload(String key, String fileLocation) {
+        if (mUploadQueue == null)
             mUploadQueue = new ArrayDeque<>();
         mUploadQueue.add(new Pair<>(key, new File(fileLocation)));
     }
@@ -269,23 +273,23 @@ public class Broadcaster extends AVRecorder {
     /**
      * Submit all queued uploads to the S3 client
      */
-    private void submitQueuedUploadsToS3(){
-        if(mUploadQueue == null) return;
-        for(Pair<String, File> pair : mUploadQueue){
+    private void submitQueuedUploadsToS3() {
+        if (mUploadQueue == null) return;
+        for (Pair<String, File> pair : mUploadQueue) {
             S3Manager.queueUpload(new S3Upload(mS3Client, pair.second, pair.first));
         }
     }
 
-    private void writeMasterManifestHeader(){
+    private void writeMasterManifestHeader() {
         // TODO: Dynamically set EXT-X-TARGETDURATION
         FileUtils.writeStringToFile("#EXTM3U\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXT-X-VERSION:3\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-TARGETDURATION:12\n",
                 mMasterManifest, false);
     }
 
-    private void appendLastManifestEntryToMasterManifest(File sourceManifest, boolean lastEntry){
-        String result = FileUtils.tail2(sourceManifest, lastEntry ? 3: 2);
+    private void appendLastManifestEntryToMasterManifest(File sourceManifest, boolean lastEntry) {
+        String result = FileUtils.tail2(sourceManifest, lastEntry ? 3 : 2);
         FileUtils.writeStringToFile(result, mMasterManifest, true);
-        if(lastEntry){
+        if (lastEntry) {
             S3Manager.queueUpload(new S3Upload(mS3Client, mMasterManifest, keyForFilename("index.m3u8")));
             Log.i(TAG, "Queued master manifest " + mMasterManifest.getAbsolutePath());
         }

@@ -21,8 +21,6 @@ import java.util.ArrayList;
 import pro.dbro.ffmpegwrapper.FFmpegWrapper;
 import pro.dbro.ffmpegwrapper.FFmpegWrapper.AVOptions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Created by davidbrodsky on 1/23/14.
  */
@@ -180,7 +178,6 @@ public class FFmpegMuxer extends Muxer implements Runnable{
                     mHandler.sendMessage(mHandler.obtainMessage(MSG_WRITE_FRAME,
                             new WritePacketData(encoder, trackIndex, bufferIndex, muxerInput, bufferInfo)));
                 }else{
-                    muxerInput = encodedData;
                     handleWriteSampleData(encoder, trackIndex, bufferIndex, encodedData, bufferInfo);
                 }
 

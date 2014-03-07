@@ -11,8 +11,6 @@ import android.os.Trace;
 import android.util.Log;
 import android.view.MotionEvent;
 
-import com.google.common.eventbus.EventBus;
-
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -659,7 +657,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     /**
      * Handles encoder state change requests.  The handler is created on the encoder thread.
      */
-    public static class EncoderHandler extends Handler {
+    private static class EncoderHandler extends Handler {
         private WeakReference<CameraEncoder> mWeakEncoder;
 
         public EncoderHandler(CameraEncoder encoder) {
