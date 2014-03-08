@@ -1,7 +1,5 @@
 package io.kickflip.sdk.av;
 
-import java.io.File;
-
 public class VideoEncoderConfig {
     protected final int mWidth;
     protected final int mHeight;

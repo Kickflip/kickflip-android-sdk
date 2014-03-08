@@ -30,6 +30,7 @@ import io.kickflip.sdk.events.HlsManifestWrittenEvent;
 import io.kickflip.sdk.events.HlsSegmentWrittenEvent;
 import io.kickflip.sdk.events.MuxerFinishedEvent;
 import io.kickflip.sdk.events.S3UploadEvent;
+import io.kickflip.sdk.events.ThumbnailWrittenEvent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -73,7 +74,7 @@ public class Broadcaster extends AVRecorder {
         mConfig = config;
         mConfig.getMuxer().setEventBus(mEventBus);
         mVideoBitrate = mConfig.getVideoBitrate();
-        Log.i(TAG, "Initial video bitrate : " + mVideoBitrate);
+        if (VERBOSE) Log.i(TAG, "Initial video bitrate : " + mVideoBitrate);
         mManifestSnapshotDir = new File(mConfig.getOutputPath().substring(0, mConfig.getOutputPath().lastIndexOf("/") + 1), "m3u8");
         mManifestSnapshotDir.mkdir();
         mMasterManifest = new File(mManifestSnapshotDir, "master.m3u8");
@@ -112,6 +113,7 @@ public class Broadcaster extends AVRecorder {
     @Override
     public void startRecording() {
         super.startRecording();
+        mCamEncoder.requestThumbnailOnFrame(60, 2);
         mKickflip.startStream(new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
@@ -219,6 +221,11 @@ public class Broadcaster extends AVRecorder {
         queueOrSubmitUpload(keyForFilename("index.m3u8"), copy.getAbsolutePath());
         appendLastManifestEntryToMasterManifest(orig, !isRecording());
         mNumSegmentsWritten++;
+    }
+
+    @Subscribe
+    public void onThumbnailWritten(ThumbnailWrittenEvent e) {
+        queueOrSubmitUpload(keyForFilename("thumb.jpg"), e.getThumbnailLocation());
     }
 
     @Subscribe

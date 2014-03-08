@@ -1,9 +1,5 @@
 package io.kickflip.sdk.av;
 
-import android.opengl.GLSurfaceView;
-
-import com.google.common.eventbus.EventBus;
-
 import io.kickflip.sdk.GLCameraView;
 
 /**
@@ -11,8 +7,8 @@ import io.kickflip.sdk.GLCameraView;
  */
 public class AVRecorder {
 
-    private CameraEncoder mCamEncoder;
-    private MicrophoneEncoder mMicEncoder;
+    protected CameraEncoder mCamEncoder;
+    protected MicrophoneEncoder mMicEncoder;
     private RecorderConfig mConfig;
     private boolean mIsRecording;
 

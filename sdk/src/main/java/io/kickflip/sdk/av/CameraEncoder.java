@@ -11,6 +11,7 @@ import android.os.Trace;
 import android.util.Log;
 import android.view.MotionEvent;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -72,6 +73,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private int mCurrentCamera;
     private int mDesiredCamera;
 
+    private boolean mThumbnailRequested;
+    private int mThumbnailScaleFactor;
+    private int mThumbnailRequestedOnFrame;
+
     public CameraEncoder(RecorderConfig config) {
         mEncodedFirstFrame = false;
         mReadyForFrames = false;
@@ -83,6 +88,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
         mCurrentFilter = -1;
         mNewFilter = Filters.FILTER_NONE;
+
+        mThumbnailRequested = false;
+        mThumbnailRequestedOnFrame = -1;
 
         mRecorderConfig = checkNotNull(config);
         mEglSaver = new EglStateSaver();
@@ -129,6 +137,31 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     }
 
     /**
+     * Request a thumbnail be generated from
+     * the next available frame
+     *
+     * @param scaleFactor a downscale factor. e.g scaleFactor 2 will
+     *                    produce a 640x360 thumbnail from a 1280x720 frame
+     */
+    public void requestThumbnail(int scaleFactor) {
+        mThumbnailRequested = true;
+        mThumbnailScaleFactor = scaleFactor;
+        mThumbnailRequestedOnFrame = -1;
+    }
+
+    /**
+     * Request a thumbnail be generated from
+     * the given frame
+     *
+     * @param scaleFactor a downscale factor. e.g scaleFactor 2 will
+     *                    produce a 640x360 thumbnail from a 1280x720 frame
+     */
+    public void requestThumbnailOnFrame(int frame, int scaleFactor) {
+        mThumbnailScaleFactor = scaleFactor;
+        mThumbnailRequestedOnFrame = frame;
+    }
+
+    /**
      * Attempts to find a preview size that matches the provided width and height (which
      * specify the dimensions of the encoded video).  If it fails to find a match it just
      * uses the default preview size.
@@ -158,7 +191,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         // else use whatever the default size is
     }
 
-    public void adjustBitrate(int targetBitrate){
+    public void adjustBitrate(int targetBitrate) {
         mVideoEncoder.adjustBitrate(targetBitrate);
     }
 
@@ -289,10 +322,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * following handleStopRecording. Last frame is submitted
      * to encoder, and drainEncoder(true) has been called.
      * Safe to release resources
-     *
+     * <p/>
      * Called on Encoder thread
      */
-    private void shutdown(){
+    private void shutdown() {
         releaseEncoder();
         releaseCamera();
         Looper.myLooper().quit();
@@ -353,10 +386,19 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     mStartTimeNs = mSurfaceTexture.getTimestamp();
                     mEncodedFirstFrame = true;
                 }
+
+                if (mThumbnailRequestedOnFrame == mFrameNum) {
+                    mThumbnailRequested = true;
+                }
+                if (mThumbnailRequested) {
+                    saveFrameAsImage();
+                    mThumbnailRequested = false;
+                }
+
                 mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp() - mStartTimeNs);
                 mInputWindowSurface.swapBuffers();
 
-                if(mEosRequested){
+                if (mEosRequested) {
                     if (VERBOSE) Log.i(TAG, "Sent last video frame. Draining encoder");
                     mVideoEncoder.drainEncoder(true);
                     mRecording = false;
@@ -370,6 +412,16 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mDisplayView.requestRender();
 
         if (TRACE) Trace.endSection();
+    }
+
+    private void saveFrameAsImage() {
+        try {
+            File recordingDir = new File(mRecorderConfig.getMuxer().getOutputPath()).getParentFile();
+            File imageFile = new File(recordingDir, String.format("%d.jpg", System.currentTimeMillis()));
+            mInputWindowSurface.saveFrame(imageFile, mThumbnailScaleFactor);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -402,7 +454,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mDisplayView.onResume();
             // Re-open camera if we're not recording and the SurfaceTexture has already been created
             if (!mRecording && mSurfaceTexture != null) {
-                if (VERBOSE) Log.i("CameraRelease", "Opening camera and attaching to SurfaceTexture");
+                if (VERBOSE)
+                    Log.i("CameraRelease", "Opening camera and attaching to SurfaceTexture");
                 mHandler.sendMessage(mHandler.obtainMessage(MSG_REOPEN_CAMERA));
             } else {
                 Log.w("CameraRelease", "Didn't try to open camera onHAResume. rec: " + mRecording + " mSurfaceTexture ready? " + (mSurfaceTexture == null ? " no" : " yes"));
@@ -469,7 +522,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                         mRecorderConfig.getMuxer());
                 mTextureId = textureId;
                 mSurfaceTexture = new SurfaceTexture(mTextureId);
-                if (VERBOSE) Log.i(TAG + "-SurfaceTexture", " SurfaceTexture created. pre setOnFrameAvailableListener");
+                if (VERBOSE)
+                    Log.i(TAG + "-SurfaceTexture", " SurfaceTexture created. pre setOnFrameAvailableListener");
                 mSurfaceTexture.setOnFrameAvailableListener(this);
                 openAndAttachCameraToSurfaceTexture();
                 mReadyForFrames = true;
@@ -540,7 +594,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         try {
             mCamera.setPreviewTexture(mSurfaceTexture);
             mCamera.startPreview();
-            if (VERBOSE) Log.i("CameraRelease", "Opened / Started Camera preview. mDisplayView ready? " + (mDisplayView == null ? " no" : " yes"));
+            if (VERBOSE)
+                Log.i("CameraRelease", "Opened / Started Camera preview. mDisplayView ready? " + (mDisplayView == null ? " no" : " yes"));
             if (mDisplayView != null) configureDisplayView();
         } catch (IOException e) {
             e.printStackTrace();

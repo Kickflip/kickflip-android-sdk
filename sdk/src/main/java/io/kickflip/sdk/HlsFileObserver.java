@@ -26,47 +26,52 @@ import java.io.File;
 
 import io.kickflip.sdk.events.HlsManifestWrittenEvent;
 import io.kickflip.sdk.events.HlsSegmentWrittenEvent;
+import io.kickflip.sdk.events.ThumbnailWrittenEvent;
 
 /**
  * A FileObserver that listens for actions
  * specific to the creation of an HLS stream
- * e.g: A .ts segment is written 
+ * e.g: A .ts segment is written
  * or a .m3u8 manifest is modified
- * @author davidbrodsky
  *
+ * @author davidbrodsky
  */
-public class HlsFileObserver extends FileObserver{
+public class HlsFileObserver extends FileObserver {
     private static final String TAG = "HlsFileObserver";
     private static final boolean VERBOSE = false;
-	
-	private static final String M3U8_EXT = "m3u8";
-	private static final String TS_EXT = "ts";
-	private String mObservedPath;
+
+    private static final String M3U8_EXT = "m3u8";
+    private static final String TS_EXT = "ts";
+    private static final String JPG_EXT = "jpg";
+    private String mObservedPath;
     private EventBus mEventBus;
 
-	/**
-	 * Begin observing the given path for changes
-	 * to .ts and .m3u8 files
-	 * @param path the absolute path to observe.
-	 * @param eventBus an EventBus to post events to
-	 */
-	public HlsFileObserver(String path, EventBus eventBus){
-		super(path, CLOSE_WRITE);
-		mEventBus = eventBus;
-		mObservedPath = path;
-	}
+    /**
+     * Begin observing the given path for changes
+     * to .ts, .m3u8 and .jpg files
+     *
+     * @param path     the absolute path to observe.
+     * @param eventBus an EventBus to post events to
+     */
+    public HlsFileObserver(String path, EventBus eventBus) {
+        super(path, CLOSE_WRITE);
+        mEventBus = eventBus;
+        mObservedPath = path;
+    }
 
-	@Override
-	public void onEvent(int event, String path) {
-		String ext = path.substring(path.lastIndexOf('.') + 1);
+    @Override
+    public void onEvent(int event, String path) {
+        String ext = path.substring(path.lastIndexOf('.') + 1);
         String absolutePath = mObservedPath + File.separator + path;
-		if(ext.compareTo(M3U8_EXT) == 0){
+        if (ext.compareTo(M3U8_EXT) == 0) {
             if (VERBOSE) Log.i(TAG, "posting manifest written");
             mEventBus.post(new HlsManifestWrittenEvent(absolutePath));
-		}else if(ext.compareTo(TS_EXT) == 0){
+        } else if (ext.compareTo(TS_EXT) == 0) {
             if (VERBOSE) Log.i(TAG, "posting hls segment written");
             mEventBus.post(new HlsSegmentWrittenEvent(absolutePath));
-		}
-	}
+        } else if (ext.compareTo(JPG_EXT) == 0) {
+            mEventBus.post(new ThumbnailWrittenEvent(absolutePath));
+        }
+    }
 
 }
