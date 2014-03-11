@@ -36,23 +36,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Access tokens as needed
  */
 public class KickflipApiClient extends OAuthClient {
-    private static final String TAG = "KickflipApiClient";
     public static final boolean VERBOSE = false;
     public static final boolean DEV_ENDPOINT = false;
-
-    public static String BASE_URL;
     public static final String NEW_USER = "/api/new/user";
     public static final String START_STREAM = "/api/stream/start";
     public static final String STOP_STREAM = "/api/stream/stop";
-    public static enum METHOD {GET, POST}
-
-    static {
-        if(DEV_ENDPOINT)
-            BASE_URL = "http://funkcity.ngrok.com";
-        else
-            BASE_URL = "http://api.kickflip.io";
-    }
-
+    public static final String SET_META = "/api/stream/info";
+    private static final String TAG = "KickflipApiClient";
+    public static String BASE_URL;
     private JsonObjectParser mJsonObjectParser;         // Re-used across requests
     private JsonFactory mJsonFactory;                   // Re-used across requests
 
@@ -116,8 +107,8 @@ public class KickflipApiClient extends OAuthClient {
      *           depending on the Kickflip account type. Implementors should
      *           check if the response is instanceof HlsStream,RtmpStream, etc.
      */
-    public void startStream(final KickflipCallback cb) {
-        startStreamWithUser(getCachedUser(), cb);
+    public void startStream(Stream stream, final KickflipCallback cb) {
+        startStreamWithUser(getCachedUser(), stream, cb);
     }
 
     /**
@@ -128,12 +119,22 @@ public class KickflipApiClient extends OAuthClient {
      *           depending on the Kickflip account type. Implementors should
      *           check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
      */
-    public void startStreamWithUser(User user, final KickflipCallback cb) {
+    public void startStreamWithUser(User user, Stream stream, final KickflipCallback cb) {
         checkNotNull(user);
         // TODO: Be HLS / RTMP Agnostic
         GenericData data = new GenericData();
         data.put("uuid", user.getUUID());
-        post(BASE_URL + START_STREAM,  new UrlEncodedContent(data), HlsStream.class, cb);
+        data.put("private", stream.isPrivate());
+        if (stream.getTitle() != null) {
+            data.put("title", stream.getTitle());
+        }
+        if (stream.getDescription() != null) {
+            data.put("description", stream.getDescription());
+        }
+        if (stream.getExtraInfo() != null) {
+            data.put("extra_info", stream.getExtraInfo());
+        }
+        post(BASE_URL + START_STREAM, new UrlEncodedContent(data), HlsStream.class, cb);
     }
 
     /**
@@ -152,6 +153,47 @@ public class KickflipApiClient extends OAuthClient {
         post(BASE_URL + STOP_STREAM, new UrlEncodedContent(data), HlsStream.class, cb);
     }
 
+    /**
+     * Request to send Stream meta data.
+     *
+     * @param stream
+     * @param cb
+     */
+    public void setStreamInfo(Stream stream, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        if (stream.getTitle() != null) {
+            data.put("title", stream.getTitle());
+        }
+        if (stream.getDescription() != null) {
+            data.put("description", stream.getDescription());
+        }
+        if (stream.getExtraInfo() != null) {
+            data.put("extra_info", stream.getExtraInfo());
+        }
+        if (stream.getLatitude() != 0) {
+            data.put("lat", stream.getLatitude());
+        }
+        if (stream.getLongitude() != 0) {
+            data.put("lon", stream.getLongitude());
+        }
+        if (stream.getCity() != null) {
+            data.put("city", stream.getCity());
+        }
+        if (stream.getState() != null) {
+            data.put("state", stream.getState());
+        }
+        if (stream.getCountry() != null) {
+            data.put("country", stream.getCountry());
+        }
+
+        if (stream.getThumbnailUrl() != null) {
+            data.put("thumbnail_url", stream.getThumbnailUrl());
+        }
+
+        data.put("private", stream.isPrivate());
+
+        post(BASE_URL + SET_META, new UrlEncodedContent(data), Stream.class, cb);
+    }
 
     /**
      * Do a GET Request, creating a new user if necessary
@@ -198,7 +240,8 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     private void request(HttpRequestFactory requestFactory, final METHOD method, final String url, final HttpContent content, final Class responseClass, final KickflipCallback cb) {
-        if (VERBOSE) Log.i(TAG, String.format("Attempting %S : %s body: %s", method, url, (content == null ? "" : content.toString() )));
+        if (VERBOSE)
+            Log.i(TAG, String.format("Attempting %S : %s body: %s", method, url, (content == null ? "" : content.toString())));
         try {
             HttpRequest request = null;
             switch (method) {
@@ -250,14 +293,14 @@ public class KickflipApiClient extends OAuthClient {
     /**
      * Verify HTTP response was successful
      * and pass to handleKickflipResponse.
-     *
+     * <p/>
      * If we have an HttpResponse at all, it means
      * the status code was < 300, so as far as http inspection
      * goes, this method simply enforces status code of 200
      *
      * @param response
      * @param responseClass
-     * @param cb Must not be null
+     * @param cb            Must not be null
      * @throws IOException
      */
     private void handleHttpResponse(HttpResponse response, Class<? extends Response> responseClass, KickflipCallback cb) throws IOException {
@@ -275,6 +318,7 @@ public class KickflipApiClient extends OAuthClient {
 
     /**
      * Parse the HttpResponse as the appropriate Response subclass
+     *
      * @param response
      * @param responseClass
      * @param cb
@@ -293,7 +337,7 @@ public class KickflipApiClient extends OAuthClient {
 //            kickFlipResponse = response.parseAs(User.class);
 //        }
 
-        if(kickFlipResponse == null || !kickFlipResponse.isSuccessful()){
+        if (kickFlipResponse == null || !kickFlipResponse.isSuccessful()) {
             cb.onError(response);
         } else
             cb.onSuccess(kickFlipResponse);
@@ -352,6 +396,15 @@ public class KickflipApiClient extends OAuthClient {
         if (mJsonObjectParser == null)
             mJsonObjectParser = new JsonObjectParser(getJsonFactory());
         return mJsonObjectParser;
+    }
+
+    public static enum METHOD {GET, POST}
+
+    static {
+        if (DEV_ENDPOINT)
+            BASE_URL = "http://funkcity.ngrok.com";
+        else
+            BASE_URL = "http://api.kickflip.io";
     }
 
 }

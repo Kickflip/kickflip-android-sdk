@@ -5,21 +5,27 @@ import android.os.Environment;
 import java.io.File;
 import java.util.UUID;
 
+import io.kickflip.sdk.api.json.Stream;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Created by davidbrodsky on 1/22/14.
+ * Configuration information for a Broadcasting or Recording session.
+ * Includes meta data, video + audio encoding
+ * and muxing parameters
  */
-public class RecorderConfig {
+public class SessionConfig {
 
-    private Muxer mMuxer;
     private final VideoEncoderConfig mVideoConfig;
     private final AudioEncoderConfig mAudioConfig;
-
     private final UUID mUUID;
+    private Muxer mMuxer;
+    private Stream mStream;
+    private boolean mIsAdaptiveBitrate;
+    private boolean mAttachLocation;
 
-    public RecorderConfig(){
+    public SessionConfig() {
         mVideoConfig = new VideoEncoderConfig(1280, 720, 2 * 1000 * 1000);
         mAudioConfig = new AudioEncoderConfig(1, 44100, 96 * 1000);
 
@@ -30,56 +36,109 @@ public class RecorderConfig {
         File outputFile = new File(outputDir, String.format("kf_%d.m3u8", System.currentTimeMillis()));
         outputDir.mkdir();
         mMuxer = FFmpegMuxer.create(outputFile.getAbsolutePath(), Muxer.FORMAT.MPEG4);
+        mStream = new Stream();
     }
 
-    public RecorderConfig(UUID uuid, Muxer muxer, VideoEncoderConfig videoConfig, AudioEncoderConfig audioConfig) {
+    public SessionConfig(UUID uuid, Muxer muxer, VideoEncoderConfig videoConfig, AudioEncoderConfig audioConfig) {
         mVideoConfig = checkNotNull(videoConfig);
         mAudioConfig = checkNotNull(audioConfig);
 
         mMuxer = checkNotNull(muxer);
         mUUID = uuid;
+        mStream = new Stream();
     }
 
-    public UUID getUUID(){
+    public UUID getUUID() {
         return mUUID;
     }
 
-    public Muxer getMuxer(){
+    public Muxer getMuxer() {
         return mMuxer;
     }
 
-    public String getOutputPath(){
+    public Stream getStream() {
+        return mStream;
+    }
+
+    public String getOutputPath() {
         return mMuxer.getOutputPath();
     }
 
-    public int getTotalBitrate(){
+    public int getTotalBitrate() {
         return mVideoConfig.getBitRate() + mAudioConfig.getBitrate();
     }
 
-    public int getVideoWidth(){
+    public int getVideoWidth() {
         return mVideoConfig.getWidth();
     }
 
-    public int getVideoHeight(){
+    public int getVideoHeight() {
         return mVideoConfig.getHeight();
     }
 
-    public int getVideoBitrate(){
+    public int getVideoBitrate() {
         return mVideoConfig.getBitRate();
     }
 
-    public int getNumAudioChannels(){
+    public int getNumAudioChannels() {
         return mAudioConfig.getNumChannels();
     }
 
-    public int getAudioBitrate(){
+    public int getAudioBitrate() {
         return mAudioConfig.getBitrate();
     }
 
-    public int getAudioSamplerate(){
+    public int getAudioSamplerate() {
         return mAudioConfig.getSampleRate();
     }
 
+    public String getExtraInfo() {
+        return mStream.getExtraInfo();
+    }
+
+    public void setExtraInfo(String extraInfo) {
+        mStream.setExtraInfo(extraInfo);
+    }
+
+    public boolean isAdaptiveBitrate() {
+        return mIsAdaptiveBitrate;
+    }
+
+    public void setUseAdaptiveBitrate(boolean useAdaptiveBit) {
+        this.mIsAdaptiveBitrate = useAdaptiveBit;
+    }
+
+    public boolean shouldAttachLocation() {
+        return mAttachLocation;
+    }
+
+    public boolean isPrivate() {
+        return mStream.isPrivate();
+    }
+
+    public void setPrivate(boolean mPrivate) {
+        mStream.setIsPrivate(mPrivate);
+    }
+
+    public String getDescription() {
+        return mStream.getDescription();
+    }
+
+    public void setDescription(String description) {
+        mStream.setDescription(description);
+    }
+
+    public String getTitle() {
+        return mStream.getTitle();
+    }
+
+    public void setTitle(String title) {
+        mStream.setTitle(title);
+    }
+
+    public void setAttachLocation(boolean mAttachLocation) {
+        this.mAttachLocation = mAttachLocation;
+    }
 
     public static class Builder {
         private int mWidth;
@@ -93,45 +152,52 @@ public class RecorderConfig {
         private Muxer mMuxer;
 
         private UUID mUUID;
+        private String mTitle;
+        private String mDescription;
+        private boolean mPrivate;
+        private boolean mAttachLocation;
+        private boolean mAdaptiveStreaming;
+        private String mExtraInfo;
 
         /**
-         * Configure a RecorderConfig quickly with intelligent path interpretation.
+         * Configure a SessionConfig quickly with intelligent path interpretation.
          * Valid inputs are "/path/to/name.m3u8", "/path/to/name.mp4", "rtmp://path/to/endpoint"
-         *
+         * <p/>
          * For file-based outputs (.m3u8, .mp4) the file structure is managed
          * by a recording UUID.
-         *
+         * <p/>
          * Given an absolute file-based outputLocation like:
-         *
+         * <p/>
          * /sdcard/test.m3u8
-         *
+         * <p/>
          * the output will be available in:
-         *
+         * <p/>
          * /sdcard/<UUID>/test.m3u8
          * /sdcard/<UUID>/test0.ts
          * /sdcard/<UUID>/test1.ts
          * ...
-         *
+         * <p/>
          * You can query the final outputLocation after building with
-         * RecorderConfig.getOutputPath()
+         * SessionConfig.getOutputPath()
          *
          * @param outputLocation desired output location. For file based recording,
          *                       recordings will be stored at <outputLocationParent>/<UUID>/<outputLocationFileName>
          */
-        public Builder(String outputLocation){
+        public Builder(String outputLocation) {
             setAVDefaults();
+            setMetaDefaults();
             mUUID = UUID.randomUUID();
 
-            if(outputLocation.contains("rtmp://")){
+            if (outputLocation.contains("rtmp://")) {
                 mMuxer = FFmpegMuxer.create(outputLocation, Muxer.FORMAT.RTMP);
-            }else if(outputLocation.contains(".flv") /*|| outputLocation.contains("f4v") */){
+            } else if (outputLocation.contains(".flv") /*|| outputLocation.contains("f4v") */) {
                 mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.RTMP);
-            }else if(outputLocation.contains(".m3u8")){
+            } else if (outputLocation.contains(".m3u8")) {
                 mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.HLS);
-            }else if(outputLocation.contains(".mp4")){
+            } else if (outputLocation.contains(".mp4")) {
                 mMuxer = AndroidMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
                 //mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
-            }else
+            } else
                 throw new RuntimeException("Unexpected muxer output. Expected a .mp4, .m3u8, or rtmp url: " + outputLocation);
 
         }
@@ -139,10 +205,12 @@ public class RecorderConfig {
         /**
          * Use this builder to manage file hierarchy manually
          * or to provide your own Muxer
+         *
          * @param muxer
          */
         public Builder(Muxer muxer) {
             setAVDefaults();
+            setMetaDefaults();
             mMuxer = checkNotNull(muxer);
             mUUID = UUID.randomUUID();
         }
@@ -154,7 +222,7 @@ public class RecorderConfig {
          * @param outputPath a desired storage location like /path/filename.ext
          * @return a File pointing to /path/UUID/filename.ext
          */
-        private String createRecordingPath(String outputPath){
+        private String createRecordingPath(String outputPath) {
             File desiredFile = new File(outputPath);
             String desiredFilename = desiredFile.getName();
             File outputDir = new File(desiredFile.getParent(), mUUID.toString());
@@ -162,7 +230,7 @@ public class RecorderConfig {
             return new File(outputDir, desiredFilename).getAbsolutePath();
         }
 
-        private void setAVDefaults(){
+        private void setAVDefaults() {
             mWidth = 1280;
             mHeight = 720;
             mVideoBitrate = 2 * 1000 * 1000;
@@ -172,8 +240,44 @@ public class RecorderConfig {
             mNumAudioChannels = 1;
         }
 
+        private void setMetaDefaults() {
+            mPrivate = false;
+            mAttachLocation = false;
+            mAdaptiveStreaming = true;
+        }
+
         public Builder withMuxer(Muxer muxer) {
             mMuxer = checkNotNull(muxer);
+            return this;
+        }
+
+        public Builder withTitle(String title) {
+            mTitle = title;
+            return this;
+        }
+
+        public Builder withDescription(String description) {
+            mDescription = description;
+            return this;
+        }
+
+        public Builder withPrivateVisibility(boolean isPrivate) {
+            mPrivate = isPrivate;
+            return this;
+        }
+
+        public Builder withLocation(boolean attachLocation) {
+            mAttachLocation = attachLocation;
+            return this;
+        }
+
+        public Builder withAdaptiveStreaming(boolean adaptiveStreaming) {
+            mAdaptiveStreaming = adaptiveStreaming;
+            return this;
+        }
+
+        public Builder withExtraInfo(String extraInfo) {
+            mExtraInfo = extraInfo;
             return this;
         }
 
@@ -198,16 +302,25 @@ public class RecorderConfig {
             return this;
         }
 
-        public Builder withAudioChannels(int numChannels){
+        public Builder withAudioChannels(int numChannels) {
             checkArgument(numChannels == 0 || numChannels == 1);
             mNumAudioChannels = numChannels;
             return this;
         }
 
-        public RecorderConfig build() {
-            return new RecorderConfig(mUUID, mMuxer,
+        public SessionConfig build() {
+            SessionConfig session = new SessionConfig(mUUID, mMuxer,
                     new VideoEncoderConfig(mWidth, mHeight, mVideoBitrate),
                     new AudioEncoderConfig(mNumAudioChannels, mAudioSamplerate, mAudioBitrate));
+
+            session.setTitle(mTitle);
+            session.setDescription(mDescription);
+            session.setPrivate(mPrivate);
+            session.setUseAdaptiveBitrate(mAdaptiveStreaming);
+            session.setAttachLocation(mAttachLocation);
+            session.setExtraInfo(mExtraInfo);
+
+            return session;
         }
 
 

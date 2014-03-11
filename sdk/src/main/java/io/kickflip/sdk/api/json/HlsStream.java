@@ -17,18 +17,6 @@ public class HlsStream extends Stream {
     @Key("aws_secret_key")
     private String mAwsSecret;
 
-    @Key("upload_url")
-    private String mUploadUrl;
-
-    @Key("stream_url")
-    private String mStreamUrl;
-
-    @Key("kickflip_url")
-    private String mKickflipUrl;
-
-    @Key("chat_url")
-    private String mChatUrl;
-
     public String getBucket() {
         return mBucket;
     }
@@ -41,21 +29,6 @@ public class HlsStream extends Stream {
         return mAwsSecret;
     }
 
-    public String getUploadUrl() {
-        return mUploadUrl;
-    }
-
-    public String getStreaUrl() {
-        return mStreamUrl;
-    }
-
-    public String getKickflipUrl() {
-        return mKickflipUrl;
-    }
-
-    public String getChatUrl() {
-        return mChatUrl;
-    }
 
     /**
      * Convenience method that returns Amazon
@@ -67,7 +40,7 @@ public class HlsStream extends Stream {
     }
 
     public String toString(){
-        return "Bucket: " + getBucket() + " streamUrl " + getStreaUrl();
+        return "Bucket: " + getBucket() + " streamUrl " + getStreamUrl();
     }
 
 //    {

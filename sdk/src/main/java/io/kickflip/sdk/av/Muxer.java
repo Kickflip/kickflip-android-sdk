@@ -55,7 +55,7 @@ public abstract class Muxer {
      */
     public int addTrack(MediaFormat trackFormat){
         mNumTracks++;
-        return 0;
+        return mNumTracks - 1;
     }
 
     /**
@@ -125,7 +125,7 @@ public abstract class Muxer {
     /**
      * Does this Muxer's format require
      * copying and buffering encoder output buffers.
-     * Generally speaking, Is the output a Socket or File?
+     * Generally speaking, is the output a Socket or File?
      * @return
      */
     protected boolean formatRequiresBuffering(){

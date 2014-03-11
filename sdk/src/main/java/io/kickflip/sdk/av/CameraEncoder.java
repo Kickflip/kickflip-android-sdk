@@ -44,7 +44,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private int mFrameNum;
     private VideoEncoderCore mVideoEncoder;
     private Camera mCamera;
-    private RecorderConfig mRecorderConfig;
+    private SessionConfig mSessionConfig;
     private float[] mTransform = new float[16];
     private int mCurrentFilter;
     private int mNewFilter;
@@ -77,7 +77,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private int mThumbnailScaleFactor;
     private int mThumbnailRequestedOnFrame;
 
-    public CameraEncoder(RecorderConfig config) {
+    public CameraEncoder(SessionConfig config) {
         mEncodedFirstFrame = false;
         mReadyForFrames = false;
         mRecording = false;
@@ -92,13 +92,13 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mThumbnailRequested = false;
         mThumbnailRequestedOnFrame = -1;
 
-        mRecorderConfig = checkNotNull(config);
+        mSessionConfig = checkNotNull(config);
         mEglSaver = new EglStateSaver();
         startEncodingThread();
     }
 
-    public RecorderConfig getConfig() {
-        return mRecorderConfig;
+    public SessionConfig getConfig() {
+        return mSessionConfig;
     }
 
     /**
@@ -374,7 +374,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 }
 
                 if (mIncomingSizeUpdated) {
-                    mFullScreen.getProgram().setTexSize(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight());
+                    mFullScreen.getProgram().setTexSize(mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
                     mIncomingSizeUpdated = false;
                 }
 
@@ -416,7 +416,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     private void saveFrameAsImage() {
         try {
-            File recordingDir = new File(mRecorderConfig.getMuxer().getOutputPath()).getParentFile();
+            File recordingDir = new File(mSessionConfig.getMuxer().getOutputPath()).getParentFile();
             File imageFile = new File(recordingDir, String.format("%d.jpg", System.currentTimeMillis()));
             mInputWindowSurface.saveFrame(imageFile, mThumbnailScaleFactor);
         } catch (IOException e) {
@@ -509,17 +509,17 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mTextureId = textureId;
                 mFullScreen = new FullFrameRect(
                         new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
-                mFullScreen.getProgram().setTexSize(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight());
+                mFullScreen.getProgram().setTexSize(mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
                 mIncomingSizeUpdated = true;
                 mSurfaceTexture.attachToGLContext(mTextureId);
                 //mEglSaver.makeNothingCurrent();
             } else {
                 // We're setting up the intial SurfaceTexure pre-recording
                 prepareEncoder(mEglSaver.getSavedEGLContext(),
-                        mRecorderConfig.getVideoWidth(),
-                        mRecorderConfig.getVideoHeight(),
-                        mRecorderConfig.getVideoBitrate(),
-                        mRecorderConfig.getMuxer());
+                        mSessionConfig.getVideoWidth(),
+                        mSessionConfig.getVideoHeight(),
+                        mSessionConfig.getVideoBitrate(),
+                        mSessionConfig.getMuxer());
                 mTextureId = textureId;
                 mSurfaceTexture = new SurfaceTexture(mTextureId);
                 if (VERBOSE)
@@ -590,7 +590,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     }
 
     private void openAndAttachCameraToSurfaceTexture() {
-        openCamera(mRecorderConfig.getVideoWidth(), mRecorderConfig.getVideoHeight(), mDesiredCamera);
+        openCamera(mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight(), mDesiredCamera);
         try {
             mCamera.setPreviewTexture(mSurfaceTexture);
             mCamera.startPreview();

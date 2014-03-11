@@ -9,14 +9,14 @@ public class AVRecorder {
 
     protected CameraEncoder mCamEncoder;
     protected MicrophoneEncoder mMicEncoder;
-    private RecorderConfig mConfig;
+    private SessionConfig mConfig;
     private boolean mIsRecording;
 
-    public AVRecorder(RecorderConfig config){
+    public AVRecorder(SessionConfig config){
         init(config);
     }
 
-    private void init(RecorderConfig config){
+    private void init(SessionConfig config){
         mCamEncoder = new CameraEncoder(config);
         mMicEncoder = new MicrophoneEncoder(config);
         mConfig = config;
@@ -59,7 +59,7 @@ public class AVRecorder {
         mMicEncoder.stopRecording();
     }
 
-    public void reset(RecorderConfig config){
+    public void reset(SessionConfig config){
         init(mConfig);
     }
 

@@ -30,7 +30,7 @@ public class MicrophoneEncoder implements Runnable{
     private long mStartTimeNs;
     private boolean mRecordingRequested;
 
-    public MicrophoneEncoder(RecorderConfig config){
+    public MicrophoneEncoder(SessionConfig config){
         mEncoderCore = new AudioEncoderCore(config.getNumAudioChannels(),
                 config.getAudioBitrate(),
                 config.getAudioSamplerate(),

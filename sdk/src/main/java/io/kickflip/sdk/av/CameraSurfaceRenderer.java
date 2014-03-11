@@ -1,6 +1,5 @@
 package io.kickflip.sdk.av;
 
-import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -9,7 +8,6 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import io.kickflip.sdk.GLCameraView;
-import io.kickflip.sdk.R;
 
 
 class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
@@ -55,7 +53,7 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         mCameraTextureId = -1;
         mFrameCount = -1;
 
-        RecorderConfig config = recorder.getConfig();
+        SessionConfig config = recorder.getConfig();
         mIncomingWidth = config.getVideoWidth();
         mIncomingHeight = config.getVideoHeight();
         mIncomingSizeUpdated = true;        // Force texture size update on next onDrawFrame

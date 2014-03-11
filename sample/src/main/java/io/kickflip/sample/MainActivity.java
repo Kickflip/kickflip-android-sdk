@@ -9,6 +9,7 @@ import java.io.File;
 
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.Kickflip;
+import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.fragment.BroadcastFragment;
 
 
@@ -16,7 +17,7 @@ public class MainActivity extends Activity implements  MainFragmentInteractionLi
     private static final String TAG = "MainActivity";
 
     // By default, Kickflip stores video in a "Kickflip" directory on external storage
-    private String mRecordingOutputPath = new File(Environment.getExternalStorageDirectory(), "MySampleApp").getAbsolutePath();
+    private String mRecordingOutputPath = new File(Environment.getExternalStorageDirectory(), "MySampleApp/index.m3u8").getAbsolutePath();
 
     private BroadcastListener mBroadcastListener = new BroadcastListener() {
         @Override
@@ -34,7 +35,8 @@ public class MainActivity extends Activity implements  MainFragmentInteractionLi
             Log.i(TAG, "onBroadcastStop");
 
             // If you're manually injecting the BroadcastFragment,
-            // here is where you'll want to remove/replace BroadcastFragment
+            // you'll want to remove/replace BroadcastFragment
+            // when the Broadcast is over.
 
             //getFragmentManager().beginTransaction()
             //    .replace(R.id.container, MainFragment.newInstance())
@@ -60,7 +62,15 @@ public class MainActivity extends Activity implements  MainFragmentInteractionLi
         }
 
         Kickflip.setupWithApiKey(SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
-        Kickflip.setOutputDirectory(mRecordingOutputPath);
+        SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
+                .withTitle("Sample Broadcast")
+                .withDescription("Testing stuff out")
+                .withExtraInfo("Extra String data")
+                .withPrivateVisibility(false)
+                .withLocation(true)
+                .withVideoResolution(1280, 720)
+                .build();
+        Kickflip.setSessionConfig(config);
     }
 
     @Override
@@ -83,7 +93,7 @@ public class MainActivity extends Activity implements  MainFragmentInteractionLi
         // register your BroadcastListener with Kickflip
         Kickflip.setBroadcastListener(mBroadcastListener);
         getFragmentManager().beginTransaction()
-                .replace(R.id.container, BroadcastFragment.newInstance(mRecordingOutputPath))
+                .replace(R.id.container, BroadcastFragment.newInstance())
                 .commit();
     }
 }

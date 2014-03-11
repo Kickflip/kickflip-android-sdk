@@ -16,10 +16,12 @@ import java.util.ArrayDeque;
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.FileUtils;
 import io.kickflip.sdk.HlsFileObserver;
+import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.api.KickflipApiClient;
 import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.HlsStream;
 import io.kickflip.sdk.api.json.Response;
+import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.api.json.User;
 import io.kickflip.sdk.api.s3.S3Client;
 import io.kickflip.sdk.api.s3.S3Manager;
@@ -30,6 +32,7 @@ import io.kickflip.sdk.events.HlsManifestWrittenEvent;
 import io.kickflip.sdk.events.HlsSegmentWrittenEvent;
 import io.kickflip.sdk.events.MuxerFinishedEvent;
 import io.kickflip.sdk.events.S3UploadEvent;
+import io.kickflip.sdk.events.StreamLocationAddedEvent;
 import io.kickflip.sdk.events.ThumbnailWrittenEvent;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -43,13 +46,14 @@ public class Broadcaster extends AVRecorder {
     private static final String TAG = "Broadcaster";
     private static final boolean VERBOSE = true;
 
+    private Context mContext;
     private KickflipApiClient mKickflip;
     private User mUser;
     private HlsStream mStream;
     private HlsFileObserver mFileObserver;
     private S3Client mS3Client;
     private ArrayDeque<Pair<String, File>> mUploadQueue;
-    private RecorderConfig mConfig;
+    private SessionConfig mConfig;
     private BroadcastListener mBroadcastListener;
     private EventBus mEventBus;
     private boolean mReadyToBroadcast;                                  // Kickflip user registered and endpoint ready
@@ -63,8 +67,9 @@ public class Broadcaster extends AVRecorder {
     private static final int MIN_BITRATE = 3 * 100 * 1000;              // 300 kbps
 
 
-    public Broadcaster(Context context, RecorderConfig config, String API_KEY, String API_SECRET) {
+    public Broadcaster(Context context, SessionConfig config, String API_KEY, String API_SECRET) {
         super(config);
+        mContext = context;
         checkArgument(API_KEY != null && API_SECRET != null);
         mLastManifestLength = 0;
         mNumSegmentsWritten = 0;
@@ -114,19 +119,11 @@ public class Broadcaster extends AVRecorder {
     public void startRecording() {
         super.startRecording();
         mCamEncoder.requestThumbnailOnFrame(60, 2);
-        mKickflip.startStream(new KickflipCallback() {
+        mKickflip.startStream(mConfig.getStream(), new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
-                checkArgument(response instanceof HlsStream);
-                mStream = (HlsStream) response;
-                if (VERBOSE) Log.i(TAG, "Got hls start stream response " + response);
-                mS3Client = new S3Client(mStream.getBasicAWSCredentials(), mEventBus);
-                mS3Client.setBucket(mStream.getBucket());
-                mReadyToBroadcast = true;
-                submitQueuedUploadsToS3();
-                mEventBus.post(new BroadcastIsBufferingEvent());
-                if (mBroadcastListener != null)
-                    mBroadcastListener.onBroadcastStart();
+                checkArgument(response instanceof HlsStream, "Got unexpected StartStream Response");
+                onGotStreamResponse((HlsStream) response);
             }
 
             @Override
@@ -134,6 +131,22 @@ public class Broadcaster extends AVRecorder {
                 Log.w(TAG, "Error getting start stream response! " + response);
             }
         });
+    }
+
+    private void onGotStreamResponse(HlsStream stream) {
+        mStream = stream;
+        if(mConfig.shouldAttachLocation()) {
+            Kickflip.addLocationToStream(mContext, mStream, mEventBus);
+        }
+        if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
+        mS3Client = new S3Client(mStream.getBasicAWSCredentials(), mEventBus);
+        mS3Client.setBucket(mStream.getBucket());
+        mReadyToBroadcast = true;
+        submitQueuedUploadsToS3();
+        mEventBus.post(new BroadcastIsBufferingEvent());
+        if (mBroadcastListener != null) {
+            mBroadcastListener.onBroadcastStart();
+        }
     }
 
     public boolean isLive() {
@@ -166,10 +179,12 @@ public class Broadcaster extends AVRecorder {
             onManifestUploaded(uploadEvent);
         } else if (uploadEvent.getUrl().contains(".ts")) {
             onSegmentUploaded(uploadEvent);
+        } else if (uploadEvent.getUrl().contains(".jpg")) {
+            onThumbnailUploaded(uploadEvent);
         }
     }
 
-    public void onSegmentUploaded(S3UploadEvent uploadEvent) {
+    private void onSegmentUploaded(S3UploadEvent uploadEvent) {
         try {
             if (Build.VERSION.SDK_INT >= 19) {
                 // Adjust video encoder bitrate per bandwidth of just-completed upload
@@ -177,7 +192,7 @@ public class Broadcaster extends AVRecorder {
                     Log.i(TAG, "Bandwidth: " + uploadEvent.getUploadByteRate() / 1000.0 + " KBps Birate: " + ((mVideoBitrate + mConfig.getAudioBitrate()) / 8 * 1000.0) + " KBps");
                 if (uploadEvent.getUploadByteRate() < (((mVideoBitrate + mConfig.getAudioBitrate()) / 8))) {
                     // The new bitrate is equal to the last upload bandwidth, never exceeding MIN_BITRATE, or the
-                    // bitrate intially provided in RecorderConfig
+                    // bitrate intially provided in SessionConfig
                     mVideoBitrate = Math.max(Math.min(uploadEvent.getUploadByteRate(), mConfig.getVideoBitrate()), MIN_BITRATE);
                     if (VERBOSE)
                         Log.i(TAG, String.format("Adjusting encoder bitrate. Bandwidth: %f KBps, Bitrate: %f KBps, New Bitrate: %f KBps",
@@ -191,13 +206,25 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
-    public void onManifestUploaded(S3UploadEvent uploadEvent) {
+    private void onManifestUploaded(S3UploadEvent uploadEvent) {
         if (!mSentBroadcastLiveEvent) {
             mEventBus.post(new BroadcastIsLiveEvent(((HlsStream) mStream).getKickflipUrl()));
             mSentBroadcastLiveEvent = true;
             if (mBroadcastListener != null)
                 mBroadcastListener.onBroadcastLive(((HlsStream) mStream).getKickflipUrl());
         }
+    }
+
+    private void onThumbnailUploaded(S3UploadEvent uploadEvent) {
+        if(mStream != null) {
+            mStream.setThumbnailUrl(uploadEvent.getUrl());
+            sendStreamMetaData();
+        }
+    }
+
+    @Subscribe
+    public void onStreamLocationAdded(StreamLocationAddedEvent event) {
+        sendStreamMetaData();
     }
 
     @Subscribe
@@ -241,6 +268,22 @@ public class Broadcaster extends AVRecorder {
         // this seems better than nulling and recreating Broadcaster
         // since it should be usable as a static object for
         // bg recording
+    }
+
+    private void sendStreamMetaData() {
+        if(mStream != null) {
+            mKickflip.setStreamInfo(mStream, new KickflipCallback() {
+                @Override
+                public void onSuccess(Response response) {
+                    if (VERBOSE) Log.i(TAG, "Got SetStreamInfo response " + (Stream) response);
+                }
+
+                @Override
+                public void onError(Object response) {
+                    if (VERBOSE) Log.i(TAG, "Got SetStreamInfo error " + response);
+                }
+            });
+        }
     }
 
     private String keyForFilename(String fileName) {

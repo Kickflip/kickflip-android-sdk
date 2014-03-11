@@ -22,15 +22,12 @@ import android.widget.TextView;
 
 import com.google.common.eventbus.Subscribe;
 
-import java.io.File;
-
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.GLCameraEncoderView;
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
 import io.kickflip.sdk.Share;
 import io.kickflip.sdk.av.Broadcaster;
-import io.kickflip.sdk.av.RecorderConfig;
 import io.kickflip.sdk.events.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.events.BroadcastIsLiveEvent;
 
@@ -54,15 +51,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     }
 
     public static BroadcastFragment newInstance() {
-        return newInstance(null);
-    }
-
-    public static BroadcastFragment newInstance(String outputPath) {
-        if (VERBOSE) Log.i(TAG, "newInstance");
-        // Ensure we're creating a new Broadcaster for each new Fragment
         mBroadcaster = null;
-        if (outputPath != null)
-            Kickflip.setOutputDirectory(outputPath);
         return new BroadcastFragment();
     }
 
@@ -71,9 +60,10 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (VERBOSE) Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         if (!Kickflip.readyToBroadcast()) {
-            Log.e(TAG, "Kickflip not properly prepared by BroadcastFragment's onCreate. Output path: " + Kickflip.getOutputDir() + " key " + Kickflip.getApiKey() + " secret " + Kickflip.getApiSecret());
-        } else
+            Log.e(TAG, "Kickflip not properly prepared by BroadcastFragment's onCreate. SessionConfig: " + Kickflip.getRecorderConfig() + " key " + Kickflip.getApiKey() + " secret " + Kickflip.getApiSecret());
+        } else {
             setupBroadcaster();
+        }
     }
 
     @Override
@@ -149,17 +139,11 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             if (mBroadcaster == null) {
                 if (VERBOSE)
-                    Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getOutputDir() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
+                    Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getRecorderConfig().getOutputPath() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
                 // TODO: Don't start recording until stream start response, so we can determine stream type...
-                File outputFile = new File(new File(Kickflip.getOutputDir()), "index.m3u8");
+                //File outputFile = new File(new File(Kickflip.getOutputDirectory()), "index.m3u8");
                 Context context = getActivity().getApplicationContext();
-                RecorderConfig config = new RecorderConfig.Builder(outputFile.getAbsolutePath())
-                        .withVideoResolution(1280, 720)
-                        .withVideoBitrate(2 * 1000 * 1000)
-                        .withAudioBitrate(96 * 1000)
-                        .build();
-
-                mBroadcaster = new Broadcaster(context, config, Kickflip.getApiKey(), Kickflip.getApiSecret());
+                mBroadcaster = new Broadcaster(context, Kickflip.getRecorderConfig(), Kickflip.getApiKey(), Kickflip.getApiSecret());
                 mBroadcaster.getEventBus().register(this);
                 mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
             }
