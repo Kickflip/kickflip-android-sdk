@@ -1,4 +1,4 @@
-package io.kickflip.sample;
+package io.kickflip.sample.fragment;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -13,6 +13,11 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.TextView;
 
+import io.kickflip.sample.MainFragmentInteractionListener;
+import io.kickflip.sample.R;
+import io.kickflip.sample.SECRETS;
+import io.kickflip.sdk.api.KickflipApiClient;
+
 public class MainFragment extends Fragment {
     private static final String TAG = "MainFragment";
     private MainFragmentInteractionListener mListener;
@@ -20,6 +25,8 @@ public class MainFragment extends Fragment {
     TextView mTitleView;
     TextView mSubtitle;
     Button mButton;
+
+    private KickflipApiClient mKickflip;
 
     public static enum EVENT { START_BROADCAST };
 
@@ -50,6 +57,62 @@ public class MainFragment extends Fragment {
                         mListener.onFragmentEvent(EVENT.START_BROADCAST);
                 }
             });
+
+            mKickflip = new KickflipApiClient(getActivity(), SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
+
+//            root.findViewById(R.id.searchUserButton).setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    mKickflip.getBroadcastsByUser(mKickflip.getCachedUser(), "jackrubycamshow-cq1nb9", new KickflipCallback() {
+//                        @Override
+//                        public void onSuccess(Response response) {
+//                            Log.i(TAG, "SearchUser success " + response);
+//                        }
+//
+//                        @Override
+//                        public void onError(Object response) {
+//                            Log.i(TAG, "SearchUser error " + response);
+//                        }
+//                    });
+//                }
+//            });
+//
+//            root.findViewById(R.id.searchKeywordButton).setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    mKickflip.getBroadcastsByKeyword(mKickflip.getCachedUser(), "test", new KickflipCallback() {
+//                        @Override
+//                        public void onSuccess(Response response) {
+//                            Log.i(TAG, "SearchKeyword success " + response);
+//                        }
+//
+//                        @Override
+//                        public void onError(Object response) {
+//                            Log.i(TAG, "SearchKeyword error " + response);
+//                        }
+//                    });
+//
+//                }
+//            });
+
+//            root.findViewById(R.id.searchGeoButton).setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    mKickflip.getBroadcastsByLocation(mKickflip.getCachedUser(), 40.07380574f, -75.46044873f, 0, new KickflipCallback() {
+//                        @Override
+//                        public void onSuccess(Response response) {
+//                            Log.i(TAG, "SearchGeo success " + (StreamList) response);
+//                        }
+//
+//                        @Override
+//                        public void onError(Object response) {
+//                            Log.i(TAG, "SearchGeo error " + response);
+//                        }
+//                    });
+//
+//                }
+//            });
+
             mTitleView = (TextView) root.findViewById(R.id.title);
             mSubtitle = (TextView) root.findViewById(R.id.subtitle);
             mButton = (Button) root.findViewById(R.id.broadcastButton);

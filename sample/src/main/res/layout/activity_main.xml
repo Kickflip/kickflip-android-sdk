@@ -3,6 +3,6 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="io.kickflip.sample.MainActivity"
+    tools:context="io.kickflip.sample.activity.MainActivity"
     tools:ignore="MergeRootFrame"/>
 

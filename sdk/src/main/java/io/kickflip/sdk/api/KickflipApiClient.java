@@ -23,6 +23,7 @@ import java.util.HashMap;
 import io.kickflip.sdk.api.json.HlsStream;
 import io.kickflip.sdk.api.json.Response;
 import io.kickflip.sdk.api.json.Stream;
+import io.kickflip.sdk.api.json.StreamList;
 import io.kickflip.sdk.api.json.User;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -37,11 +38,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class KickflipApiClient extends OAuthClient {
     public static final boolean VERBOSE = false;
-    public static final boolean DEV_ENDPOINT = false;
+    public static final boolean DEV_ENDPOINT = true;
     public static final String NEW_USER = "/api/new/user";
     public static final String START_STREAM = "/api/stream/start";
     public static final String STOP_STREAM = "/api/stream/stop";
     public static final String SET_META = "/api/stream/info";
+    public static final String SEARCH = "/api/search";
+    public static final String SEARCH_USER = "/api/search/user";
+    public static final String SEARCH_GEO = "/api/search/location";
     private static final String TAG = "KickflipApiClient";
     public static String BASE_URL;
     private JsonObjectParser mJsonObjectParser;         // Re-used across requests
@@ -65,7 +69,9 @@ public class KickflipApiClient extends OAuthClient {
         if (!credentialsAcquired()) {
             createNewUser(cb);
         } else {
-            cb.onSuccess(getCachedUser());
+            if (cb != null) {
+                cb.onSuccess(getCachedUser());
+            }
             if (VERBOSE)
                 Log.i(TAG, "Credentials stored " + getAWSCredentials());
         }
@@ -147,9 +153,16 @@ public class KickflipApiClient extends OAuthClient {
     public void stopStream(User user, Stream stream, final KickflipCallback cb) {
         checkNotNull(stream);
         // TODO: Be HLS / RTMP Agnostic
+        // TODO: Add start / stop lat lon to Stream?
         GenericData data = new GenericData();
         data.put("stream_id", stream.getStreamId());
         data.put("uuid", user.getUUID());
+        if(stream.getLatitude() != 0) {
+            data.put("lat", stream.getLatitude());
+        }
+        if(stream.getLongitude() != 0) {
+            data.put("lon", stream.getLongitude());
+        }
         post(BASE_URL + STOP_STREAM, new UrlEncodedContent(data), HlsStream.class, cb);
     }
 
@@ -161,6 +174,9 @@ public class KickflipApiClient extends OAuthClient {
      */
     public void setStreamInfo(Stream stream, final KickflipCallback cb) {
         GenericData data = new GenericData();
+        data.put("stream_id", stream.getStreamId());
+        // TODO: Allow feeding User as argument
+        data.put("uuid", getCachedUser().getUUID());
         if (stream.getTitle() != null) {
             data.put("title", stream.getTitle());
         }
@@ -193,6 +209,49 @@ public class KickflipApiClient extends OAuthClient {
         data.put("private", stream.isPrivate());
 
         post(BASE_URL + SET_META, new UrlEncodedContent(data), Stream.class, cb);
+    }
+
+    /**
+     * Get broadcasts created by a particular username
+     * @param user
+     * @param cb
+     */
+    public void getBroadcastsByUser(User user, String username, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        data.put("uuid", user.getUUID());
+        data.put("username", username);
+        post(BASE_URL + SEARCH_USER, new UrlEncodedContent(data), StreamList.class, cb);
+    }
+
+    /**
+     * Get broadcasts containing a keyword
+     * @param user
+     * @param cb
+     */
+    public void getBroadcastsByKeyword(User user, String keyword, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        data.put("uuid", user.getUUID());
+        data.put("keyword", keyword);
+        post(BASE_URL + SEARCH, new UrlEncodedContent(data), StreamList.class, cb);
+    }
+
+    /**
+     * Get broadcasts created near a particular location
+     * @param user
+     * @param lat
+     * @param lon
+     * @param radius
+     * @param cb
+     */
+    public void getBroadcastsByLocation(User user, float lat, float lon, int radius, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        data.put("uuid", user.getUUID());
+        data.put("lat", lat);
+        data.put("lon", lon);
+        if(radius != 0) {
+            data.put("radius", radius);
+        }
+        post(BASE_URL + SEARCH_GEO, new UrlEncodedContent(data), StreamList.class, cb);
     }
 
     /**
@@ -282,10 +341,12 @@ public class KickflipApiClient extends OAuthClient {
                                 httpException.getStatusCode(),
                                 httpException.getMessage()));
                 }
+                cb.onError(exception);
             } catch (ClassCastException e) {
                 // A non-HTTP releated error occured.
                 Log.w(TAG, String.format("Unhandled Error: %s. Stack trace follows:", e.getMessage()));
                 exception.printStackTrace();
+                cb.onError(e);
             }
         }
     }
@@ -374,7 +435,7 @@ public class KickflipApiClient extends OAuthClient {
      *
      * @return
      */
-    private User getCachedUser() {
+    public User getCachedUser() {
         SharedPreferences prefs = getStorage();
         return new User(
                 prefs.getString("app_name", ""),

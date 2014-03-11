@@ -1,4 +1,4 @@
-package io.kickflip.sample;
+package io.kickflip.sample.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -7,13 +7,18 @@ import android.util.Log;
 
 import java.io.File;
 
+import io.kickflip.sample.MainFragmentInteractionListener;
+import io.kickflip.sample.R;
+import io.kickflip.sample.SECRETS;
+import io.kickflip.sample.fragment.MainFragment;
+import io.kickflip.sample.fragment.StreamListFragment;
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.fragment.BroadcastFragment;
 
 
-public class MainActivity extends Activity implements  MainFragmentInteractionListener {
+public class MainActivity extends Activity implements MainFragmentInteractionListener, StreamListFragment.StreamListFragmentInteractionListener {
     private static final String TAG = "MainActivity";
 
     // By default, Kickflip stores video in a "Kickflip" directory on external storage
@@ -57,9 +62,12 @@ public class MainActivity extends Activity implements  MainFragmentInteractionLi
 
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
+//                    .replace(R.id.container, new StreamListFragment())
                     .replace(R.id.container, MainFragment.newInstance())
                     .commit();
         }
+
+
 
         Kickflip.setupWithApiKey(SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
         SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
@@ -95,5 +103,14 @@ public class MainActivity extends Activity implements  MainFragmentInteractionLi
         getFragmentManager().beginTransaction()
                 .replace(R.id.container, BroadcastFragment.newInstance())
                 .commit();
+    }
+
+    /**
+     * Listener for StreamListFragment
+     * @param id
+     */
+    @Override
+    public void onFragmentInteraction(String id) {
+
     }
 }

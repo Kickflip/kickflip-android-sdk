@@ -138,6 +138,10 @@ public class Broadcaster extends AVRecorder {
         if(mConfig.shouldAttachLocation()) {
             Kickflip.addLocationToStream(mContext, mStream, mEventBus);
         }
+        mStream.setTitle(mConfig.getTitle());
+        mStream.setDescription(mConfig.getDescription());
+        mStream.setExtraInfo(mConfig.getExtraInfo());
+        mStream.setIsPrivate(mConfig.isPrivate());
         if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
         mS3Client = new S3Client(mStream.getBasicAWSCredentials(), mEventBus);
         mS3Client.setBucket(mStream.getBucket());

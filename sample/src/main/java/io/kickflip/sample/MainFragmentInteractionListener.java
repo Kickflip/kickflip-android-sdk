@@ -1,5 +1,7 @@
 package io.kickflip.sample;
 
+import io.kickflip.sample.fragment.MainFragment;
+
 /**
  * All activities used with MainActivity implement this interface
  * for communication.

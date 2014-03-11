@@ -45,6 +45,7 @@ if (project.hasProperty('keyPassword')) {
 }
 
 dependencies {
+    compile 'com.squareup.picasso:picasso:2.2.0'
+    compile 'com.android.support:support-v4:+'
     compile project(':sdk')
-
 }

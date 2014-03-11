@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="io.kickflip.sample.MainFragment"
+    tools:context="io.kickflip.sample.fragment.MainFragment"
     android:animateLayoutChanges="true">
 
     <TextView
@@ -42,5 +42,6 @@
         android:fontFamily="sans-serif-condensed"
         android:visibility="invisible"
         android:layout_centerInParent="true"/>
+
 
 </RelativeLayout>
