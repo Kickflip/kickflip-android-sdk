@@ -2,8 +2,6 @@ package io.kickflip.sdk;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.Window;
 
 import io.kickflip.sdk.fragment.BroadcastFragment;
@@ -13,7 +11,7 @@ public class BroadcastActivity extends Activity implements BroadcastListener{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
+        getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_broadcast);
 
         if (savedInstanceState == null) {

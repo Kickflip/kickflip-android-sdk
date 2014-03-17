@@ -1,8 +1,15 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="android:Theme.Holo.Light.NoActionBar">
+    <style name="AppTheme" parent="android:Theme.Holo.Light">
         <item name="android:windowBackground">@color/kickflip_green</item>
+        <item name="android:actionBarStyle">@style/KFActionBar</item>
+        <item name="android:actionMenuTextColor">@color/kickflip_white</item>
+        <item name="android:windowActionBarOverlay">false</item>
+    </style>
+
+    <style name="KFActionBar" parent="@android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:background">@color/kickflip_green</item>
     </style>
 
 </resources>

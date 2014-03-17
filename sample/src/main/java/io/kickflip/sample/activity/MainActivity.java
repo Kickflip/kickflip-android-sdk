@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import java.io.File;
 
@@ -57,13 +59,13 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        getActionBar().setTitle("");
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
-//                    .replace(R.id.container, new StreamListFragment())
-                    .replace(R.id.container, MainFragment.newInstance())
+                    .replace(R.id.container, new StreamListFragment())
+//                    .replace(R.id.container, MainFragment.newInstance())
                     .commit();
         }
 
@@ -79,6 +81,22 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
                 .withVideoResolution(1280, 720)
                 .build();
         Kickflip.setSessionConfig(config);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu (Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected (MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_broadcast:
+                Kickflip.startBroadcastActivity(this, mBroadcastListener);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

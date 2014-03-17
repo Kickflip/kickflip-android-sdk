@@ -3,10 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingTop="?android:attr/actionBarSize"
     tools:context="io.kickflip.sample.fragment.StreamListFragment">
 
     <ListView
         android:id="@android:id/list"
+        android:dividerHeight="0dp"
+        android:divider="@android:color/transparent"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
