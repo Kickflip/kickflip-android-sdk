@@ -4,6 +4,7 @@
     
     <item android:id="@+id/action_broadcast"
         android:title="@string/action_broadcast"
+        android:icon="@drawable/ic_broadcast"
         android:orderInCategory="100"
         android:showAsAction="always" />
 </menu>

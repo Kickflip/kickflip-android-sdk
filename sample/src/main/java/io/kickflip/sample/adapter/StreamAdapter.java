@@ -16,7 +16,9 @@ import io.kickflip.sample.R;
 import io.kickflip.sdk.api.json.Stream;
 
 /**
- * Created by davidbrodsky on 3/11/14.
+ * StreamAdapter connects a List of Streams
+ * to an Adapter backed view like ListView or GridView
+ *
  */
 public class StreamAdapter extends ArrayAdapter<Stream> {
 
@@ -28,22 +30,32 @@ public class StreamAdapter extends ArrayAdapter<Stream> {
 
     public View getView(int position, View convertView, ViewGroup parent) {
         Stream stream = getItem(position);
+        ViewHolder holder;
         if (convertView == null) {
             convertView = ((LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(LAYOUT_ID, null);
-        }
-
-        ImageView imageView = (ImageView) convertView.findViewById(R.id.image);
-        TextView titleView = (TextView) convertView.findViewById(R.id.title);
-        TextView subTitleView = (TextView) convertView.findViewById(R.id.subTitle);
-
-        if(stream.getThumbnailUrl() != null && stream.getThumbnailUrl().compareTo("") != 0 ){
-            Picasso.with(getContext()).load(stream.getThumbnailUrl()).into(imageView);
+            holder = new ViewHolder();
+            holder.imageView = (ImageView) convertView.findViewById(R.id.image);
+            holder.titleView = (TextView) convertView.findViewById(R.id.title);
+            holder.subTitleView = (TextView) convertView.findViewById(R.id.subTitle);
+            convertView.setTag(holder);
         } else {
-            imageView.setImageResource(R.drawable.play);
+            holder = (ViewHolder) convertView.getTag();
         }
-        titleView.setText(stream.getTitle());
-        subTitleView.setText(stream.getCity());
+
+        if (stream.getThumbnailUrl() != null && stream.getThumbnailUrl().compareTo("") != 0) {
+            Picasso.with(getContext()).load(stream.getThumbnailUrl()).into(holder.imageView);
+        } else {
+            holder.imageView.setImageResource(R.drawable.play);
+        }
+        holder.titleView.setText(stream.getTitle());
+        holder.subTitleView.setText(stream.getCity());
 
         return convertView;
+    }
+
+    public static class ViewHolder {
+        ImageView imageView;
+        TextView titleView;
+        TextView subTitleView;
     }
 }

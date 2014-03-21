@@ -2,45 +2,40 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:background="@drawable/card_btn_bg"
+    android:padding="8dp"
+    android:layout_margin="8dp">
 
     <ImageView
         android:id="@+id/image"
         android:layout_width="match_parent"
         android:layout_height="200dp"
+        android:src="@drawable/play"
         android:scaleType="centerCrop" />
-
-    <TextView
-        android:id="@+id/subTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@id/image"
-        android:layout_alignParentLeft="true"
-        android:paddingLeft="8dp"
-        android:fontFamily="sans-serif-condensed"
-        android:shadowColor="#000000"
-        android:shadowDx="-2"
-        android:shadowDy="-2"
-        android:shadowRadius="8"
-        android:text="SubTitle"
-        android:textColor="@color/kickflip_white"
-        android:textSize="18sp" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@id/subTitle"
+        android:layout_below="@id/image"
         android:layout_alignParentLeft="true"
-        android:paddingLeft="8dp"
         android:fontFamily="sans-serif-condensed"
-        android:shadowColor="#000000"
-        android:shadowDx="-2"
-        android:shadowDy="-2"
-        android:shadowRadius="8"
         android:text="Title"
-        android:textColor="@color/kickflip_white"
+        android:textStyle="bold"
+        android:textColor="@color/text"
         android:textSize="22sp" />
+
+    <TextView
+        android:id="@+id/subTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title"
+        android:layout_alignParentLeft="true"
+        android:fontFamily="sans-serif-condensed"
+        android:text="SubTitle"
+        android:textColor="@color/text_subdued"
+        android:textSize="18sp" />
 
 
 </RelativeLayout>

@@ -59,7 +59,7 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getActionBar().setTitle("");
+        getActionBar().setDisplayShowHomeEnabled(false);
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
