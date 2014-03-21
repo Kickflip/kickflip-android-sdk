@@ -43,6 +43,7 @@ public class Kickflip {
         checkNotNull(sSessionConfig, host.getString(R.string.error_no_recorderconfig));
         sBroadcastListener = listener;
         Intent broadcastIntent = new Intent(host, BroadcastActivity.class);
+        broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
         host.startActivity(broadcastIntent);
     }
 

@@ -7,6 +7,7 @@ import android.view.Window;
 import io.kickflip.sdk.fragment.BroadcastFragment;
 
 public class BroadcastActivity extends Activity implements BroadcastListener{
+    public static final String TAG = "BroadcastActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

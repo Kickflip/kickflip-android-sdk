@@ -69,13 +69,9 @@ public class Broadcaster extends AVRecorder {
 
     public Broadcaster(Context context, SessionConfig config, String API_KEY, String API_SECRET) {
         super(config);
-        mContext = context;
         checkArgument(API_KEY != null && API_SECRET != null);
-        mLastManifestLength = 0;
-        mNumSegmentsWritten = 0;
-        mSentBroadcastLiveEvent = false;
-        mEventBus = new EventBus("Broadcaster");
-        mEventBus.register(this);
+        init();
+        mContext = context;
         mConfig = config;
         mConfig.getMuxer().setEventBus(mEventBus);
         mVideoBitrate = mConfig.getVideoBitrate();
@@ -105,6 +101,14 @@ public class Broadcaster extends AVRecorder {
                     mBroadcastListener.onBroadcastError();
             }
         });
+    }
+
+    private void init() {
+        mLastManifestLength = 0;
+        mNumSegmentsWritten = 0;
+        mSentBroadcastLiveEvent = false;
+        mEventBus = new EventBus("Broadcaster");
+        mEventBus.register(this);
     }
 
     public void setBroadcastListener(BroadcastListener listener) {

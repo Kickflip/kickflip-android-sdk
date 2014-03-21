@@ -65,22 +65,10 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
                     .replace(R.id.container, new StreamListFragment())
-//                    .replace(R.id.container, MainFragment.newInstance())
                     .commit();
         }
 
-
-
         Kickflip.setupWithApiKey(SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
-        SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
-                .withTitle("Sample Broadcast")
-                .withDescription("Testing stuff out")
-                .withExtraInfo("Extra String data")
-                .withPrivateVisibility(false)
-                .withLocation(true)
-                .withVideoResolution(1280, 720)
-                .build();
-        Kickflip.setSessionConfig(config);
     }
 
     @Override
@@ -93,7 +81,7 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
     public boolean onOptionsItemSelected (MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_broadcast:
-                Kickflip.startBroadcastActivity(this, mBroadcastListener);
+                startBroadcastingActivity();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -101,7 +89,7 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
 
     @Override
     public void onFragmentEvent(MainFragment.EVENT event) {
-        Kickflip.startBroadcastActivity(this, mBroadcastListener);
+        startBroadcastingActivity();
     }
 
     /**
@@ -117,6 +105,7 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
     public void startBroadcastFragment(){
         // Before using the BroadcastFragment, be sure to
         // register your BroadcastListener with Kickflip
+        configureNewBroadcast();
         Kickflip.setBroadcastListener(mBroadcastListener);
         getFragmentManager().beginTransaction()
                 .replace(R.id.container, BroadcastFragment.newInstance())
@@ -130,5 +119,22 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
     @Override
     public void onFragmentInteraction(String id) {
 
+    }
+
+    private void startBroadcastingActivity() {
+        configureNewBroadcast();
+        Kickflip.startBroadcastActivity(this, mBroadcastListener);
+    }
+
+    private void configureNewBroadcast() {
+        SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
+                .withTitle("Sample Broadcast")
+                .withDescription("Testing stuff out")
+                .withExtraInfo("Extra String data")
+                .withPrivateVisibility(false)
+                .withLocation(true)
+                .withVideoResolution(1280, 720)
+                .build();
+        Kickflip.setSessionConfig(config);
     }
 }
