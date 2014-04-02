@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,11 +32,14 @@ import io.kickflip.sdk.api.json.StreamList;
  * with a GridView.
  * <p/>
  */
-public class StreamListFragment extends Fragment implements AbsListView.OnItemClickListener {
+public class StreamListFragment extends Fragment implements AbsListView.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener {
+    public static final String TAG = "StreamListFragment";
 
     private StreamListFragmentInteractionListener mListener;
+    private SwipeRefreshLayout mSwipeLayout;
     private KickflipApiClient mKickflip;
     private List<Stream> mStreams;
+    private boolean mRefreshing;
 
     /**
      * The fragment's ListView/GridView.
@@ -59,8 +63,12 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mKickflip = new KickflipApiClient(getActivity(), SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         getStreams();
     }
 
@@ -72,6 +80,13 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
         // Set the adapter
         mListView = (AbsListView) view.findViewById(android.R.id.list);
         mListView.setEmptyView(view.findViewById(android.R.id.empty));
+
+        mSwipeLayout = (SwipeRefreshLayout) view.findViewById(R.id.refreshLayout);
+        mSwipeLayout.setOnRefreshListener(this);
+        mSwipeLayout.setColorScheme(R.color.kickflip_green,
+                R.color.kickflip_green_shade_2,
+                R.color.kickflip_green_shade_3,
+                R.color.kickflip_green_shade_4);
 
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
@@ -107,6 +122,7 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
     }
 
     private void getStreams() {
+        mRefreshing = true;
         mKickflip.getBroadcastsByKeyword(mKickflip.getCachedUser(), "test", new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
@@ -120,7 +136,8 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
                         mListView.setAdapter(mAdapter);
                     }
                 }
-
+                mSwipeLayout.setRefreshing(false);
+                mRefreshing = false;
             }
 
             @Override
@@ -129,6 +146,8 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
                 if (getActivity() != null) {
                     showNetworkError();
                 }
+                mSwipeLayout.setRefreshing(false);
+                mRefreshing = false;
             }
         });
     }
@@ -158,6 +177,14 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
         if (emptyView instanceof TextView) {
             ((TextView) emptyView).setText(text);
         }
+    }
+
+    @Override
+    public void onRefresh() {
+        if (!mRefreshing) {
+            getStreams();
+        }
+
     }
 
     /**

@@ -52,4 +52,6 @@ dependencies {
 }
 
 // Maven publish task
-apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
+// Uncomment this line to enable publishing to Maven Central. Requires maven
+// credentials in gradle.properties
+//apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'

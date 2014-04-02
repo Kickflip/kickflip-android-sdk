@@ -223,9 +223,9 @@ public class FFmpegMuxer extends Muxer implements Runnable{
             // Don't write Audio END_OF_STREAM packet. It causes a crash in av_dup_packet. TODO: Check if this is resolved...
             if (trackIndex == mVideoTrackIndex && ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ){
                 packageH264Keyframe(encodedData, bufferInfo);
-                mFFmpeg.writeAVPacketFromEncodedData(mH264Keyframe, 1, bufferInfo.offset, bufferInfo.size + mH264MetaSize, bufferInfo.flags, bufferInfo.presentationTimeUs);
+                mFFmpeg.writeAVPacketFromEncodedData(mH264Keyframe, 1, bufferInfo.offset, bufferInfo.size + mH264MetaSize, bufferInfo.flags, getSafePts(bufferInfo.presentationTimeUs));
             }else
-                mFFmpeg.writeAVPacketFromEncodedData(encodedData, (trackIndex == mVideoTrackIndex ? 1 : 0), bufferInfo.offset, bufferInfo.size, bufferInfo.flags, bufferInfo.presentationTimeUs);
+                mFFmpeg.writeAVPacketFromEncodedData(encodedData, (trackIndex == mVideoTrackIndex ? 1 : 0), bufferInfo.offset, bufferInfo.size, bufferInfo.flags, getSafePts(bufferInfo.presentationTimeUs));
         }else{
             Log.i(TAG, "Skipping last audio packet");
         }

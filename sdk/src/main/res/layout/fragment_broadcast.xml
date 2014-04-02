@@ -12,7 +12,7 @@
 
     <Spinner
         android:id="@+id/filterSpinner"
-        android:background="@drawable/card_btn_bg"
+        android:background="@drawable/effects_bg"
         android:alpha=".7"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
@@ -22,8 +22,8 @@
         android:tag="filter"
         android:spinnerMode="dialog"
         android:prompt="@string/effects_chooser_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_width="50dp"
+        android:layout_height="50dp"/>
 
 
     <ImageButton
@@ -34,8 +34,8 @@
         android:background="@android:color/transparent"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_marginTop="@dimen/status_bar_margin"
         android:layout_marginRight="10dp"
         android:layout_marginBottom="0dp"/>
@@ -56,16 +56,16 @@
         android:layout_width="wrap_content"
         android:layout_height="70dp"
         android:layout_marginTop="@dimen/status_bar_margin"
+        android:layout_marginLeft="0dp"
         android:background="@drawable/live_bg"
         android:fontFamily="sans-serif-condensed"
         android:gravity="center"
-        android:drawableLeft="@drawable/ic_share"
-        android:drawablePadding="8dp"
+        android:drawablePadding="-10dp"
         android:text="@string/live"
         android:clickable="true"
         android:textColor="#FFFFFF"
         android:textSize="30sp"
         android:textStyle="bold|italic"
-        android:visibility="visible" />
+        android:visibility="invisible" />
 
 </RelativeLayout>

@@ -27,6 +27,7 @@ public abstract class Muxer {
     protected String mOutputPath;
     protected int mNumTracks;
     protected int mNumTracksFinished;
+    protected long mLastPts;
 
     private EventBus mEventBus;
 
@@ -36,6 +37,7 @@ public abstract class Muxer {
         mFormat = format;
         mNumTracks = 0;
         mNumTracksFinished = 0;
+        mLastPts = 0;
     }
 
     public void setEventBus(EventBus eventBus){
@@ -135,5 +137,16 @@ public abstract class Muxer {
             default:
                 return false;
         }
+    }
+
+    protected long getSafePts(long pts) {
+        if (mLastPts >= pts) {
+            // Enforce a non-zero minimum spacing
+            // between pts
+            mLastPts += 9643;
+            return mLastPts;
+        }
+        mLastPts = pts;
+        return pts;
     }
 }

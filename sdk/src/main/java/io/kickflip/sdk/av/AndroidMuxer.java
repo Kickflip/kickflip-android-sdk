@@ -94,6 +94,7 @@ public class AndroidMuxer extends Muxer {
             return;
         }
 
+        bufferInfo.presentationTimeUs = getSafePts(bufferInfo.presentationTimeUs);
         mMuxer.writeSampleData(trackIndex, encodedData, bufferInfo);
 
         encoder.releaseOutputBuffer(bufferIndex, false);

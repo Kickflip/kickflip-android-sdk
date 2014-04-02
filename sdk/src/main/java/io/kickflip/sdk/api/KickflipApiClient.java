@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 // TODO: Standardize Kickflip server error responses to have detail message
 public class KickflipApiClient extends OAuthClient {
     public static final boolean VERBOSE = false;
-    public static final boolean DEV_ENDPOINT = true;
+    public static final boolean DEV_ENDPOINT = false;
     public static final String NEW_USER = "/api/new/user";
     public static final String START_STREAM = "/api/stream/start";
     public static final String STOP_STREAM = "/api/stream/stop";
@@ -88,8 +88,8 @@ public class KickflipApiClient extends OAuthClient {
                 .setClientSecret(secret)
                 .setAccessTokenRequestUrl(BASE_URL + "/o/token/")
                 .setAccessTokenAuthorizeUrl(BASE_URL + "/o/authorize/"));
-        initialize(cb);
         mCallbackHandler = new Handler();
+        initialize(cb);
     }
 
     public void initialize(KickflipCallback cb) {
