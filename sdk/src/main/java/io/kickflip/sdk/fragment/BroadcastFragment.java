@@ -40,6 +40,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     private static final boolean VERBOSE = false;
 
     private BroadcastListener mListener;
+    private static BroadcastFragment mFragment;
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
     private GLCameraEncoderView mCameraView;
     private TextView mLiveBanner;
@@ -50,7 +51,19 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (VERBOSE) Log.i(TAG, "construct");
     }
 
-    public static BroadcastFragment newInstance() {
+    public static BroadcastFragment getInstance() {
+        if(mFragment == null) {
+            // We haven't yet created a BroadcastFragment instance
+            mFragment = recreateBroadcastFragment();
+        } else if(mBroadcaster != null && !mBroadcaster.isRecording()) {
+            // We have a leftover BroadcastFragment but it is not recording
+            // Treat it as finished, and recreate
+            mFragment = recreateBroadcastFragment();
+        }
+        return mFragment;
+    }
+
+    private static BroadcastFragment recreateBroadcastFragment() {
         mBroadcaster = null;
         return new BroadcastFragment();
     }
@@ -240,6 +253,15 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     private void hideLiveBanner() {
         mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_to_left));
         mLiveBanner.setVisibility(View.INVISIBLE);
+    }
+
+    /**
+     * Force this fragment to stop broadcasting.
+     * Useful if your application wants to stop broadcasting
+     * when a user leaves the Activity hosting this fragment
+     */
+    public void stopBroadcasting() {
+        mBroadcaster.stopRecording();
     }
 
     View.OnClickListener mRecordButtonClickListener = new View.OnClickListener() {

@@ -46,7 +46,7 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
             // when the Broadcast is over.
 
             //getFragmentManager().beginTransaction()
-            //    .replace(R.id.container, MainFragment.newInstance())
+            //    .replace(R.id.container, MainFragment.getInstance())
             //    .commit();
         }
 
@@ -108,7 +108,7 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
         configureNewBroadcast();
         Kickflip.setBroadcastListener(mBroadcastListener);
         getFragmentManager().beginTransaction()
-                .replace(R.id.container, BroadcastFragment.newInstance())
+                .replace(R.id.container, BroadcastFragment.getInstance())
                 .commit();
     }
 
