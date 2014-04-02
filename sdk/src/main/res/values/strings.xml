@@ -52,4 +52,7 @@
     <string name="error_no_recorderconfig">You must provide a RecorderConfig object before starting the BroadcastActivity. See Kickflip#setRecorderConfig</string>
     <string name="error_no_broadcastlistener">You must provide a BroadcastListener</string>
 
+    <!-- KickflipApiClient -->
+    <string name="generic_error">A Kickflip server error occured</string>
+
 </resources>

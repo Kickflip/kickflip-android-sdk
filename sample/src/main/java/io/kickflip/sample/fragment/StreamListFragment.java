@@ -26,10 +26,10 @@ import io.kickflip.sdk.api.json.StreamList;
 
 /**
  * A fragment representing a list of Items.
- * <p />
+ * <p/>
  * Large screen devices (such as tablets) are supported by replacing the ListView
  * with a GridView.
- * <p />
+ * <p/>
  */
 public class StreamListFragment extends Fragment implements AbsListView.OnItemClickListener {
 
@@ -71,6 +71,7 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
 
         // Set the adapter
         mListView = (AbsListView) view.findViewById(android.R.id.list);
+        mListView.setEmptyView(view.findViewById(android.R.id.empty));
 
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
@@ -85,7 +86,7 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
             mListener = (StreamListFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
-                + " must implement StreamListFragmentInteractionListener");
+                    + " must implement StreamListFragmentInteractionListener");
         }
     }
 
@@ -101,7 +102,7 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
         Stream stream = mAdapter.getItem(position);
 
         Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setDataAndType(Uri.parse(stream.getStreamUrl()),"application/vnd.apple.mpegurl");
+        i.setDataAndType(Uri.parse(stream.getStreamUrl()), "application/vnd.apple.mpegurl");
         startActivity(i);
     }
 
@@ -110,47 +111,65 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
             @Override
             public void onSuccess(Response response) {
                 Log.i("API", "request succeeded " + response);
-                mStreams = ((StreamList) response).getStreams();
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
+                if (getActivity() != null) {
+                    mStreams = ((StreamList) response).getStreams();
+                    if (mStreams.size() == 0) {
+                        showNoBroadcasts();
+                    } else {
                         mAdapter = new StreamAdapter(getActivity(), mStreams);
                         mListView.setAdapter(mAdapter);
                     }
-                });
+                }
 
             }
 
             @Override
             public void onError(Object response) {
                 Log.i("API", "request failed " + response);
+                if (getActivity() != null) {
+                    showNetworkError();
+                }
             }
         });
     }
 
     /**
-     * The default content for this Fragment has a TextView that is shown when
-     * the list is empty. If you would like to change the text, call this method
-     * to supply the text it should use.
+     * Inform the user that a network error has occured
      */
-    public void setEmptyText(CharSequence emptyText) {
+    public void showNetworkError() {
+        setEmptyListViewText(getString(R.string.no_network));
+    }
+
+    /**
+     * Inform the user that no broadcasts were found
+     */
+    public void showNoBroadcasts() {
+        setEmptyListViewText(getString(R.string.no_broadcasts));
+    }
+
+    /**
+     * If the ListView is hidden, show the
+     *
+     * @param text
+     */
+    private void setEmptyListViewText(String text) {
         View emptyView = mListView.getEmptyView();
 
-        if (emptyText instanceof TextView) {
-            ((TextView) emptyView).setText(emptyText);
+        if (emptyView instanceof TextView) {
+            ((TextView) emptyView).setText(text);
         }
     }
 
     /**
-    * This interface must be implemented by activities that contain this
-    * fragment to allow an interaction in this fragment to be communicated
-    * to the activity and potentially other fragments contained in that
-    * activity.
-    * <p>
-    * See the Android Training lesson <a href=
-    * "http://developer.android.com/training/basics/fragments/communicating.html"
-    * >Communicating with Other Fragments</a> for more information.
-    */
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
     public interface StreamListFragmentInteractionListener {
         // TODO: Update argument type and name
         public void onFragmentInteraction(String id);

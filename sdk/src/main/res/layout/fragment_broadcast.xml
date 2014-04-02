@@ -56,14 +56,16 @@
         android:layout_width="wrap_content"
         android:layout_height="70dp"
         android:layout_marginTop="@dimen/status_bar_margin"
-        android:background="@drawable/buffering_bg"
+        android:background="@drawable/live_bg"
         android:fontFamily="sans-serif-condensed"
         android:gravity="center"
+        android:drawableLeft="@drawable/ic_share"
+        android:drawablePadding="8dp"
         android:text="@string/live"
         android:clickable="true"
         android:textColor="#FFFFFF"
         android:textSize="30sp"
         android:textStyle="bold|italic"
-        android:visibility="invisible" />
+        android:visibility="visible" />
 
 </RelativeLayout>

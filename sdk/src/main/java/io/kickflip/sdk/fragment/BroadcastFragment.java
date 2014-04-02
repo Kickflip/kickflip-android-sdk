@@ -200,33 +200,37 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
 
     @Subscribe
     public void onBroadcastIsBuffering(BroadcastIsBufferingEvent event) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                setBannerToBufferingState();
-                showLiveBanner();
-            }
-        });
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    setBannerToBufferingState();
+                    showLiveBanner();
+                }
+            });
+        }
     }
 
     @Subscribe
     public void onBroadcastIsLive(final BroadcastIsLiveEvent liveEvent) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    setBannerToLiveState(liveEvent.getWatchUrl());
-                } catch (Exception e) {
-                    Log.i(TAG, "onBroadcastIsLiveException");
-                    e.printStackTrace();
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        setBannerToLiveState(liveEvent.getWatchUrl());
+                    } catch (Exception e) {
+                        Log.i(TAG, "onBroadcastIsLiveException");
+                        e.printStackTrace();
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private void setBannerToBufferingState() {
         mLiveBanner.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
-        mLiveBanner.setBackgroundResource(R.drawable.buffering_bg);
+        //mLiveBanner.setBackgroundResource(R.drawable.buffering_bg);
         mLiveBanner.setTag(null);
         mLiveBanner.setText(getString(R.string.buffering));
     }
@@ -237,7 +241,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
 
     private void setBannerToLiveState(String watchUrl) {
         mLiveBanner.setBackgroundResource(R.drawable.live_bg);
-        Drawable img = getActivity().getResources().getDrawable(android.R.drawable.ic_menu_share);
+        Drawable img = getActivity().getResources().getDrawable(R.drawable.ic_share);
         mLiveBanner.setCompoundDrawablesWithIntrinsicBounds(img, null, null, null);
         if (watchUrl != null)
             mLiveBanner.setTag(watchUrl);

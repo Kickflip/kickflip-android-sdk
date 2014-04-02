@@ -2,6 +2,7 @@ package io.kickflip.sdk.api;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.util.Log;
 
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -20,6 +21,7 @@ import com.google.api.client.util.GenericData;
 import java.io.IOException;
 import java.util.HashMap;
 
+import io.kickflip.sdk.R;
 import io.kickflip.sdk.api.json.HlsStream;
 import io.kickflip.sdk.api.json.Response;
 import io.kickflip.sdk.api.json.Stream;
@@ -36,6 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * The client will handle acquiring and refreshing the OAuth
  * Access tokens as needed
  */
+// TODO: Standardize Kickflip server error responses to have detail message
 public class KickflipApiClient extends OAuthClient {
     public static final boolean VERBOSE = false;
     public static final boolean DEV_ENDPOINT = true;
@@ -51,10 +54,33 @@ public class KickflipApiClient extends OAuthClient {
     private JsonObjectParser mJsonObjectParser;         // Re-used across requests
     private JsonFactory mJsonFactory;                   // Re-used across requests
 
+    private Handler mCallbackHandler;                   // Ensure callbacks are posted to consistent thread
+
+    public class KickflipApiException extends Exception{
+        public KickflipApiException(String detail) {
+            super(detail);
+        }
+    }
+
+    /**
+     * Construct a KickflipApiClient. All callbacks from this client will occur
+     * on the current calling thread.
+     * @param appContext Your Application Context
+     * @param key Your Kickflip Account Key
+     * @param secret Your Kickflip Account Secret
+     */
     public KickflipApiClient(Context appContext, String key, String secret) {
         this(appContext, key, secret, null);
     }
 
+    /**
+     * Construct a KickflipApiClient. All callbacks from this client will occur
+     * on the current calling thread.
+     * @param appContext Your Application Context
+     * @param key Your Kickflip Account Key
+     * @param secret Your Kickflip Account Secret
+     * @param cb A callback to be notified when the provided Kickflip credentials are verified
+     */
     public KickflipApiClient(Context appContext, String key, String secret, KickflipCallback cb) {
         super(appContext, new OAuthConfig()
                 .setCredentialStoreName("KF")
@@ -63,15 +89,14 @@ public class KickflipApiClient extends OAuthClient {
                 .setAccessTokenRequestUrl(BASE_URL + "/o/token/")
                 .setAccessTokenAuthorizeUrl(BASE_URL + "/o/authorize/"));
         initialize(cb);
+        mCallbackHandler = new Handler();
     }
 
     public void initialize(KickflipCallback cb) {
         if (!credentialsAcquired()) {
             createNewUser(cb);
         } else {
-            if (cb != null) {
-                cb.onSuccess(getCachedUser());
-            }
+            postResponseToCallback(cb, getCachedUser());
             if (VERBOSE)
                 Log.i(TAG, "Credentials stored " + getAWSCredentials());
         }
@@ -87,19 +112,17 @@ public class KickflipApiClient extends OAuthClient {
     public void createNewUser(final KickflipCallback cb) {
         post(BASE_URL + NEW_USER, User.class, new KickflipCallback() {
             @Override
-            public void onSuccess(Response response) {
+            public void onSuccess(final Response response) {
                 if (VERBOSE)
                     Log.i(TAG, "createNewUser response: " + response);
                 storeNewUserResponse((User) response);
-                if (cb != null)
-                    cb.onSuccess(response);
+                postResponseToCallback(cb, response);
             }
 
             @Override
-            public void onError(Object response) {
+            public void onError(final Object response) {
                 Log.w(TAG, "createNewUser Error: " + response);
-                if (cb != null)
-                    cb.onError(response);
+                postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
             }
         });
     }
@@ -314,7 +337,7 @@ public class KickflipApiClient extends OAuthClient {
                     break;
             }
             handleHttpResponse(request.execute(), responseClass, cb);
-        } catch (IOException exception) {
+        } catch (final IOException exception) {
             // First try to handle as HttpResponseException
             try {
                 HttpResponseException httpException = (HttpResponseException) exception;
@@ -341,12 +364,12 @@ public class KickflipApiClient extends OAuthClient {
                                 httpException.getStatusCode(),
                                 httpException.getMessage()));
                 }
-                cb.onError(exception);
+                postExceptionToCallback(cb, exception);
             } catch (ClassCastException e) {
                 // A non-HTTP releated error occured.
                 Log.w(TAG, String.format("Unhandled Error: %s. Stack trace follows:", e.getMessage()));
                 exception.printStackTrace();
-                cb.onError(e);
+                postExceptionToCallback(cb, exception);
             }
         }
     }
@@ -373,7 +396,7 @@ public class KickflipApiClient extends OAuthClient {
             //cb.onSuccess(responseClass.cast(parsedResponse));
         } else {
             // Http Failure
-            cb.onError(response);
+            postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
         }
     }
 
@@ -399,9 +422,10 @@ public class KickflipApiClient extends OAuthClient {
 //        }
 
         if (kickFlipResponse == null || !kickFlipResponse.isSuccessful()) {
-            cb.onError(response);
-        } else
-            cb.onSuccess(kickFlipResponse);
+            postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
+        } else {
+            postResponseToCallback(cb, kickFlipResponse);
+        }
     }
 
     private void storeNewUserResponse(User response) {
@@ -466,6 +490,28 @@ public class KickflipApiClient extends OAuthClient {
             BASE_URL = "http://funkcity.ngrok.com";
         else
             BASE_URL = "http://api.kickflip.io";
+    }
+
+    private void postExceptionToCallback(final KickflipCallback cb, final Exception e) {
+        if (cb != null) {
+            mCallbackHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    cb.onError(e);
+                }
+            });
+        }
+    }
+
+    private void postResponseToCallback(final KickflipCallback cb, final Response response) {
+        if (cb != null) {
+            mCallbackHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    cb.onSuccess(response);
+                }
+            });
+        }
     }
 
 }

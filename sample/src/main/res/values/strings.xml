@@ -9,4 +9,8 @@
     <string name="record">Record</string>
     <string name="stop">Stop</string>
 
+    <!-- StreamListFragment strings displayed when ListView is empty -->
+    <string name="no_network">Unable to contact Kicklip</string>
+    <string name="no_broadcasts">You don\'t have any broadcasts… yet!</string>
+
 </resources>
