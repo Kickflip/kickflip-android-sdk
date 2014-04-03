@@ -8,6 +8,10 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -38,13 +42,63 @@ import io.kickflip.sdk.events.BroadcastIsLiveEvent;
 public class BroadcastFragment extends Fragment implements AdapterView.OnItemSelectedListener {
     private static final String TAG = "BroadcastFragment";
     private static final boolean VERBOSE = false;
-
-    private BroadcastListener mListener;
     private static BroadcastFragment mFragment;
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
     private GLCameraEncoderView mCameraView;
     private TextView mLiveBanner;
 
+    View.OnClickListener mShareButtonClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (v.getTag() != null) {
+                Intent shareIntent = Share.createShareChooserIntentWithTitleAndUrl(getActivity(), getString(R.string.share_broadcast), (String) v.getTag());
+                startActivity(shareIntent);
+            }
+        }
+    };
+
+    private BroadcastListener mListener;
+    View.OnClickListener mRecordButtonClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mBroadcaster.isRecording()) {
+                mBroadcaster.stopRecording();
+                hideLiveBanner();
+                if (mListener != null)
+                    mListener.onBroadcastStop();
+            } else {
+                mBroadcaster.startRecording();
+                v.setBackgroundResource(R.drawable.red_dot_stop);
+            }
+        }
+    };
+
+    private SensorEventListener mOrientationListener = new SensorEventListener() {
+        int orientation = -1;
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            if (getActivity() != null) {
+                if (event.values[1] < 6.5 && event.values[1] > -6.5) {
+                    if (orientation != 1) {
+                        Log.d("Sensor", "Landscape");
+                        getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.GONE);
+                    }
+                    orientation = 1;
+                } else {
+                    if (orientation != 0) {
+                        Log.d("Sensor", "Portrait");
+                        getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.VISIBLE);
+                    }
+                    orientation = 0;
+                }
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        }
+    };
 
     public BroadcastFragment() {
         // Required empty public constructor
@@ -52,10 +106,10 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     }
 
     public static BroadcastFragment getInstance() {
-        if(mFragment == null) {
+        if (mFragment == null) {
             // We haven't yet created a BroadcastFragment instance
             mFragment = recreateBroadcastFragment();
-        } else if(mBroadcaster != null && !mBroadcaster.isRecording()) {
+        } else if (mBroadcaster != null && !mBroadcaster.isRecording()) {
             // We have a leftover BroadcastFragment but it is not recording
             // Treat it as finished, and recreate
             mFragment = recreateBroadcastFragment();
@@ -103,14 +157,15 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         super.onResume();
         if (mBroadcaster != null)
             mBroadcaster.onHostActivityResumed();
+        startMonitoringOrientation();
     }
-
 
     @Override
     public void onPause() {
         super.onPause();
         if (mBroadcaster != null)
             mBroadcaster.onHostActivityPaused();
+        stopMonitoringOrientation();
     }
 
     @Override
@@ -268,30 +323,19 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         mBroadcaster.stopRecording();
     }
 
-    View.OnClickListener mRecordButtonClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (mBroadcaster.isRecording()) {
-                mBroadcaster.stopRecording();
-                hideLiveBanner();
-                if (mListener != null)
-                    mListener.onBroadcastStop();
-            } else {
-                mBroadcaster.startRecording();
-                v.setBackgroundResource(R.drawable.red_dot_stop);
-            }
+    private void startMonitoringOrientation() {
+        if (getActivity() != null) {
+            SensorManager sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+            sensorManager.registerListener(mOrientationListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
         }
-    };
+    }
 
-    View.OnClickListener mShareButtonClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (v.getTag() != null) {
-                Intent shareIntent = Share.createShareChooserIntentWithTitleAndUrl(getActivity(), getString(R.string.share_broadcast), (String) v.getTag());
-                startActivity(shareIntent);
-            }
+    private void stopMonitoringOrientation() {
+        if (getActivity() != null) {
+            SensorManager sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+            sensorManager.unregisterListener(mOrientationListener);
         }
-    };
+    }
 
 
 }

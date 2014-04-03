@@ -2,8 +2,6 @@ package io.kickflip.sample.fragment;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
@@ -34,8 +32,9 @@ import io.kickflip.sdk.api.json.StreamList;
  */
 public class StreamListFragment extends Fragment implements AbsListView.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener {
     public static final String TAG = "StreamListFragment";
+    private static final boolean VERBOSE = false;
 
-    private StreamListFragmentInteractionListener mListener;
+    private StreamListFragmenListener mListener;
     private SwipeRefreshLayout mSwipeLayout;
     private KickflipApiClient mKickflip;
     private List<Stream> mStreams;
@@ -80,6 +79,10 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
         // Set the adapter
         mListView = (AbsListView) view.findViewById(android.R.id.list);
         mListView.setEmptyView(view.findViewById(android.R.id.empty));
+        // Why does this selection remain if I long press, release
+        // without activating onListItemClick?
+        //mListView.setSelector(R.drawable.stream_list_selector_overlay);
+        //mListView.setDrawSelectorOnTop(true);
 
         mSwipeLayout = (SwipeRefreshLayout) view.findViewById(R.id.refreshLayout);
         mSwipeLayout.setOnRefreshListener(this);
@@ -98,10 +101,10 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mListener = (StreamListFragmentInteractionListener) activity;
+            mListener = (StreamListFragmenListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
-                    + " must implement StreamListFragmentInteractionListener");
+                    + " must implement StreamListFragmenListener");
         }
     }
 
@@ -115,18 +118,15 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Stream stream = mAdapter.getItem(position);
-
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setDataAndType(Uri.parse(stream.getStreamUrl()), "application/vnd.apple.mpegurl");
-        startActivity(i);
+        mListener.onStreamPlaybackRequested(stream.getStreamUrl());
     }
 
     private void getStreams() {
         mRefreshing = true;
-        mKickflip.getBroadcastsByKeyword(mKickflip.getCachedUser(), "test", new KickflipCallback() {
+        mKickflip.getBroadcastsByUser(mKickflip.getCachedUser(), mKickflip.getCachedUser().getName(), new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
-                Log.i("API", "request succeeded " + response);
+                if (VERBOSE) Log.i("API", "request succeeded " + response);
                 if (getActivity() != null) {
                     mStreams = ((StreamList) response).getStreams();
                     if (mStreams.size() == 0) {
@@ -142,7 +142,7 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
 
             @Override
             public void onError(Object response) {
-                Log.i("API", "request failed " + response);
+                if (VERBOSE) Log.i("API", "request failed " + response);
                 if (getActivity() != null) {
                     showNetworkError();
                 }
@@ -187,19 +187,8 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
 
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface StreamListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        public void onFragmentInteraction(String id);
+    public interface StreamListFragmenListener {
+        public void onStreamPlaybackRequested(String url);
     }
 
 }

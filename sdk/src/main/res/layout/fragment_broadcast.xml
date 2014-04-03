@@ -68,4 +68,13 @@
         android:textStyle="bold|italic"
         android:visibility="invisible" />
 
+    <ImageView
+        android:id="@+id/rotateDeviceHint"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:alpha=".7"
+        android:visibility="gone"
+        android:src="@drawable/rotate_device"/>
+
 </RelativeLayout>

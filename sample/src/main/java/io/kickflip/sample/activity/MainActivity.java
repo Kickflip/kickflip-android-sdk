@@ -1,6 +1,7 @@
 package io.kickflip.sample.activity;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -12,20 +13,18 @@ import java.io.File;
 import io.kickflip.sample.MainFragmentInteractionListener;
 import io.kickflip.sample.R;
 import io.kickflip.sample.SECRETS;
+import io.kickflip.sample.Util;
 import io.kickflip.sample.fragment.MainFragment;
 import io.kickflip.sample.fragment.StreamListFragment;
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.Kickflip;
+import io.kickflip.sdk.MediaPlayerActivity;
 import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.fragment.BroadcastFragment;
 
 
-public class MainActivity extends Activity implements MainFragmentInteractionListener, StreamListFragment.StreamListFragmentInteractionListener {
+public class MainActivity extends Activity implements MainFragmentInteractionListener, StreamListFragment.StreamListFragmenListener {
     private static final String TAG = "MainActivity";
-
-    // By default, Kickflip stores video in a "Kickflip" directory on external storage
-    private String mRecordingOutputPath = new File(Environment.getExternalStorageDirectory(), "MySampleApp/index.m3u8").getAbsolutePath();
-
     private BroadcastListener mBroadcastListener = new BroadcastListener() {
         @Override
         public void onBroadcastStart() {
@@ -55,6 +54,8 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
             Log.i(TAG, "onBroadcastError");
         }
     };
+    // By default, Kickflip stores video in a "Kickflip" directory on external storage
+    private String mRecordingOutputPath = new File(Environment.getExternalStorageDirectory(), "MySampleApp/index.m3u8").getAbsolutePath();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,13 +73,13 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
     }
 
     @Override
-    public boolean onCreateOptionsMenu (Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
-    public boolean onOptionsItemSelected (MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_broadcast:
                 startBroadcastingActivity();
@@ -95,14 +96,13 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
     /**
      * Unused method demonstrating how to use
      * Kickflip's BroadcastFragment.
-     *
+     * <p/>
      * Note that in this scenario your Activity is responsible for
      * removing the BroadcastFragment in your onBroadcastStop callback.
      * When the user stops recording, the BroadcastFragment begins releasing
      * resources and freezes the camera preview.
-     *
      */
-    public void startBroadcastFragment(){
+    public void startBroadcastFragment() {
         // Before using the BroadcastFragment, be sure to
         // register your BroadcastListener with Kickflip
         configureNewBroadcast();
@@ -112,13 +112,18 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
                 .commit();
     }
 
-    /**
-     * Listener for StreamListFragment
-     * @param id
-     */
-    @Override
-    public void onFragmentInteraction(String id) {
 
+    @Override
+    public void onStreamPlaybackRequested(String streamUrl) {
+        // Play with Kickflip's built-in Media Player
+        Intent playbackIntent = new Intent(this, MediaPlayerActivity.class);
+        playbackIntent.putExtra("mediaUrl", streamUrl);
+        startActivity(playbackIntent);
+
+        // Play with system Media Player
+        //Intent i = new Intent(Intent.ACTION_VIEW);
+        //i.setDataAndType(Uri.parse(stream.getStreamUrl()), "application/vnd.apple.mpegurl");
+        //startActivity(i);
     }
 
     private void startBroadcastingActivity() {
@@ -128,9 +133,9 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
 
     private void configureNewBroadcast() {
         SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
-                .withTitle("Sample Broadcast")
-                .withDescription("Testing stuff out")
-                .withExtraInfo("Extra String data")
+                .withTitle(Util.getHumanDateString())
+                .withDescription("Example Description")
+                .withExtraInfo("{'foo': 'bar'}")
                 .withPrivateVisibility(false)
                 .withLocation(true)
                 .withVideoResolution(1280, 720)

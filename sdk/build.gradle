@@ -31,6 +31,8 @@ android {
 
 
 dependencies {
+    compile 'com.google.guava:guava:16.0'
+    compile 'com.android.support:support-v4:19.+'
     // aws-sdk-android
     compile files('libs/aws-android-sdk-1.7.0-core.jar')
     compile files('libs/aws-android-sdk-1.7.0-s3.jar')
@@ -48,7 +50,6 @@ dependencies {
     //compile files('libs/jackson-core-asl-1.9.11.jar')
 
     // guava-libraries
-    compile 'com.google.guava:guava:16.0'
 }
 
 // Maven publish task
