@@ -12,6 +12,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.TextView;
 
+import java.util.Collections;
 import java.util.List;
 
 import io.kickflip.sample.R;
@@ -32,7 +33,7 @@ import io.kickflip.sdk.api.json.StreamList;
  */
 public class StreamListFragment extends Fragment implements AbsListView.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener {
     public static final String TAG = "StreamListFragment";
-    private static final boolean VERBOSE = false;
+    private static final boolean VERBOSE = true;
 
     private StreamListFragmenListener mListener;
     private SwipeRefreshLayout mSwipeLayout;
@@ -66,8 +67,8 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
         getStreams();
     }
 
@@ -123,7 +124,7 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
 
     private void getStreams() {
         mRefreshing = true;
-        mKickflip.getBroadcastsByUser(mKickflip.getCachedUser(), mKickflip.getCachedUser().getName(), new KickflipCallback() {
+        mKickflip.getBroadcastsByKeyword(mKickflip.getCachedUser(), null, new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
                 if (VERBOSE) Log.i("API", "request succeeded " + response);
@@ -132,6 +133,7 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
                     if (mStreams.size() == 0) {
                         showNoBroadcasts();
                     } else {
+                        Collections.sort(mStreams);
                         mAdapter = new StreamAdapter(getActivity(), mStreams);
                         mListView.setAdapter(mAdapter);
                     }

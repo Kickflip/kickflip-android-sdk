@@ -5,7 +5,7 @@ import com.google.api.client.util.Key;
 /**
  * Kickflip base Stream response
  */
-public class Stream extends Response {
+public class Stream extends Response implements Comparable<Stream> {
 
     @Key("stream_id")
     private String mStreamId;
@@ -55,6 +55,12 @@ public class Stream extends Response {
     @Key("thumbnail_url")
     private String mThumbnailUrl;
 
+    @Key("time_started")
+    private String mTimeStarted;
+
+    @Key("length")
+    private int mLength;
+
     public String getThumbnailUrl() {
         return mThumbnailUrl;
     }
@@ -85,6 +91,14 @@ public class Stream extends Response {
 
     public String getKickflipUrl() {
         return mKickflipUrl;
+    }
+
+    public String getTimeStarted() {
+        return mTimeStarted;
+    }
+
+    public int getLengthInSeconds() {
+        return mLength;
     }
 
     public String getExtraInfo() {
@@ -157,6 +171,11 @@ public class Stream extends Response {
 
     public void setDescription(String mDescription) {
         this.mDescription = mDescription;
+    }
+
+    @Override
+    public int compareTo(Stream another) {
+        return another.getTimeStarted().compareTo(getTimeStarted());
     }
 
 //    stream.start_lat = float(request.POST.get("lat", 0))

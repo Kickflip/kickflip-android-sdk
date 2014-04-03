@@ -81,7 +81,7 @@ public abstract class OAuthClient {
      */
     protected void acquireAccessToken(final OAuthCallback cb) {
         if (isAccessTokenCached()) {
-            Log.d(TAG, "Access token cached");
+            if (VERBOSE) Log.d(TAG, "Access token cached");
             if(cb != null){
                 new Thread(new Runnable() {
                     @Override

@@ -3,5 +3,18 @@
     android:pivotX="50%"
     android:pivotY="50%"
     android:toDegrees="360">
-    <bitmap android:src="@drawable/ic_launcher" />
+
+    <shape xmlns:android="http://schemas.android.com/apk/res/android"
+        android:innerRadius="32dp"
+        android:innerRadiusRatio="3"
+        android:shape="ring"
+        android:thickness="10dp"
+        android:useLevel="false">
+
+        <stroke
+            android:width="6dp"
+            android:color="@color/kickflip_green"
+            android:dashGap="4dp"
+            android:dashWidth="12dp" />
+    </shape>
 </rotate>

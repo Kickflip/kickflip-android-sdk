@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 // TODO: Standardize Kickflip server error responses to have detail message
 public class KickflipApiClient extends OAuthClient {
-    public static final boolean VERBOSE = false;
+    public static final boolean VERBOSE = true;
     public static final boolean DEV_ENDPOINT = false;
     public static final String NEW_USER = "/api/new/user";
     public static final String START_STREAM = "/api/stream/start";
@@ -56,18 +56,13 @@ public class KickflipApiClient extends OAuthClient {
 
     private Handler mCallbackHandler;                   // Ensure callbacks are posted to consistent thread
 
-    public class KickflipApiException extends Exception{
-        public KickflipApiException(String detail) {
-            super(detail);
-        }
-    }
-
     /**
      * Construct a KickflipApiClient. All callbacks from this client will occur
      * on the current calling thread.
+     *
      * @param appContext Your Application Context
-     * @param key Your Kickflip Account Key
-     * @param secret Your Kickflip Account Secret
+     * @param key        Your Kickflip Account Key
+     * @param secret     Your Kickflip Account Secret
      */
     public KickflipApiClient(Context appContext, String key, String secret) {
         this(appContext, key, secret, null);
@@ -76,10 +71,11 @@ public class KickflipApiClient extends OAuthClient {
     /**
      * Construct a KickflipApiClient. All callbacks from this client will occur
      * on the current calling thread.
+     *
      * @param appContext Your Application Context
-     * @param key Your Kickflip Account Key
-     * @param secret Your Kickflip Account Secret
-     * @param cb A callback to be notified when the provided Kickflip credentials are verified
+     * @param key        Your Kickflip Account Key
+     * @param secret     Your Kickflip Account Secret
+     * @param cb         A callback to be notified when the provided Kickflip credentials are verified
      */
     public KickflipApiClient(Context appContext, String key, String secret, KickflipCallback cb) {
         super(appContext, new OAuthConfig()
@@ -180,10 +176,10 @@ public class KickflipApiClient extends OAuthClient {
         GenericData data = new GenericData();
         data.put("stream_id", stream.getStreamId());
         data.put("uuid", user.getUUID());
-        if(stream.getLatitude() != 0) {
+        if (stream.getLatitude() != 0) {
             data.put("lat", stream.getLatitude());
         }
-        if(stream.getLongitude() != 0) {
+        if (stream.getLongitude() != 0) {
             data.put("lon", stream.getLongitude());
         }
         post(BASE_URL + STOP_STREAM, new UrlEncodedContent(data), HlsStream.class, cb);
@@ -236,6 +232,7 @@ public class KickflipApiClient extends OAuthClient {
 
     /**
      * Get broadcasts created by a particular username
+     *
      * @param user
      * @param cb
      */
@@ -248,18 +245,22 @@ public class KickflipApiClient extends OAuthClient {
 
     /**
      * Get broadcasts containing a keyword
+     *
      * @param user
      * @param cb
      */
     public void getBroadcastsByKeyword(User user, String keyword, final KickflipCallback cb) {
         GenericData data = new GenericData();
         data.put("uuid", user.getUUID());
-        data.put("keyword", keyword);
+        if (keyword != null) {
+            data.put("keyword", keyword);
+        }
         post(BASE_URL + SEARCH, new UrlEncodedContent(data), StreamList.class, cb);
     }
 
     /**
      * Get broadcasts created near a particular location
+     *
      * @param user
      * @param lat
      * @param lon
@@ -271,7 +272,7 @@ public class KickflipApiClient extends OAuthClient {
         data.put("uuid", user.getUUID());
         data.put("lat", lat);
         data.put("lon", lon);
-        if(radius != 0) {
+        if (radius != 0) {
             data.put("radius", radius);
         }
         post(BASE_URL + SEARCH_GEO, new UrlEncodedContent(data), StreamList.class, cb);
@@ -483,15 +484,6 @@ public class KickflipApiClient extends OAuthClient {
         return mJsonObjectParser;
     }
 
-    public static enum METHOD {GET, POST}
-
-    static {
-        if (DEV_ENDPOINT)
-            BASE_URL = "http://funkcity.ngrok.com";
-        else
-            BASE_URL = "http://api.kickflip.io";
-    }
-
     private void postExceptionToCallback(final KickflipCallback cb, final Exception e) {
         if (cb != null) {
             mCallbackHandler.post(new Runnable() {
@@ -511,6 +503,21 @@ public class KickflipApiClient extends OAuthClient {
                     cb.onSuccess(response);
                 }
             });
+        }
+    }
+
+    public static enum METHOD {GET, POST}
+
+    static {
+        if (DEV_ENDPOINT)
+            BASE_URL = "http://funkcity.ngrok.com";
+        else
+            BASE_URL = "http://api.kickflip.io";
+    }
+
+    public class KickflipApiException extends Exception {
+        public KickflipApiException(String detail) {
+            super(detail);
         }
     }
 

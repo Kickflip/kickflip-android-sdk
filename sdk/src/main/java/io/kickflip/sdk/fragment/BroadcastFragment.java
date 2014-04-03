@@ -78,16 +78,14 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
 
         @Override
         public void onSensorChanged(SensorEvent event) {
-            if (getActivity() != null) {
+            if (getActivity() != null && getActivity().findViewById(R.id.rotateDeviceHint) != null) {
                 if (event.values[1] < 6.5 && event.values[1] > -6.5) {
                     if (orientation != 1) {
-                        Log.d("Sensor", "Landscape");
                         getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.GONE);
                     }
                     orientation = 1;
                 } else {
                     if (orientation != 0) {
-                        Log.d("Sensor", "Portrait");
                         getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.VISIBLE);
                     }
                     orientation = 0;
@@ -188,8 +186,13 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
                 setBannerToLiveState();
                 mLiveBanner.setVisibility(View.VISIBLE);
             }
-            if (mBroadcaster.isRecording())
+            if (mBroadcaster.isRecording()) {
                 recordButton.setBackgroundResource(R.drawable.red_dot_stop);
+                if (!mBroadcaster.isLive()) {
+                    setBannerToBufferingState();
+                    mLiveBanner.setVisibility(View.VISIBLE);
+                }
+            }
             setupFilterSpinner(root);
             setupCameraFlipper(root);
         } else
@@ -260,7 +263,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
                 @Override
                 public void run() {
                     setBannerToBufferingState();
-                    showLiveBanner();
+                    animateLiveBanner();
                 }
             });
         }
@@ -303,7 +306,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         mLiveBanner.setText(getString(R.string.live));
     }
 
-    private void showLiveBanner() {
+    private void animateLiveBanner() {
         mLiveBanner.bringToFront();
         mLiveBanner.startAnimation(AnimationUtils.loadAnimation(getActivity().getApplicationContext(), R.anim.slide_from_left));
         mLiveBanner.setVisibility(View.VISIBLE);

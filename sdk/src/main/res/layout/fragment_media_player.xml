@@ -12,8 +12,8 @@
     <ProgressBar
         android:id="@+id/progress"
         android:indeterminateDrawable="@drawable/kickflip_progress"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:visibility="gone"
         android:indeterminate="true"
         android:layout_gravity="center"/>
