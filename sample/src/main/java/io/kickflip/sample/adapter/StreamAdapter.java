@@ -38,7 +38,6 @@ public class StreamAdapter extends ArrayAdapter<Stream> {
             holder = new ViewHolder();
             holder.imageView = (ImageView) convertView.findViewById(R.id.image);
             holder.titleView = (TextView) convertView.findViewById(R.id.title);
-            holder.subTitleView = (TextView) convertView.findViewById(R.id.subTitle);
             holder.liveBannerView = (TextView) convertView.findViewById(R.id.liveLabel);
             holder.rightTitleView = (TextView) convertView.findViewById(R.id.rightTitle);
             holder.shareButton = (ImageButton) convertView.findViewById(R.id.shareBtn);
@@ -70,7 +69,6 @@ public class StreamAdapter extends ArrayAdapter<Stream> {
             holder.imageView.setImageResource(R.drawable.play);
         }
         holder.titleView.setText(stream.getTitle());
-        holder.subTitleView.setText(stream.getCity());
 
         return convertView;
     }
@@ -78,7 +76,6 @@ public class StreamAdapter extends ArrayAdapter<Stream> {
     public static class ViewHolder {
         ImageView imageView;
         TextView titleView;
-        TextView subTitleView;
         TextView liveBannerView;
         TextView rightTitleView;
         ImageButton shareButton;

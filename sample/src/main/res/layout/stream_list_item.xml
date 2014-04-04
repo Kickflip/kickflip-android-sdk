@@ -13,22 +13,26 @@
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:src="@drawable/play"
+        android:visibility="visible"
         android:scaleType="centerCrop" />
 
     <TextView
         android:id="@+id/liveLabel"
         android:layout_width="70dp"
-        android:layout_height="50dp"
+        android:layout_height="30dp"
+        android:paddingLeft="8dp"
+        android:drawableLeft="@drawable/red_dot_small"
         android:layout_alignLeft="@id/image"
         android:layout_alignTop="@id/image"
         android:background="@drawable/live_bg"
         android:fontFamily="sans-serif-condensed"
         android:text="@string/live"
+        android:drawablePadding="8dp"
         android:textStyle="bold|italic"
         android:textColor="#ffffff"
-        android:gravity="center"
+        android:gravity="left|center_vertical"
         android:textSize="16sp"
-        android:visibility="invisible"
+        android:visibility="visible"
         android:layout_marginTop="8dp"/>
 
     <TextView
@@ -45,14 +49,16 @@
 
     <ImageButton
         android:id="@+id/shareBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:paddingLeft="20dp"
+        android:paddingBottom="20dp"
         android:onClick="onShareBtnClick"
         android:focusable="false"
         android:focusableInTouchMode="false"
-        android:background="@drawable/transparent_btn_bg"
+        android:background="@drawable/right_upper_corner_btn_bg"
         android:src="@drawable/ic_share_dark"
-        android:layout_below="@id/rightTitle"
+        android:layout_alignTop="@id/image"
         android:layout_alignParentRight="true"/>
 
 
@@ -68,20 +74,5 @@
         android:textStyle="bold"
         android:textColor="@color/text"
         android:textSize="22sp" />
-
-    <TextView
-        android:id="@+id/subTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/title"
-        android:layout_marginTop="8dp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignBottom="@id/shareBtn"
-        android:gravity="center"
-        android:fontFamily="sans-serif-condensed"
-        android:text="SubTitle"
-        android:textColor="@color/text_subdued"
-        android:textSize="18sp" />
-
 
 </RelativeLayout>

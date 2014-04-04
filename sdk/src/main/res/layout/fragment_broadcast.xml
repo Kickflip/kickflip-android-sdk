@@ -54,19 +54,19 @@
     <TextView
         android:id="@+id/liveLabel"
         android:layout_width="wrap_content"
-        android:layout_height="70dp"
+        android:layout_height="50dp"
         android:layout_marginTop="@dimen/status_bar_margin"
-        android:layout_marginLeft="0dp"
-        android:background="@drawable/live_bg"
+        android:background="@drawable/live_orange_bg"
         android:fontFamily="sans-serif-condensed"
-        android:gravity="center"
-        android:drawablePadding="-10dp"
-        android:text="@string/live"
+        android:gravity="left|center_vertical"
+        android:drawablePadding="5dp"
+        android:paddingLeft="10dp"
+        android:text="@string/buffering"
         android:clickable="true"
         android:textColor="#FFFFFF"
         android:textSize="30sp"
         android:textStyle="bold|italic"
-        android:visibility="invisible" />
+        android:visibility="gone" />
 
     <ImageView
         android:id="@+id/rotateDeviceHint"

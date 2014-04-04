@@ -39,12 +39,4 @@ public class User extends Response {
         return mUUID;
     }
 
-//    {
-//        "aws_secret_key":"5R/B7GiAzq9GkGmR13Tk6HlTz95hQNnuHFd2dP/R",
-//            "aws_access_key":"AKIAJREVS52GQEOMGZ3A",
-//            "app":"kickflip-ios-123",
-//            "name":"kickflip-ios-123-w3pi7o",
-//            "uuid":"26ac0eea-14c1-4d29-afd7-5d8576aXc1ea"
-//    }
-
 }
