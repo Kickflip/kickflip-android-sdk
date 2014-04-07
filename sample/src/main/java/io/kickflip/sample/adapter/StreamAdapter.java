@@ -52,7 +52,7 @@ public class StreamAdapter extends ArrayAdapter<Stream> {
         if (streamLengthSec == 0) {
             // A Live Stream
             holder.liveBannerView.setVisibility(View.VISIBLE);
-            holder.rightTitleView.setText(Util.getHumanRelativeDateStringFromString(stream.getTimeStarted()));
+            holder.rightTitleView.setText("started " + Util.getHumanRelativeDateStringFromString(stream.getTimeStarted()));
         } else {
             // A previously ended Stream
             holder.liveBannerView.setVisibility(View.GONE);

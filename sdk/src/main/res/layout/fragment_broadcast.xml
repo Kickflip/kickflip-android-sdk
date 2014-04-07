@@ -58,7 +58,7 @@
         android:layout_marginTop="@dimen/status_bar_margin"
         android:background="@drawable/live_orange_bg"
         android:fontFamily="sans-serif-condensed"
-        android:gravity="left|center_vertical"
+        android:gravity="center"
         android:drawablePadding="5dp"
         android:paddingLeft="10dp"
         android:text="@string/buffering"

@@ -63,13 +63,25 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mKickflip = new KickflipApiClient(getActivity(), SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
+        mKickflip = new KickflipApiClient(getActivity(), SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET, new KickflipCallback() {
+            @Override
+            public void onSuccess(Response response) {
+                getStreams();
+            }
+
+            @Override
+            public void onError(Object response) {
+                showNetworkError();
+            }
+        });
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        getStreams();
+        if (mKickflip.credentialsAcquired()) {
+            getStreams();
+        }
     }
 
     @Override

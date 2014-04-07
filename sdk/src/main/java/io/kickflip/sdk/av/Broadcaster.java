@@ -122,7 +122,7 @@ public class Broadcaster extends AVRecorder {
     @Override
     public void startRecording() {
         super.startRecording();
-        mCamEncoder.requestThumbnailOnFrame(60, 2);
+        mCamEncoder.requestThumbnailOnFrameWithScaling(60, 2);
         mKickflip.startStream(mConfig.getStream(), new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {

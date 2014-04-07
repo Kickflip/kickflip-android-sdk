@@ -146,7 +146,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
             mListener = (BroadcastListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
-                    + " must implement MainFragmentInteractionListener");
+                    + " must implement BroadcastListener");
         }
     }
 

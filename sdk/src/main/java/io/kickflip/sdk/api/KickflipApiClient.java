@@ -288,8 +288,13 @@ public class KickflipApiClient extends OAuthClient {
     private void get(final String url, final Class responseClass, final KickflipCallback cb) {
         acquireAccessToken(new OAuthCallback() {
             @Override
-            public void ready(HttpRequestFactory requestFactory) {
+            public void onSuccess(HttpRequestFactory requestFactory) {
                 request(requestFactory, METHOD.GET, url, null, responseClass, cb);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                postExceptionToCallback(cb, e);
             }
         });
     }
@@ -316,8 +321,13 @@ public class KickflipApiClient extends OAuthClient {
     private void post(final String url, final HttpContent body, final Class responseClass, final KickflipCallback cb) {
         acquireAccessToken(new OAuthCallback() {
             @Override
-            public void ready(HttpRequestFactory requestFactory) {
+            public void onSuccess(HttpRequestFactory requestFactory) {
                 request(requestFactory, METHOD.POST, url, body, responseClass, cb);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                postExceptionToCallback(cb, e);
             }
         });
     }
@@ -351,8 +361,13 @@ public class KickflipApiClient extends OAuthClient {
                         clearAccessToken();
                         acquireAccessToken(new OAuthCallback() {
                             @Override
-                            public void ready(HttpRequestFactory oauthRequestFactory) {
+                            public void onSuccess(HttpRequestFactory oauthRequestFactory) {
                                 request(oauthRequestFactory, method, url, content, responseClass, cb);
+                            }
+
+                            @Override
+                            public void onFailure(Exception e) {
+                                postExceptionToCallback(cb, e);
                             }
                         });
                         break;

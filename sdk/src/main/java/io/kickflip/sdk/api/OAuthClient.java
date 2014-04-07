@@ -17,8 +17,12 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 
 /**
+ * Manage the OAuth Client Credentials authentication
+ * to be negotiated prior to any API Requests being performed
+ *
  * Created by davidbrodsky on 1/14/14.
  */
 public abstract class OAuthClient {
@@ -34,11 +38,15 @@ public abstract class OAuthClient {
     private OAuthConfig mConfig;                        // Immutable OAuth Configuration
     private SharedPreferences mStorage;
     private Context mContext;                           // Application Context
+    private ArrayDeque<OAuthCallback> mCallbackQueue;   // Queued callbacks awaiting OAuth registration
+    private boolean mOauthInProgress;                   // Is an OAuth authentication flow in progress
 
     public OAuthClient(Context context, OAuthConfig config) {
         mConfig = config;
         mContext = context;
         mStorage = context.getSharedPreferences(mConfig.getCredentialStoreName(), Context.MODE_PRIVATE);
+        mOauthInProgress = false;
+        mCallbackQueue = new ArrayDeque<>();
     }
 
     public Context getContext() {
@@ -49,12 +57,14 @@ public abstract class OAuthClient {
         return mConfig;
     }
 
-    public SharedPreferences getStorage(){ return mStorage; }
+    public SharedPreferences getStorage() {
+        return mStorage;
+    }
 
     /**
      * Force clear and re-acquire an OAuth Acess Token
      */
-    protected void refreshAccessToken(){
+    protected void refreshAccessToken() {
         refreshAccessToken(null);
     }
 
@@ -62,7 +72,7 @@ public abstract class OAuthClient {
      * Force clear and re-acquire an OAuth Acess Token
      * cb is always called on a background thread
      */
-    protected void refreshAccessToken(final OAuthCallback cb){
+    protected void refreshAccessToken(final OAuthCallback cb) {
         clearAccessToken();
         acquireAccessToken(cb);
     }
@@ -75,60 +85,79 @@ public abstract class OAuthClient {
     }
 
     /**
-     * Asynchronously attempt to jsonRequest an OAuth Access Token
+     * Asynchronously attempt to acquire an OAuth Access Token
+     *
      * @param cb called when AccessToken is acquired. Always called
      *           on a background thread suitable for networking.
      */
     protected void acquireAccessToken(final OAuthCallback cb) {
         if (isAccessTokenCached()) {
+            // Execute the callback immediately with cached OAuth credentials
             if (VERBOSE) Log.d(TAG, "Access token cached");
-            if(cb != null){
+            if (cb != null) {
+                // Ensure networking occurs off the main thread
+                // TODO: Use an ExecutorService and expose an application shutdown method to shutdown?
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        cb.ready(httpRequestFactoryFromAccessToken(mStorage.getString(ACCESS_TOKEN_KEY, null)));
+                        cb.onSuccess(getRequestFactoryFromCachedCredentials());
                     }
                 }).start();
             }
+        } else if (mOauthInProgress && cb != null) {
+            // Add the callback to the queue for execution when outstanding OAuth negotiation complete
+            mCallbackQueue.add(cb);
+            if (VERBOSE) Log.i(TAG, "Adding cb to queue");
+        } else {
+            mOauthInProgress = true;
+            // Perform an OAuth Client Credentials Request
+            // TODO: Replace with new Thread()
+            new AsyncTask<Void, Void, Void>() {
 
-            return;
-        }
-
-        // TODO: Replace with new Thread()
-        new AsyncTask<Void, Void, Void>(){
-
-            @Override
-            protected Void doInBackground(Void... params) {
-                TokenResponse response = null;
-                try {
-                    if (VERBOSE) Log.i(TAG, "Fetching OAuth " + mConfig.getAccessTokenRequestUrl());
-                    response = new ClientCredentialsTokenRequest(new NetHttpTransport(), new JacksonFactory(), new GenericUrl(mConfig.getAccessTokenRequestUrl()))
-                            .setGrantType("client_credentials")
-                            .setClientAuthentication(new BasicAuthentication(mConfig.getClientId(), mConfig.getClientSecret()))
-                            .execute();
-                } catch (IOException e) {
-                    // TODO: Alert user Kickflip down
-                    //       or client credentials invalid
-                    e.printStackTrace();
+                @Override
+                protected Void doInBackground(Void... params) {
+                    TokenResponse response = null;
+                    try {
+                        if (VERBOSE)
+                            Log.i(TAG, "Fetching OAuth " + mConfig.getAccessTokenRequestUrl());
+                        response = new ClientCredentialsTokenRequest(new NetHttpTransport(), new JacksonFactory(), new GenericUrl(mConfig.getAccessTokenRequestUrl()))
+                                .setGrantType("client_credentials")
+                                .setClientAuthentication(new BasicAuthentication(mConfig.getClientId(), mConfig.getClientSecret()))
+                                .execute();
+                    } catch (IOException e) {
+                        // TODO: Alert user Kickflip down
+                        //       or client credentials invalid
+                        if (cb != null) {
+                            postExceptionToCallback(cb, e);
+                        }
+                        e.printStackTrace();
+                    }
+                    if (response != null) {
+                        if (VERBOSE) Log.i(TAG, "Got Access Token " + response.getAccessToken().substring(0, 5) + "...");
+                        storeAccessToken(response.getAccessToken());
+                        mOauthInProgress = false;
+                        if (cb != null)
+                            cb.onSuccess(getRequestFactoryFromAccessToken(mStorage.getString(ACCESS_TOKEN_KEY, null)));
+                        executeQueuedCallbacks();
+                    } else {
+                        mOauthInProgress = false;
+                        Log.w(TAG, "Failed to get Access Token");
+                    }
+                    return null;
                 }
-
-                if (response != null) {
-                    if (VERBOSE) Log.i(TAG, "Got Access Token " + response.getAccessToken());
-                    storeAccessToken(response.getAccessToken());
-                    if(cb != null)
-                        cb.ready(httpRequestFactoryFromAccessToken(mStorage.getString(ACCESS_TOKEN_KEY, null)));
-                } else
-                    Log.w(TAG, "Failed to get Access Token");
-                return null;
-            }
-        }.execute();
+            }.execute();
+        }
     }
 
-    private HttpRequestFactory httpRequestFactoryFromAccessToken(String accessToken){
-        if(accessToken == null){
-            throw new NullPointerException("httpRequestFactoryFromAccessToken got null Access Token");
+    protected HttpRequestFactory getRequestFactoryFromCachedCredentials() {
+        return getRequestFactoryFromAccessToken(mStorage.getString(ACCESS_TOKEN_KEY, null));
+    }
+
+    private HttpRequestFactory getRequestFactoryFromAccessToken(String accessToken) {
+        if (accessToken == null) {
+            throw new NullPointerException("getRequestFactoryFromAccessToken got null Access Token");
         }
-        if(mRequestFactory == null || !accessToken.equals(mOAuthAccessToken)){
+        if (mRequestFactory == null || !accessToken.equals(mOAuthAccessToken)) {
             Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod()).setAccessToken(accessToken);
             NetHttpTransport mHttpTransport = new NetHttpTransport.Builder().build();
             mRequestFactory = mHttpTransport.createRequestFactory(credential);
@@ -140,27 +169,50 @@ public abstract class OAuthClient {
     protected boolean isAccessTokenCached() {
         // An Access Token is stored along with a Client ID that matches what's currently provided
         boolean validCredentialsStored = (mStorage.contains(ACCESS_TOKEN_KEY) && mStorage.getString(CLIENT_ID, "").equals(mConfig.getClientId()));
-        if(!validCredentialsStored)
+        if (!validCredentialsStored)
             clearAccessToken();
         return validCredentialsStored;
     }
 
-    protected void storeAccessToken(String accessToken){
+    protected void storeAccessToken(String accessToken) {
         getContext().getSharedPreferences(mConfig.getCredentialStoreName(), mContext.MODE_PRIVATE).edit()
-            .putString(ACCESS_TOKEN_KEY, accessToken)
-            .putString(CLIENT_ID, mConfig.getClientId())
-            .apply();
+                .putString(ACCESS_TOKEN_KEY, accessToken)
+                .putString(CLIENT_ID, mConfig.getClientId())
+                .apply();
     }
 
-    protected void clearAccessToken(){
+    protected void clearAccessToken() {
         getContext().getSharedPreferences(mConfig.getCredentialStoreName(), mContext.MODE_PRIVATE).edit()
-            .clear()
-            .apply();
+                .clear()
+                .apply();
     }
 
-    protected boolean isSuccessResponse(HttpResponse response){
+    protected boolean isSuccessResponse(HttpResponse response) {
         if (VERBOSE) Log.i(TAG, "Response status code: " + response.getStatusCode());
         return response.getStatusCode() == 200;
+    }
+
+    /**
+     * Execute queued callbacks once valid OAuth
+     * credentials are acquired.
+     */
+    protected void executeQueuedCallbacks() {
+        if (VERBOSE) Log.i(TAG, String.format("Executing %d queued callbacks", mCallbackQueue.size()));
+        for (OAuthCallback cb : mCallbackQueue) {
+            cb.onSuccess(getRequestFactoryFromCachedCredentials());
+        }
+    }
+
+    private void postExceptionToCallback(final OAuthCallback cb, final Exception e) {
+        if (cb != null) {
+            cb.onFailure(new OAuthException(e.getMessage()));
+        }
+    }
+
+    public class OAuthException extends Exception {
+        public OAuthException(String detail) {
+            super(detail);
+        }
     }
 
 }

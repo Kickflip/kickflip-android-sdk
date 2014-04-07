@@ -156,7 +156,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * @param scaleFactor a downscale factor. e.g scaleFactor 2 will
      *                    produce a 640x360 thumbnail from a 1280x720 frame
      */
-    public void requestThumbnailOnFrame(int frame, int scaleFactor) {
+    public void requestThumbnailOnFrameWithScaling(int frame, int scaleFactor) {
         mThumbnailScaleFactor = scaleFactor;
         mThumbnailRequestedOnFrame = frame;
     }
