@@ -16,9 +16,9 @@ import io.kickflip.sample.SECRETS;
 import io.kickflip.sample.Util;
 import io.kickflip.sample.fragment.MainFragment;
 import io.kickflip.sample.fragment.StreamListFragment;
-import io.kickflip.sdk.BroadcastListener;
+import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.Kickflip;
-import io.kickflip.sdk.MediaPlayerActivity;
+import io.kickflip.sdk.activity.MediaPlayerActivity;
 import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.fragment.BroadcastFragment;
 

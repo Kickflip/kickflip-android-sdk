@@ -178,9 +178,8 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
                 if (getActivity() != null) {
                     mStreams = ((StreamList) response).getStreams();
                     Collections.sort(mStreams);
-                    mAdapter.clear();
-                    mAdapter.addAll(mStreams);
-                    mAdapter.notifyDataSetChanged();
+                    mAdapter.refresh(mListView, mStreams);
+
                     if (mStreams.size() == 0) {
                         showNoBroadcasts();
                     }
@@ -202,11 +201,14 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
     }
 
     private void setupListViewAdapter() {
-        mStreams = new ArrayList<>(0);
-        mAdapter = new StreamAdapter(getActivity(), mStreams, mStreamActionListener);
-        mListView.setAdapter(mAdapter);
-        if (mKickflip.credentialsAcquired()) {
-            mAdapter.setUserName(mKickflip.getCachedUser().getName());
+        if (mAdapter == null) {
+            mStreams = new ArrayList<>(0);
+            mAdapter = new StreamAdapter(getActivity(), mStreams, mStreamActionListener);
+            mAdapter.setNotifyOnChange(false);
+            mListView.setAdapter(mAdapter);
+            if (mKickflip.credentialsAcquired()) {
+                mAdapter.setUserName(mKickflip.getCachedUser().getName());
+            }
         }
     }
 

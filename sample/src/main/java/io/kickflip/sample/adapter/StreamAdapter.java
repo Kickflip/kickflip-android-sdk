@@ -2,9 +2,11 @@ package io.kickflip.sample.adapter;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -43,6 +45,21 @@ public class StreamAdapter extends ArrayAdapter<Stream> {
      */
     public void setUserName(String userName) {
         mUsername = userName;
+    }
+
+    /**
+     * Refresh the entire data structure underlying this adapter,
+     * resuming the precise scroll state.
+     *
+     * @param listView
+     * @param streams
+     */
+    public void refresh(AbsListView listView, List<Stream> streams) {
+        Parcelable state = listView.onSaveInstanceState();
+        clear();
+        addAll(streams);
+        notifyDataSetChanged();
+        listView.onRestoreInstanceState(state);
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {

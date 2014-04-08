@@ -1,10 +1,12 @@
-package io.kickflip.sdk;
+package io.kickflip.sdk.activity;
 
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import io.kickflip.sdk.R;
+import io.kickflip.sdk.activity.ImmersiveActivity;
 import io.kickflip.sdk.fragment.MediaPlayerFragment;
 
 

@@ -29,11 +29,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="io.kickflip.sdk.BroadcastActivity"
+            android:name="io.kickflip.sdk.activity.BroadcastActivity"
             android:screenOrientation="landscape" >
         </activity>
         <activity
-            android:name="io.kickflip.sdk.MediaPlayerActivity"
+            android:name="io.kickflip.sdk.activity.MediaPlayerActivity"
             android:screenOrientation="landscape" >
         </activity>
     </application>

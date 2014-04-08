@@ -26,8 +26,8 @@ import android.widget.TextView;
 
 import com.google.common.eventbus.Subscribe;
 
-import io.kickflip.sdk.BroadcastListener;
-import io.kickflip.sdk.GLCameraEncoderView;
+import io.kickflip.sdk.av.BroadcastListener;
+import io.kickflip.sdk.view.GLCameraEncoderView;
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
 import io.kickflip.sdk.Share;
@@ -68,6 +68,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
                     mListener.onBroadcastStop();
             } else {
                 mBroadcaster.startRecording();
+                stopMonitoringOrientation();
                 v.setBackgroundResource(R.drawable.red_dot_stop);
             }
         }

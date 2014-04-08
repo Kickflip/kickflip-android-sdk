@@ -16,8 +16,8 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import io.kickflip.sdk.GLCameraEncoderView;
-import io.kickflip.sdk.GLCameraView;
+import io.kickflip.sdk.view.GLCameraEncoderView;
+import io.kickflip.sdk.view.GLCameraView;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

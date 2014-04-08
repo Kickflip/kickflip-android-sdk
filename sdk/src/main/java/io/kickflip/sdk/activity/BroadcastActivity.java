@@ -1,7 +1,10 @@
-package io.kickflip.sdk;
+package io.kickflip.sdk.activity;
 
 import android.os.Bundle;
 
+import io.kickflip.sdk.av.BroadcastListener;
+import io.kickflip.sdk.Kickflip;
+import io.kickflip.sdk.R;
 import io.kickflip.sdk.fragment.BroadcastFragment;
 
 public class BroadcastActivity extends ImmersiveActivity implements BroadcastListener {

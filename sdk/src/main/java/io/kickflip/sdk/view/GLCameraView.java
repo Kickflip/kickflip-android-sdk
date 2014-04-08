@@ -1,4 +1,4 @@
-package io.kickflip.sdk;
+package io.kickflip.sdk.view;
 
 import android.content.Context;
 import android.hardware.Camera;

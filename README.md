@@ -57,7 +57,7 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
 	
 	```xml
     <activity
-         android:name="io.kickflip.sdk.BroadcastActivity"
+         android:name="io.kickflip.sdk.activity.BroadcastActivity"
          android:screenOrientation="landscape">
     </activity>
 	```

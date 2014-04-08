@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     tools:context="io.kickflip.sdk.fragment.BroadcastFragment">
 
-    <io.kickflip.sdk.GLCameraEncoderView
+    <io.kickflip.sdk.view.GLCameraEncoderView
         android:id="@+id/cameraPreview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

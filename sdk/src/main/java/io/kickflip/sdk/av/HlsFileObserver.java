@@ -15,7 +15,7 @@
  *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kickflip.sdk;
+package io.kickflip.sdk.av;
 
 import android.os.FileObserver;
 import android.util.Log;

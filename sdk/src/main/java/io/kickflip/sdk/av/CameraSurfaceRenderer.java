@@ -7,7 +7,7 @@ import android.view.MotionEvent;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import io.kickflip.sdk.GLCameraView;
+import io.kickflip.sdk.view.GLCameraView;
 
 
 class CameraSurfaceRenderer implements GLSurfaceView.Renderer {

@@ -1,4 +1,4 @@
-package io.kickflip.sdk;
+package io.kickflip.sdk.av;
 
 
 public interface BroadcastListener {

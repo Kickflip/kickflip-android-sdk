@@ -1,4 +1,4 @@
-package io.kickflip.sdk;
+package io.kickflip.sdk.activity;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
