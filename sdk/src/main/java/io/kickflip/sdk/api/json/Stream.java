@@ -67,6 +67,17 @@ public class Stream extends Response implements Comparable<Stream> {
     @Key("user_avatar")
     private String mOwnerAvatar;
 
+    @Key("deleted")
+    private boolean mDeleted;
+
+    public boolean isDeleted() {
+        return mDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        mDeleted = deleted;
+    }
+
     public String getOwnerName() {
         return mOwnerName;
     }

@@ -59,12 +59,11 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
     private StreamAdapter.StreamAdapterActionListener mStreamActionListener = new StreamAdapter.StreamAdapterActionListener() {
         @Override
         public void onFlagButtonClick(final Stream stream) {
-            // Flag recording
-            mKickflip.flagStream(stream, new KickflipCallback() {
+            KickflipCallback cb = new KickflipCallback() {
                 @Override
                 public void onSuccess(Response response) {
                     if (getActivity() != null) {
-                        if (mKickflip.getCachedUser().getName().compareTo(stream.getOwnerName()) == 0) {
+                        if (mKickflip.userOwnsStream(stream)) {
                             mAdapter.remove(stream);
                             mAdapter.notifyDataSetChanged();
                         } else {
@@ -75,7 +74,14 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
 
                 @Override
                 public void onError(Object response) {}
-            });
+            };
+
+            if (mKickflip.userOwnsStream(stream)) {
+                stream.setDeleted(true);
+                mKickflip.setStreamInfo(stream, cb);
+            } else {
+                mKickflip.flagStream(stream, cb);
+            }
         }
 
         @Override

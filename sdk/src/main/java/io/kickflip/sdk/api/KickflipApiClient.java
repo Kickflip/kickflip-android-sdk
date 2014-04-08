@@ -227,6 +227,7 @@ public class KickflipApiClient extends OAuthClient {
         }
 
         data.put("private", stream.isPrivate());
+        data.put("deleted", stream.isDeleted());
 
         post(BASE_URL + SET_META, new UrlEncodedContent(data), Stream.class, cb);
     }
@@ -543,6 +544,10 @@ public class KickflipApiClient extends OAuthClient {
             BASE_URL = "http://funkcity.ngrok.com";
         else
             BASE_URL = "http://api.kickflip.io";
+    }
+
+    public boolean userOwnsStream(Stream stream) {
+        return getCachedUser().getName().compareTo(stream.getOwnerName()) == 0;
     }
 
     public class KickflipApiException extends Exception {
