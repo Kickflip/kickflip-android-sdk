@@ -2,6 +2,7 @@ package io.kickflip.sample.fragment;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
@@ -11,13 +12,16 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import io.kickflip.sample.R;
 import io.kickflip.sample.SECRETS;
 import io.kickflip.sample.adapter.StreamAdapter;
+import io.kickflip.sdk.Share;
 import io.kickflip.sdk.api.KickflipApiClient;
 import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.Response;
@@ -52,6 +56,30 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
      */
     private StreamAdapter mAdapter;
 
+    private StreamAdapter.StreamAdapterActionListener mStreamActionListener = new StreamAdapter.StreamAdapterActionListener() {
+        @Override
+        public void onFlagButtonClick(Stream stream) {
+            // Flag recording
+            mKickflip.flagStream(stream, new KickflipCallback() {
+                @Override
+                public void onSuccess(Response response) {
+                    if (getActivity() != null) {
+                        Toast.makeText(getActivity(), getActivity().getString(R.string.stream_flagged), Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onError(Object response) {}
+            });
+        }
+
+        @Override
+        public void onShareButtonClick(Stream stream) {
+            Intent shareIntent = Share.createShareChooserIntentWithTitleAndUrl(getActivity(), getString(io.kickflip.sdk.R.string.share_broadcast), stream.getKickflipUrl());
+            startActivity(shareIntent);
+        }
+    };
+
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -66,7 +94,10 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
         mKickflip = new KickflipApiClient(getActivity(), SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET, new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
-                getStreams();
+                if (mAdapter != null) {
+                    mAdapter.setUserName(mKickflip.getCachedUser().getName());
+                }
+                // Update profile display when we add that
             }
 
             @Override
@@ -79,9 +110,7 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
     @Override
     public void onStart() {
         super.onStart();
-        if (mKickflip.credentialsAcquired()) {
-            getStreams();
-        }
+        getStreams();
     }
 
     @Override
@@ -107,6 +136,7 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
 
+        setupListViewAdapter();
         return view;
     }
 
@@ -142,12 +172,12 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
                 if (VERBOSE) Log.i("API", "request succeeded " + response);
                 if (getActivity() != null) {
                     mStreams = ((StreamList) response).getStreams();
+                    Collections.sort(mStreams);
+                    mAdapter.clear();
+                    mAdapter.addAll(mStreams);
+                    mAdapter.notifyDataSetChanged();
                     if (mStreams.size() == 0) {
                         showNoBroadcasts();
-                    } else {
-                        Collections.sort(mStreams);
-                        mAdapter = new StreamAdapter(getActivity(), mStreams);
-                        mListView.setAdapter(mAdapter);
                     }
                 }
                 mSwipeLayout.setRefreshing(false);
@@ -164,6 +194,15 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
                 mRefreshing = false;
             }
         });
+    }
+
+    private void setupListViewAdapter() {
+        mStreams = new ArrayList<>(0);
+        mAdapter = new StreamAdapter(getActivity(), mStreams, mStreamActionListener);
+        mListView.setAdapter(mAdapter);
+        if (mKickflip.credentialsAcquired()) {
+            mAdapter.setUserName(mKickflip.getCachedUser().getName());
+        }
     }
 
     /**

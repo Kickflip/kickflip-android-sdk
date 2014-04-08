@@ -12,5 +12,6 @@
     <!-- StreamListFragment strings displayed when ListView is empty -->
     <string name="no_network">Unable to contact Kicklip</string>
     <string name="no_broadcasts">You don\'t have any broadcasts… yet!</string>
+    <string name="stream_flagged">Stream flagged</string>
 
 </resources>

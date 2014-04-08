@@ -32,7 +32,7 @@
         android:textColor="#ffffff"
         android:gravity="left|center_vertical"
         android:textSize="16sp"
-        android:visibility="visible"
+        android:visibility="invisible"
         android:layout_marginTop="8dp"/>
 
     <TextView
@@ -42,25 +42,23 @@
         android:layout_below="@id/image"
         android:layout_alignParentRight="true"
         android:fontFamily="sans-serif-condensed"
-        android:text="00:00:00"
+        android:text=""
         android:textStyle="bold"
         android:textColor="@color/text_subdued"
         android:textSize="18sp" />
 
     <ImageButton
-        android:id="@+id/shareBtn"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:paddingLeft="20dp"
-        android:paddingBottom="20dp"
-        android:onClick="onShareBtnClick"
+        android:id="@+id/overflowBtn"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:paddingLeft="30dp"
+        android:paddingBottom="30dp"
         android:focusable="false"
         android:focusableInTouchMode="false"
         android:background="@drawable/right_upper_corner_btn_bg"
-        android:src="@drawable/ic_share_dark"
-        android:layout_alignTop="@id/image"
+        android:src="@drawable/ic_overflow"
+        android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"/>
-
 
     <TextView
         android:id="@+id/title"
@@ -70,9 +68,17 @@
         android:layout_alignParentLeft="true"
         android:fontFamily="sans-serif-condensed"
         android:layout_toLeftOf="@id/rightTitle"
-        android:text="Title"
+        android:text=""
         android:textStyle="bold"
         android:textColor="@color/text"
         android:textSize="22sp" />
+
+    <include
+        android:id="@+id/actions"
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        layout="@layout/stream_actions"/>
 
 </RelativeLayout>

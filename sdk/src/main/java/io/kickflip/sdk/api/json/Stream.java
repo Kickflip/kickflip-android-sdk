@@ -61,6 +61,20 @@ public class Stream extends Response implements Comparable<Stream> {
     @Key("length")
     private int mLength;
 
+    @Key("user_username")
+    private String mOwnerName;
+
+    @Key("user_avatar")
+    private String mOwnerAvatar;
+
+    public String getOwnerName() {
+        return mOwnerName;
+    }
+
+    public String getOwnerAvatar() {
+        return mOwnerAvatar;
+    }
+
     public String getThumbnailUrl() {
         return mThumbnailUrl;
     }

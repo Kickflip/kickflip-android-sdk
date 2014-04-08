@@ -42,10 +42,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class KickflipApiClient extends OAuthClient {
     public static final boolean VERBOSE = true;
     public static final boolean DEV_ENDPOINT = false;
-    public static final String NEW_USER = "/api/new/user";
+    public static final String NEW_USER = "/api/user/new";
     public static final String START_STREAM = "/api/stream/start";
     public static final String STOP_STREAM = "/api/stream/stop";
     public static final String SET_META = "/api/stream/info";
+    public static final String FLAG_STREAM = "/api/stream/flag";
     public static final String SEARCH = "/api/search";
     public static final String SEARCH_USER = "/api/search/user";
     public static final String SEARCH_GEO = "/api/search/location";
@@ -88,7 +89,7 @@ public class KickflipApiClient extends OAuthClient {
         initialize(cb);
     }
 
-    public void initialize(KickflipCallback cb) {
+    private void initialize(KickflipCallback cb) {
         if (!credentialsAcquired()) {
             createNewUser(cb);
         } else {
@@ -124,7 +125,7 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Request to start a new Stream.
+     * Start a new Stream.
      * Delivers stream endpoint destination data via cb.
      * Uses the cached User
      *
@@ -137,7 +138,7 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Request to start a new Stream.
+     * Start a new Stream.
      * Delivers stream endpoint destination data via cb.
      *
      * @param cb This callback will receive a Stream subclass in #onSuccess(response)
@@ -163,7 +164,7 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Request to stop a Stream.
+     * Stop a Stream.
      *
      * @param cb This callback will receive a Stream subclass in #onSuccess(response)
      *           depending on the Kickflip account type. Implementors should
@@ -186,7 +187,7 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Request to send Stream meta data.
+     * Send Stream meta data.
      *
      * @param stream
      * @param cb
@@ -228,6 +229,20 @@ public class KickflipApiClient extends OAuthClient {
         data.put("private", stream.isPrivate());
 
         post(BASE_URL + SET_META, new UrlEncodedContent(data), Stream.class, cb);
+    }
+
+    /**
+     * Flag a Stream, or delete if user-owned
+     *
+     * @param stream
+     * @param cb
+     */
+    public void flagStream(Stream stream, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        data.put("uuid", getCachedUser().getUUID());
+        data.put("stream_id", stream.getStreamId());
+
+        post(BASE_URL + FLAG_STREAM, new UrlEncodedContent(data), Stream.class, cb);
     }
 
     /**

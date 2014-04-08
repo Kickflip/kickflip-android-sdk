@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:animateLayoutChanges="true">
+
+    <ImageButton
+        android:id="@+id/flagBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/transparent_btn_bg"
+        android:focusable="false"
+        android:padding="20dp"
+        android:focusableInTouchMode="false"
+        android:scaleType="center"
+        android:src="@drawable/ic_red_flag" />
+
+    <ImageButton
+        android:id="@+id/shareBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:background="@drawable/transparent_btn_bg"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:scaleType="center"
+        android:src="@drawable/ic_share"
+        android:layout_toRightOf="@id/flagBtn"/>
+
+</RelativeLayout>

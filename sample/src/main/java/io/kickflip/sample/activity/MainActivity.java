@@ -7,7 +7,6 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import java.io.File;
 
@@ -20,7 +19,6 @@ import io.kickflip.sample.fragment.StreamListFragment;
 import io.kickflip.sdk.BroadcastListener;
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.MediaPlayerActivity;
-import io.kickflip.sdk.Share;
 import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.fragment.BroadcastFragment;
 
@@ -112,12 +110,6 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
         getFragmentManager().beginTransaction()
                 .replace(R.id.container, BroadcastFragment.getInstance())
                 .commit();
-    }
-
-    public void onShareBtnClick(View v) {
-        String url = (String) v.getTag();
-        Intent shareIntent = Share.createShareChooserIntentWithTitleAndUrl(this, getString(io.kickflip.sdk.R.string.share_broadcast), (String) v.getTag());
-        startActivity(shareIntent);
     }
 
 

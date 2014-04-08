@@ -1,5 +1,6 @@
 package io.kickflip.sample.adapter;
 
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,11 +24,25 @@ import io.kickflip.sdk.api.json.Stream;
  * to an Adapter backed view like ListView or GridView
  */
 public class StreamAdapter extends ArrayAdapter<Stream> {
-
     public static final int LAYOUT_ID = R.layout.stream_list_item;
+    private StreamAdapterActionListener mActionListener;
+    private String mUsername;
 
-    public StreamAdapter(final Context context, List<Stream> objects) {
+    public StreamAdapter(final Context context, List<Stream> objects, StreamAdapterActionListener listener) {
         super(context, LAYOUT_ID, objects);
+        mActionListener = listener;
+    }
+
+    /**
+     * Set a Kickflip username to enable this adapter
+     * to stylize user-owned entries appropriately.
+     *
+     * Should be called before {@link #notifyDataSetChanged()}
+     *
+     * @param userName the Kickflip username this view should be stylized for
+     */
+    public void setUserName(String userName) {
+        mUsername = userName;
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -40,13 +55,16 @@ public class StreamAdapter extends ArrayAdapter<Stream> {
             holder.titleView = (TextView) convertView.findViewById(R.id.title);
             holder.liveBannerView = (TextView) convertView.findViewById(R.id.liveLabel);
             holder.rightTitleView = (TextView) convertView.findViewById(R.id.rightTitle);
-            holder.shareButton = (ImageButton) convertView.findViewById(R.id.shareBtn);
+            holder.overflowBtn = (ImageButton) convertView.findViewById(R.id.overflowBtn);
+            holder.actions = convertView.findViewById(R.id.actions);
             convertView.setTag(holder);
+            convertView.findViewById(R.id.overflowBtn).setOnClickListener(mOverflowBtnClickListener);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
-
-        holder.shareButton.setTag(stream.getKickflipUrl());
+        // Hide the stream actions panel
+        holder.actions.setVisibility(View.GONE);
+        holder.overflowBtn.setTag(position);
 
         int streamLengthSec = stream.getLengthInSeconds();
         if (streamLengthSec == 0) {
@@ -78,6 +96,83 @@ public class StreamAdapter extends ArrayAdapter<Stream> {
         TextView titleView;
         TextView liveBannerView;
         TextView rightTitleView;
-        ImageButton shareButton;
+        ImageButton overflowBtn;
+        View actions;
     }
+
+    private View.OnClickListener mOverflowBtnClickListener = new View.OnClickListener(){
+
+        @Override
+        public void onClick(View overflowBtn) {
+            // Toggle the Action container's visibility and set Tags on its subviews
+            View listItemParent = ((View)overflowBtn.getParent());
+            if (isActionContainerVisible(listItemParent)) {
+                hideActionContainer(listItemParent);
+            } else {
+                View actionContainer = listItemParent.findViewById(R.id.actions);
+                if (mUsername != null) {
+                    // TODO: Server returns AppUser, not individual user.
+                    if (mUsername.compareTo(getItem(((Integer) overflowBtn.getTag())).getOwnerName()) == 0) {
+                        ((ImageButton) actionContainer.findViewById(R.id.flagBtn)).setImageResource(R.drawable.ic_trash);
+                    } else {
+                        ((ImageButton) actionContainer.findViewById(R.id.flagBtn)).setImageResource(R.drawable.ic_red_flag);
+                    }
+                }
+                showActionContainer(listItemParent);
+                // Transfer the overflowBtn tag to the two newly revealed buttons
+                actionContainer.findViewById(R.id.flagBtn).setTag(overflowBtn.getTag());
+                actionContainer.findViewById(R.id.flagBtn).setOnClickListener(mFlagBtnClick);
+                actionContainer.findViewById(R.id.shareBtn).setTag(overflowBtn.getTag());
+                actionContainer.findViewById(R.id.shareBtn).setOnClickListener(mShareBtnClick);
+            }
+        }
+    };
+
+    private View.OnClickListener mFlagBtnClick = new View.OnClickListener(){
+
+        @Override
+        public void onClick(View flagBtn) {
+            mActionListener.onFlagButtonClick(getItem((Integer) flagBtn.getTag()));
+            hideActionContainer((View) flagBtn.getParent().getParent());
+        }
+    };
+
+    private View.OnClickListener mShareBtnClick = new View.OnClickListener(){
+
+        @Override
+        public void onClick(View shareBtn) {
+            mActionListener.onShareButtonClick(getItem((Integer) shareBtn.getTag()));
+            hideActionContainer((View) shareBtn.getParent().getParent());
+        }
+    };
+
+    private boolean isActionContainerVisible(View listItemParent) {
+        return listItemParent.findViewById(R.id.actions).getVisibility() == View.VISIBLE;
+    }
+
+    private void showActionContainer(View listItemParent) {
+        View actionContainer = listItemParent.findViewById(R.id.actions);
+
+        ObjectAnimator imageWashOut = ObjectAnimator.ofFloat(listItemParent.findViewById(R.id.image), "alpha", 1f, 0.4f);
+        imageWashOut.setDuration(250);
+        imageWashOut.start();
+
+        actionContainer.setVisibility(View.VISIBLE);
+    }
+
+    private void hideActionContainer(View listItemParent) {
+        View actionContainer = listItemParent.findViewById(R.id.actions);
+
+        ObjectAnimator imageWashOut = ObjectAnimator.ofFloat(listItemParent.findViewById(R.id.image), "alpha", 0.4f, 1.0f);
+        imageWashOut.setDuration(250);
+        imageWashOut.start();
+
+        actionContainer.setVisibility(View.GONE);
+    }
+
+    public static interface StreamAdapterActionListener {
+        public void onFlagButtonClick(Stream stream);
+        public void onShareButtonClick(Stream stream);
+    }
+
 }
