@@ -58,13 +58,18 @@ public class StreamListFragment extends Fragment implements AbsListView.OnItemCl
 
     private StreamAdapter.StreamAdapterActionListener mStreamActionListener = new StreamAdapter.StreamAdapterActionListener() {
         @Override
-        public void onFlagButtonClick(Stream stream) {
+        public void onFlagButtonClick(final Stream stream) {
             // Flag recording
             mKickflip.flagStream(stream, new KickflipCallback() {
                 @Override
                 public void onSuccess(Response response) {
                     if (getActivity() != null) {
-                        Toast.makeText(getActivity(), getActivity().getString(R.string.stream_flagged), Toast.LENGTH_LONG).show();
+                        if (mKickflip.getCachedUser().getName().compareTo(stream.getOwnerName()) == 0) {
+                            mAdapter.remove(stream);
+                            mAdapter.notifyDataSetChanged();
+                        } else {
+                            Toast.makeText(getActivity(), getActivity().getString(R.string.stream_flagged), Toast.LENGTH_LONG).show();
+                        }
                     }
                 }
 

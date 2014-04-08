@@ -16,6 +16,8 @@
 #   public *;
 #}
 
+-dontobfuscate
+
 # Amazon AWS SDK
 -keep class org.apache.commons.logging.**               { *; }
 -keep class com.amazonaws.services.sqs.QueueUrlHandler  { *; }
@@ -38,3 +40,6 @@
 
 # Kickflip
 # -keep class io.kickflip.sdk.FileUtils               { *; }
+
+# Picasso
+-dontwarn com.squareup.okhttp.**
