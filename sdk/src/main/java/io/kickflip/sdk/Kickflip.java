@@ -12,6 +12,7 @@ import com.google.common.eventbus.EventBus;
 import java.io.IOException;
 
 import io.kickflip.sdk.activity.BroadcastActivity;
+import io.kickflip.sdk.activity.MediaPlayerActivity;
 import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
@@ -47,6 +48,12 @@ public class Kickflip {
         Intent broadcastIntent = new Intent(host, BroadcastActivity.class);
         broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         host.startActivity(broadcastIntent);
+    }
+
+    public static void startMediaPlayerActivity(Activity host, String streamUrl) {
+        Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
+        playbackIntent.putExtra("mediaUrl", streamUrl);
+        host.startActivity(playbackIntent);
     }
 
     public static void addLocationToStream(final Context context, final Stream stream, final EventBus eventBus) {

@@ -1,7 +1,6 @@
 package io.kickflip.sample.activity;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -16,9 +15,8 @@ import io.kickflip.sample.SECRETS;
 import io.kickflip.sample.Util;
 import io.kickflip.sample.fragment.MainFragment;
 import io.kickflip.sample.fragment.StreamListFragment;
-import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.Kickflip;
-import io.kickflip.sdk.activity.MediaPlayerActivity;
+import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.fragment.BroadcastFragment;
 
@@ -116,11 +114,9 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
     @Override
     public void onStreamPlaybackRequested(String streamUrl) {
         // Play with Kickflip's built-in Media Player
-        Intent playbackIntent = new Intent(this, MediaPlayerActivity.class);
-        playbackIntent.putExtra("mediaUrl", streamUrl);
-        startActivity(playbackIntent);
+        Kickflip.startMediaPlayerActivity(this, streamUrl);
 
-        // Play with system Media Player
+        // Play via Intent for 3rd party Media Player
         //Intent i = new Intent(Intent.ACTION_VIEW);
         //i.setDataAndType(Uri.parse(stream.getStreamUrl()), "application/vnd.apple.mpegurl");
         //startActivity(i);

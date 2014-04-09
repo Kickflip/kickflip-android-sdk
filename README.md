@@ -53,7 +53,7 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 	```
 	
-	**BroadcastActivity:**
+	**BroadcastActivity:**	
 	
 	```xml
     <activity
@@ -62,6 +62,16 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
     </activity>
 	```
 
+	**MediaPlayerActivity** (Optional):
+	
+	MediaPlayerActivity handles playing HLS streams with some additional features over Android's MediaPlayer (like indicating when a stream is "Live" and more accurately inferring the stream duration).
+	
+	```xml
+	<activity
+            android:name="io.kickflip.sdk.activity.MediaPlayerActivity"
+            android:screenOrientation="landscape" >
+    </activity>
+	```
 4. Provide your Kickflip keys and start `BroadcastActivity` when appropriate:
 
 	```java
