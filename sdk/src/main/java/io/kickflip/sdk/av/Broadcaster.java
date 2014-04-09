@@ -19,7 +19,6 @@ import io.kickflip.sdk.api.KickflipApiClient;
 import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.HlsStream;
 import io.kickflip.sdk.api.json.Response;
-import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.api.json.User;
 import io.kickflip.sdk.api.s3.S3Client;
 import io.kickflip.sdk.api.s3.S3Manager;
@@ -145,7 +144,7 @@ public class Broadcaster extends AVRecorder {
         mStream.setExtraInfo(mConfig.getExtraInfo());
         mStream.setIsPrivate(mConfig.isPrivate());
         if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
-        mS3Client = new S3Client(mStream.getBasicAWSCredentials(), mEventBus);
+        mS3Client = new S3Client(S3Client.getBasicAWSCredentials(mStream.getAwsKey(), mStream.getAwsSecret()), mEventBus);
         mS3Client.setBucket(mStream.getBucket());
         mReadyToBroadcast = true;
         submitQueuedUploadsToS3();
@@ -278,17 +277,7 @@ public class Broadcaster extends AVRecorder {
 
     private void sendStreamMetaData() {
         if(mStream != null) {
-            mKickflip.setStreamInfo(mStream, new KickflipCallback() {
-                @Override
-                public void onSuccess(Response response) {
-                    if (VERBOSE) Log.i(TAG, "Got SetStreamInfo response " + (Stream) response);
-                }
-
-                @Override
-                public void onError(Object response) {
-                    if (VERBOSE) Log.i(TAG, "Got SetStreamInfo error " + response);
-                }
-            });
+            mKickflip.setStreamInfo(mStream, null);
         }
     }
 

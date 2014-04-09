@@ -14,7 +14,8 @@ import java.io.File;
 
 import io.kickflip.sdk.events.S3UploadEvent;
 
-public class S3Client {
+public class
+        S3Client {
     private static final String TAG = "S3Client";
     private static final boolean VERBOSE = false;
 
@@ -23,11 +24,19 @@ public class S3Client {
     private EventBus mEventBus;
     private String mBucket;
 
-
     public S3Client(BasicAWSCredentials creds, EventBus eventBus) {
         mCredentials = creds;
         mEventBus = eventBus;
         mS3 = new AmazonS3Client(creds);
+    }
+
+    /**
+     * Convenience method that returns Amazon
+     * BasicAWSCredentials corresponding to this Stream
+     * @return BasicAWSCredentials for this stream
+     */
+    public static BasicAWSCredentials getBasicAWSCredentials(String awsKey, String awsSecret){
+        return new BasicAWSCredentials(awsKey, awsSecret);
     }
 
     public void setBucket(String bucket) {

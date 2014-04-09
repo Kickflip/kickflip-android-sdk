@@ -1,6 +1,5 @@
 package io.kickflip.sdk.api.json;
 
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.api.client.util.Key;
 
 /**
@@ -27,16 +26,6 @@ public class HlsStream extends Stream {
 
     public String getAwsSecret() {
         return mAwsSecret;
-    }
-
-
-    /**
-     * Convenience method that returns Amazon
-     * BasicAWSCredentials corresponding to this Stream
-     * @return BasicAWSCredentials for this stream
-     */
-    public BasicAWSCredentials getBasicAWSCredentials(){
-        return new BasicAWSCredentials(mAwsKey, mAwsSecret);
     }
 
     public String toString(){

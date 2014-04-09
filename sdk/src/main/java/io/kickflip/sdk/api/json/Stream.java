@@ -1,5 +1,6 @@
 package io.kickflip.sdk.api.json;
 
+import com.amazonaws.util.json.Jackson;
 import com.google.api.client.util.Key;
 
 /**
@@ -201,6 +202,11 @@ public class Stream extends Response implements Comparable<Stream> {
     @Override
     public int compareTo(Stream another) {
         return another.getTimeStarted().compareTo(getTimeStarted());
+    }
+
+    @Override
+    public String toString() {
+        return Jackson.toJsonPrettyString(this);
     }
 
 //    stream.start_lat = float(request.POST.get("lat", 0))

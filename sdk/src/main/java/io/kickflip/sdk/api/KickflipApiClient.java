@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.util.json.Jackson;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
@@ -350,7 +351,7 @@ public class KickflipApiClient extends OAuthClient {
 
     private void request(HttpRequestFactory requestFactory, final METHOD method, final String url, final HttpContent content, final Class responseClass, final KickflipCallback cb) {
         if (VERBOSE)
-            Log.i(TAG, String.format("Attempting %S : %s body: %s", method, url, (content == null ? "" : content.toString())));
+            Log.i(TAG, String.format("REQUEST: %S : %s body: %s", method, shortenUrlString(url), (content == null ? "" : Jackson.toJsonPrettyString(content))));
         try {
             HttpRequest request = null;
             switch (method) {
@@ -420,7 +421,6 @@ public class KickflipApiClient extends OAuthClient {
      * @throws IOException
      */
     private void handleHttpResponse(HttpResponse response, Class<? extends Response> responseClass, KickflipCallback cb) throws IOException {
-        checkNotNull(cb);
         //Object parsedResponse = response.parseAs(responseClass);
         if (isSuccessResponse(response)) {
             // Http Success
@@ -428,6 +428,7 @@ public class KickflipApiClient extends OAuthClient {
             //cb.onSuccess(responseClass.cast(parsedResponse));
         } else {
             // Http Failure
+            if (VERBOSE) Log.i(TAG, String.format("RESPONSE (F): %s body: %s", shortenUrlString(response.getRequest().getUrl().toString()), response.getContent().toString()));
             postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
         }
     }
@@ -441,8 +442,10 @@ public class KickflipApiClient extends OAuthClient {
      * @throws IOException
      */
     private void handleKickflipResponse(HttpResponse response, Class<? extends Response> responseClass, KickflipCallback cb) throws IOException {
+        if (cb == null) return;
         HashMap responseMap = null;
         Response kickFlipResponse = response.parseAs(responseClass);
+        if (VERBOSE) Log.i(TAG, String.format("RESPONSE: %s body: %s", shortenUrlString(response.getRequest().getUrl().toString()), Jackson.toJsonPrettyString(kickFlipResponse)));
 //        if (Stream.class.isAssignableFrom(responseClass)) {
 //            if( ((String) responseMap.get("stream_type")).compareTo("HLS") == 0){
 //                kickFlipResponse = response.parseAs(HlsStream.class);
@@ -452,7 +455,6 @@ public class KickflipApiClient extends OAuthClient {
 //        } else if(User.class.isAssignableFrom(responseClass)){
 //            kickFlipResponse = response.parseAs(User.class);
 //        }
-
         if (kickFlipResponse == null || !kickFlipResponse.isSuccessful()) {
             postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
         } else {
@@ -543,7 +545,17 @@ public class KickflipApiClient extends OAuthClient {
         if (DEV_ENDPOINT)
             BASE_URL = "http://funkcity.ngrok.com";
         else
-            BASE_URL = "http://api.kickflip.io";
+            BASE_URL = "https://www.kickflip.io";
+    }
+
+    /**
+     * Given a string like https://api.kickflip.io/api/search
+     * return /api/search
+     * @param url
+     * @return
+     */
+    private String shortenUrlString(String url) {
+        return url.substring(BASE_URL.length());
     }
 
     public boolean userOwnsStream(Stream stream) {
