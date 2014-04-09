@@ -99,7 +99,11 @@ public class StreamAdapter extends ArrayAdapter<Stream> {
         }
 
         if (stream.getThumbnailUrl() != null && stream.getThumbnailUrl().compareTo("") != 0) {
-            Picasso.with(getContext()).load(stream.getThumbnailUrl()).into(holder.imageView);
+            Picasso.with(getContext())
+                    .load(stream.getThumbnailUrl())
+                    .placeholder(R.drawable.play)
+                    .error(R.drawable.play)
+                    .into(holder.imageView);
         } else {
             holder.imageView.setImageResource(R.drawable.play);
         }

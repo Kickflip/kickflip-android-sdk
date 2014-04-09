@@ -96,7 +96,6 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.setSurface(displaySurface);
             mMediaPlayer.setDataSource(mMediaUrl);
-            Log.i(TAG, "set bufferingUpdateListener");
             mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
@@ -109,7 +108,6 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
             mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
-                    Log.i("MediaPlayer", "playback complete");
                     if (getActivity() != null) {
                         getActivity().finish();
                     }

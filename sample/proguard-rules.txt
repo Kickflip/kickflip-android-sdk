@@ -39,7 +39,7 @@
 -dontwarn com.google.common.collect.MinMaxPriorityQueue
 
 # Kickflip
-# -keep class io.kickflip.sdk.FileUtils               { *; }
+# -keep class io.kickflip.sdk               { *; }
 
 # Picasso
 -dontwarn com.squareup.okhttp.**
