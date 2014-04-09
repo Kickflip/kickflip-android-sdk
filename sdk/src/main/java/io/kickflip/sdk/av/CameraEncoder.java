@@ -594,6 +594,12 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         try {
             mCamera.setPreviewTexture(mSurfaceTexture);
             mCamera.startPreview();
+//            mCamera.autoFocus(new Camera.AutoFocusCallback() {
+//                @Override
+//                public void onAutoFocus(boolean success, Camera camera) {
+//                    Log.i(TAG, "autofocus happened")
+//                }
+//            });
             if (VERBOSE)
                 Log.i("CameraRelease", "Opened / Started Camera preview. mDisplayView ready? " + (mDisplayView == null ? " no" : " yes"));
             if (mDisplayView != null) configureDisplayView();

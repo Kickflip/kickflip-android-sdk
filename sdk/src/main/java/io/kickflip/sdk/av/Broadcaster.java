@@ -12,6 +12,8 @@ import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import io.kickflip.sdk.FileUtils;
 import io.kickflip.sdk.Kickflip;
@@ -43,6 +45,7 @@ public class Broadcaster extends AVRecorder {
     private static final String TAG = "Broadcaster";
     private static final boolean VERBOSE = true;
 
+    private static ExecutorService mExecutorService;
     private Context mContext;
     private KickflipApiClient mKickflip;
     private User mUser;
@@ -57,9 +60,9 @@ public class Broadcaster extends AVRecorder {
     private boolean mSentBroadcastLiveEvent;
     private int mVideoBitrate;
     private File mManifestSnapshotDir;                                  // Directory where manifest snapshots are stored
-    private File mMasterManifest;                                       // Master HLS Manifest containing complete history
+    private File mVodManifest;                                          // VOD HLS Manifest containing complete history
     private int mNumSegmentsWritten;
-    private int mLastManifestLength;
+    private final String VOD_FILENAME = "vod.m3u8";
 
     private static final int MIN_BITRATE = 3 * 100 * 1000;              // 300 kbps
 
@@ -75,8 +78,8 @@ public class Broadcaster extends AVRecorder {
         if (VERBOSE) Log.i(TAG, "Initial video bitrate : " + mVideoBitrate);
         mManifestSnapshotDir = new File(mConfig.getOutputPath().substring(0, mConfig.getOutputPath().lastIndexOf("/") + 1), "m3u8");
         mManifestSnapshotDir.mkdir();
-        mMasterManifest = new File(mManifestSnapshotDir, "master.m3u8");
-        writeMasterManifestHeader();
+        mVodManifest = new File(mManifestSnapshotDir, VOD_FILENAME);
+        writeEventManifestHeader(mConfig.getHlsSegmentDuration());
 
         String watchDir = config.getOutputPath().substring(0, config.getOutputPath().lastIndexOf(File.separator) + 1);
         mFileObserver = new HlsFileObserver(watchDir, mEventBus);
@@ -101,11 +104,16 @@ public class Broadcaster extends AVRecorder {
     }
 
     private void init() {
-        mLastManifestLength = 0;
         mNumSegmentsWritten = 0;
         mSentBroadcastLiveEvent = false;
         mEventBus = new EventBus("Broadcaster");
         mEventBus.register(this);
+    }
+
+    private ExecutorService getExecutorService(){
+        if(mExecutorService == null)
+            mExecutorService = Executors.newSingleThreadExecutor();
+        return mExecutorService;
     }
 
     public void setBroadcastListener(BroadcastListener listener) {
@@ -177,6 +185,11 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
+    /**
+     * An S3 Upload completed.
+     *
+     * Called on a background thread
+     */
     @Subscribe
     public void onS3UploadComplete(S3UploadEvent uploadEvent) {
         if (VERBOSE) Log.i(TAG, "Upload completed for " + uploadEvent.getUrl());
@@ -189,6 +202,11 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
+    /**
+     * An S3 .ts segment upload completed.
+     *
+     * Called on a background thread
+     */
     private void onSegmentUploaded(S3UploadEvent uploadEvent) {
         try {
             if (Build.VERSION.SDK_INT >= 19) {
@@ -211,6 +229,11 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
+    /**
+     * An S3 .m3u8 upload completed.
+     *
+     * Called on a background thread
+     */
     private void onManifestUploaded(S3UploadEvent uploadEvent) {
         if (!mSentBroadcastLiveEvent) {
             mEventBus.post(new BroadcastIsLiveEvent(((HlsStream) mStream).getKickflipUrl()));
@@ -220,6 +243,11 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
+    /**
+     * A thumbnail upload completed.
+     *
+     * Called on a background thread
+     */
     private void onThumbnailUploaded(S3UploadEvent uploadEvent) {
         if(mStream != null) {
             mStream.setThumbnailUrl(uploadEvent.getUrl());
@@ -237,6 +265,11 @@ public class Broadcaster extends AVRecorder {
         if (VERBOSE) Log.i(TAG, "DeadEvent ");
     }
 
+    /**
+     * A .m3u8 file was written in the recording directory.
+     *
+     * Called on a background thread
+     */
     @Subscribe
     public void onManifestUpdated(HlsManifestWrittenEvent e) {
         if (VERBOSE) Log.i(TAG, "onManifestUpdated");
@@ -251,15 +284,25 @@ public class Broadcaster extends AVRecorder {
             e1.printStackTrace();
         }
         queueOrSubmitUpload(keyForFilename("index.m3u8"), copy.getAbsolutePath());
-        appendLastManifestEntryToMasterManifest(orig, !isRecording());
+        appendLastManifestEntryToEventManifest(orig, !isRecording());
         mNumSegmentsWritten++;
     }
 
+    /**
+     * A thumbnail was written in the recording directory.
+     *
+     * Called on a background thread
+     */
     @Subscribe
     public void onThumbnailWritten(ThumbnailWrittenEvent e) {
         queueOrSubmitUpload(keyForFilename("thumb.jpg"), e.getThumbnailLocation());
     }
 
+    /**
+     * A .ts file was written in the recording directory.
+     *
+     * Called on a background thread
+     */
     @Subscribe
     public void onSegmentWritten(HlsSegmentWrittenEvent e) {
         if (VERBOSE) Log.i(TAG, "onSegmentWritten");
@@ -325,18 +368,22 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
-    private void writeMasterManifestHeader() {
-        // TODO: Dynamically set EXT-X-TARGETDURATION
-        FileUtils.writeStringToFile("#EXTM3U\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXT-X-VERSION:3\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-TARGETDURATION:12\n",
-                mMasterManifest, false);
+    private void writeEventManifestHeader(int targetDuration) {
+        FileUtils.writeStringToFile(
+                String.format("#EXTM3U\n" +
+                        "#EXT-X-PLAYLIST-TYPE:VOD\n" +
+                        "#EXT-X-VERSION:3\n" +
+                        "#EXT-X-MEDIA-SEQUENCE:0\n" +
+                        "#EXT-X-TARGETDURATION:%d\n", targetDuration + 1),
+                mVodManifest, false);
     }
 
-    private void appendLastManifestEntryToMasterManifest(File sourceManifest, boolean lastEntry) {
+    private void appendLastManifestEntryToEventManifest(File sourceManifest, boolean lastEntry) {
         String result = FileUtils.tail2(sourceManifest, lastEntry ? 3 : 2);
-        FileUtils.writeStringToFile(result, mMasterManifest, true);
+        FileUtils.writeStringToFile(result, mVodManifest, true);
         if (lastEntry) {
-            S3Manager.queueUpload(new S3Upload(mS3Client, mMasterManifest, keyForFilename("index.m3u8")));
-            Log.i(TAG, "Queued master manifest " + mMasterManifest.getAbsolutePath());
+            S3Manager.queueUpload(new S3Upload(mS3Client, mVodManifest, keyForFilename("vod.m3u8")));
+            if (VERBOSE) Log.i(TAG, "Queued master manifest " + mVodManifest.getAbsolutePath());
         }
     }
 

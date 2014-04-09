@@ -27,7 +27,7 @@ import java.util.ArrayDeque;
  */
 public abstract class OAuthClient {
     private static final String TAG = "OAuthClient";
-    private static final boolean VERBOSE = true;
+    private static final boolean VERBOSE = false;
 
     // For SharedPreferences storage
     private final String ACCESS_TOKEN_KEY = "AT";

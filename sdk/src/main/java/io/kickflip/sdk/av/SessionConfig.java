@@ -24,6 +24,7 @@ public class SessionConfig {
     private Stream mStream;
     private boolean mIsAdaptiveBitrate;
     private boolean mAttachLocation;
+    private int mHlsSegmentDuration;
 
     public SessionConfig() {
         mVideoConfig = new VideoEncoderConfig(1280, 720, 2 * 1000 * 1000);
@@ -104,6 +105,10 @@ public class SessionConfig {
         return mIsAdaptiveBitrate;
     }
 
+    public int getHlsSegmentDuration() {
+        return mHlsSegmentDuration;
+    }
+
     public void setUseAdaptiveBitrate(boolean useAdaptiveBit) {
         this.mIsAdaptiveBitrate = useAdaptiveBit;
     }
@@ -140,6 +145,10 @@ public class SessionConfig {
         this.mAttachLocation = mAttachLocation;
     }
 
+    public void setHlsSegmentDuration(int hlsSegmentDuration) {
+        mHlsSegmentDuration = hlsSegmentDuration;
+    }
+
     public static class Builder {
         private int mWidth;
         private int mHeight;
@@ -158,6 +167,8 @@ public class SessionConfig {
         private boolean mAttachLocation;
         private boolean mAdaptiveStreaming;
         private String mExtraInfo;
+
+        private int mHlsSegmentDuration;
 
         /**
          * Configure a SessionConfig quickly with intelligent path interpretation.
@@ -244,6 +255,7 @@ public class SessionConfig {
             mPrivate = false;
             mAttachLocation = false;
             mAdaptiveStreaming = true;
+            mHlsSegmentDuration = 10;
         }
 
         public Builder withMuxer(Muxer muxer) {
@@ -308,6 +320,11 @@ public class SessionConfig {
             return this;
         }
 
+        public Builder withHlsSegmentDuration(int segmentDuration) {
+            mHlsSegmentDuration = segmentDuration;
+            return this;
+        }
+
         public SessionConfig build() {
             SessionConfig session = new SessionConfig(mUUID, mMuxer,
                     new VideoEncoderConfig(mWidth, mHeight, mVideoBitrate),
@@ -319,6 +336,7 @@ public class SessionConfig {
             session.setUseAdaptiveBitrate(mAdaptiveStreaming);
             session.setAttachLocation(mAttachLocation);
             session.setExtraInfo(mExtraInfo);
+            session.setHlsSegmentDuration(mHlsSegmentDuration);
 
             return session;
         }

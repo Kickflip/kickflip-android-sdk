@@ -19,6 +19,7 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.GenericData;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -41,8 +42,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 // TODO: Standardize Kickflip server error responses to have detail message
 public class KickflipApiClient extends OAuthClient {
-    public static final boolean VERBOSE = true;
+    public static final boolean VERBOSE = false;
     public static final boolean DEV_ENDPOINT = false;
+    private static final int MAX_EOF_RETRIES = 1;
     public static final String NEW_USER = "/api/user/new";
     public static final String START_STREAM = "/api/stream/start";
     public static final String STOP_STREAM = "/api/stream/stop";
@@ -364,7 +366,7 @@ public class KickflipApiClient extends OAuthClient {
                             new GenericUrl(url), content).setParser(getJsonObjectParser());
                     break;
             }
-            handleHttpResponse(request.execute(), responseClass, cb);
+            executeAndRetryRequest(request, responseClass, cb);
         } catch (final IOException exception) {
             // First try to handle as HttpResponseException
             try {
@@ -405,6 +407,39 @@ public class KickflipApiClient extends OAuthClient {
                 postExceptionToCallback(cb, exception);
             }
         }
+    }
+
+    /**
+     * Execute a HTTPRequest and retry up to {@link io.kickflip.sdk.api.KickflipApiClient#MAX_EOF_RETRIES} times if an EOFException occurs.
+     * This is an attempt to address what appears to be a bug in NetHttpTransport
+     *
+     * See <a href="https://code.google.com/p/google-api-java-client/issues/detail?id=869&can=4&colspec=Milestone%20Priority%20Component%20Type%20Summary%20ID%20Status%20Owner">This issue</a>
+     *
+     * @param request
+     * @param responseClass
+     * @param cb
+     * @throws IOException
+     */
+    private void executeAndRetryRequest(HttpRequest request, Class responseClass, KickflipCallback cb) throws IOException {
+        int numRetries = 0;
+        while (numRetries < MAX_EOF_RETRIES + 1) {
+            try {
+                executeAndHandleHttpRequest(request, responseClass, cb);
+                // If executeAndHandleHttpRequest completes without throwing EOFException
+                // we're good
+                return;
+            } catch (EOFException eof) {
+                if (VERBOSE) Log.i(TAG, "Got EOFException. Retrying..");
+               // An EOFException may be due to a bug in the way Connections are recycled
+               // within the NetHttpTransport package. Ignore and retry
+            }
+            numRetries++;
+        }
+        postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
+    }
+
+    private void executeAndHandleHttpRequest(HttpRequest request, Class responseClass, KickflipCallback cb) throws IOException {
+        handleHttpResponse(request.execute(), responseClass, cb);
     }
 
     /**
