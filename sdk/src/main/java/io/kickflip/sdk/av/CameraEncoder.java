@@ -660,6 +660,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             if (VERBOSE) Log.i(TAG, "Camera does not support autofocus");
         }
 
+        parms.setRecordingHint(true);
+
         List<int[]> fpsRanges = parms.getSupportedPreviewFpsRange();
         int[] maxFpsRange = fpsRanges.get(fpsRanges.size() - 1);
         parms.setPreviewFpsRange(maxFpsRange[0], maxFpsRange[1]);
