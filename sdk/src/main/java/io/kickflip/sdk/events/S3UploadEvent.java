@@ -1,7 +1,5 @@
 package io.kickflip.sdk.events;
 
-import android.util.Log;
-
 /**
  * Created by davidbrodsky on 2/19/14.
  */
@@ -11,6 +9,7 @@ public class S3UploadEvent extends BroadcastEvent implements UploadEvent {
     private String mUrl;
 
     private int mBytesPerSecond;
+    private long mTotalBytes;
 
     @Override
     public String getUrl() {
@@ -22,9 +21,10 @@ public class S3UploadEvent extends BroadcastEvent implements UploadEvent {
         return mBytesPerSecond;
     }
 
-    public S3UploadEvent(String url, int bytesPerSecond) {
+    public S3UploadEvent(String url, int bytesPerSecond, long totalBytes) {
         this.mUrl = url;
         this.mBytesPerSecond = bytesPerSecond;
+        this.mTotalBytes = totalBytes;
     }
 
     public String toString(){

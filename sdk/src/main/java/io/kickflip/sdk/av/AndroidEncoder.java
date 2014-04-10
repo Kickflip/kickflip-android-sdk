@@ -38,7 +38,7 @@ public abstract class AndroidEncoder {
             bitrate.putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, targetBitrate);
             mEncoder.setParameters(bitrate);
         }else if (Build.VERSION.SDK_INT < 19) {
-            Log.w(TAG, "Ignoring adjustBitrate call. This functionality is only available on Android API 19+");
+            Log.w(TAG, "Ignoring adjustVideoBitrate call. This functionality is only available on Android API 19+");
         }
     }
 

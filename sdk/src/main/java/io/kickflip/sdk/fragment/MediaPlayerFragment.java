@@ -141,9 +141,6 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         super.onPause();
 
         if (mMediaPlayer != null) {
-            if (mMediaPlayer.isPlaying()) {
-                mMediaPlayer.stop();
-            }
             mMediaPlayer.release();
         }
     }

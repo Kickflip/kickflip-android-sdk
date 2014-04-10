@@ -49,7 +49,7 @@ public class MicrophoneEncoder implements Runnable{
             bufferSize = ((minBufferSize / SAMPLES_PER_FRAME) + 1) * SAMPLES_PER_FRAME * 2;
 
         mAudioRecord = new AudioRecord(
-                MediaRecorder.AudioSource.MIC,       // source
+                MediaRecorder.AudioSource.CAMCORDER, // source
                 mEncoderCore.mSampleRate,            // sample rate, hz
                 mEncoderCore.mChannelConfig,         // channels
                 AUDIO_FORMAT,                        // audio format

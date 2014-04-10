@@ -63,6 +63,7 @@ public class Broadcaster extends AVRecorder {
     private File mVodManifest;                                          // VOD HLS Manifest containing complete history
     private int mNumSegmentsWritten;
     private final String VOD_FILENAME = "vod.m3u8";
+    private int mLastRealizedBandwidthBytesPerSec;                      // Bandwidth snapshot for adapting bitrate
 
     private static final int MIN_BITRATE = 3 * 100 * 1000;              // 300 kbps
 
@@ -104,6 +105,7 @@ public class Broadcaster extends AVRecorder {
     }
 
     private void init() {
+        mLastRealizedBandwidthBytesPerSec = 0;
         mNumSegmentsWritten = 0;
         mSentBroadcastLiveEvent = false;
         mEventBus = new EventBus("Broadcaster");
@@ -203,24 +205,69 @@ public class Broadcaster extends AVRecorder {
     }
 
     /**
+     * A .ts file was written in the recording directory.
+     *
+     * Use this opportunity to verify the segment is of expected size
+     * given the target bitrate
+     *
+     * Called on a background thread
+     */
+    @Subscribe
+    public void onSegmentWritten(HlsSegmentWrittenEvent event) {
+        try {
+            if (Build.VERSION.SDK_INT >= 19 && mConfig.isAdaptiveBitrate()) {
+                // Adjust bitrate to match expected filesize
+                File hlsSegment = new File(event.getSegmentLocation());
+                long actualSegmentSizeBytes = hlsSegment.length();
+                long expectedSizeBytes = ((mConfig.getAudioBitrate() / 8) + (mVideoBitrate / 8)) * mConfig.getHlsSegmentDuration();
+                float filesizeRatio = actualSegmentSizeBytes / (float) expectedSizeBytes;
+                if (VERBOSE)
+                    Log.i(TAG, "OnSegmentWritten. Segment size: " + (actualSegmentSizeBytes / 1000) + "kB. ratio: " + filesizeRatio );
+                if (filesizeRatio < .7) {
+                    if (mLastRealizedBandwidthBytesPerSec != 0) {
+                        // Scale bitrate while not exceeding available bandwidth
+                        float scaledBitrate = mVideoBitrate * (1 / filesizeRatio);
+                        float bandwidthBitrate = mLastRealizedBandwidthBytesPerSec * 8;
+                        mVideoBitrate = (int) Math.min(scaledBitrate, bandwidthBitrate);
+                    } else {
+                        // Scale bitrate to match expected fileSize
+                        mVideoBitrate *= (1 / filesizeRatio);
+                    }
+                    if (VERBOSE) Log.i(TAG, "Scaling video bitrate to " + mVideoBitrate + " bps");
+                    adjustVideoBitrate(mVideoBitrate);
+                }
+                String fileName = hlsSegment.getName();
+                queueOrSubmitUpload(keyForFilename(fileName), event.getSegmentLocation());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /**
      * An S3 .ts segment upload completed.
+     *
+     * Use this opportunity to adjust bitrate based on the bandwidth
+     * measured during this segment's transmission.
      *
      * Called on a background thread
      */
     private void onSegmentUploaded(S3UploadEvent uploadEvent) {
         try {
-            if (Build.VERSION.SDK_INT >= 19) {
+            if (Build.VERSION.SDK_INT >= 19 && mConfig.isAdaptiveBitrate()) {
+                mLastRealizedBandwidthBytesPerSec = uploadEvent.getUploadByteRate();
                 // Adjust video encoder bitrate per bandwidth of just-completed upload
-                if (VERBOSE)
-                    Log.i(TAG, "Bandwidth: " + uploadEvent.getUploadByteRate() / 1000.0 + " KBps Birate: " + ((mVideoBitrate + mConfig.getAudioBitrate()) / 8 * 1000.0) + " KBps");
-                if (uploadEvent.getUploadByteRate() < (((mVideoBitrate + mConfig.getAudioBitrate()) / 8))) {
-                    // The new bitrate is equal to the last upload bandwidth, never exceeding MIN_BITRATE, or the
-                    // bitrate intially provided in SessionConfig
-                    mVideoBitrate = Math.max(Math.min(uploadEvent.getUploadByteRate(), mConfig.getVideoBitrate()), MIN_BITRATE);
-                    if (VERBOSE)
-                        Log.i(TAG, String.format("Adjusting encoder bitrate. Bandwidth: %f KBps, Bitrate: %f KBps, New Bitrate: %f KBps",
-                                uploadEvent.getUploadByteRate() / 1000.0, mConfig.getTotalBitrate() / 1000.0, mVideoBitrate / 1000.0));
-                    adjustBitrate(mVideoBitrate);
+                if (VERBOSE) {
+                    Log.i(TAG, "Bandwidth: " + (mLastRealizedBandwidthBytesPerSec / 1000.0) + " kBps. Encoder: " + ((mVideoBitrate + mConfig.getAudioBitrate()) / 8) / 1000.0 + " kBps");
+                }
+                if (mLastRealizedBandwidthBytesPerSec < (((mVideoBitrate + mConfig.getAudioBitrate()) / 8))) {
+                    // The new bitrate is equal to the last upload bandwidth, never inferior to MIN_BITRATE, nor superior to the initial specified bitrate
+                    mVideoBitrate = Math.max(Math.min(mLastRealizedBandwidthBytesPerSec * 8, mConfig.getVideoBitrate()), MIN_BITRATE);
+                    if (VERBOSE) {
+                        Log.i(TAG, String.format("Adjusting video bitrate to %f kBps. Bandwidth: %f kBps",
+                                mVideoBitrate / (8 *1000.0), mLastRealizedBandwidthBytesPerSec / 1000.0));
+                    }
+                    adjustVideoBitrate(mVideoBitrate);
                 }
             }
         } catch (Exception e) {
@@ -296,18 +343,6 @@ public class Broadcaster extends AVRecorder {
     @Subscribe
     public void onThumbnailWritten(ThumbnailWrittenEvent e) {
         queueOrSubmitUpload(keyForFilename("thumb.jpg"), e.getThumbnailLocation());
-    }
-
-    /**
-     * A .ts file was written in the recording directory.
-     *
-     * Called on a background thread
-     */
-    @Subscribe
-    public void onSegmentWritten(HlsSegmentWrittenEvent e) {
-        if (VERBOSE) Log.i(TAG, "onSegmentWritten");
-        String fileName = e.getSegmentLocation().substring(e.getSegmentLocation().lastIndexOf(File.separator) + 1);
-        queueOrSubmitUpload(keyForFilename(fileName), e.getSegmentLocation());
     }
 
     @Subscribe

@@ -39,7 +39,7 @@ public class AVRecorder {
         mCamEncoder.requestCamera(camera);
     }
 
-    public void adjustBitrate(int targetBitRate){
+    public void adjustVideoBitrate(int targetBitRate){
         mCamEncoder.adjustBitrate(targetBitRate);
     }
 
