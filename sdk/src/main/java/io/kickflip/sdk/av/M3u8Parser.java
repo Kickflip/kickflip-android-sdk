@@ -1,5 +1,6 @@
 package io.kickflip.sdk.av;
 
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -10,6 +11,10 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import io.kickflip.sdk.api.KickflipApiClient;
+
+import static io.kickflip.sdk.Kickflip.isKickflipUrl;
+
 /**
  * Created by David Brodsky on 4/8/14.
  */
@@ -19,6 +24,16 @@ public class M3u8Parser {
     public interface M3u8ParserCallback{
         public void onSuccess(Playlist playlist);
         public void onError(Exception e);
+    }
+
+    public static void getM3u8FromUrl(KickflipApiClient kickflip, String url, final M3u8ParserCallback cb) {
+        if (isKickflipUrl(Uri.parse(url))) {
+
+        } else if(url.substring(url.lastIndexOf(".")+1).equals("m3u8")) {
+            parseM3u8(url, cb);
+        } else {
+            throw new IllegalArgumentException("Url is not an .m3u8 or kickflip.io url");
+        }
     }
 
     public static void parseM3u8(String url, final M3u8ParserCallback cb) {

@@ -87,7 +87,7 @@ public class Broadcaster extends AVRecorder {
         mFileObserver.startWatching();
 
         mReadyToBroadcast = false;
-        mKickflip = new KickflipApiClient(context, API_KEY, API_SECRET, new KickflipCallback() {
+        mKickflip = Kickflip.setup(context, API_KEY, API_SECRET, new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
                 User user = (User) response;

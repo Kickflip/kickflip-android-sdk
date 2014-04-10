@@ -1,6 +1,7 @@
 package io.kickflip.sample.activity;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -19,6 +20,8 @@ import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.fragment.BroadcastFragment;
+
+import static io.kickflip.sdk.Kickflip.isKickflipUrl;
 
 
 public class MainActivity extends Activity implements MainFragmentInteractionListener, StreamListFragment.StreamListFragmenListener {
@@ -61,13 +64,16 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
         getActionBar().setDisplayShowHomeEnabled(false);
         setContentView(R.layout.activity_main);
 
-        if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
-                    .replace(R.id.container, new StreamListFragment())
-                    .commit();
-        }
+        // This must happen before any other Kickflip interactions
+        Kickflip.setup(this, SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
 
-        Kickflip.setupWithApiKey(SECRETS.CLIENT_KEY, SECRETS.CLIENT_SECRET);
+        if (!handleLaunchingIntent()) {
+            if (savedInstanceState == null) {
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.container, new StreamListFragment())
+                        .commit();
+            }
+        }
     }
 
     @Override
@@ -114,7 +120,7 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
     @Override
     public void onStreamPlaybackRequested(String streamUrl) {
         // Play with Kickflip's built-in Media Player
-        Kickflip.startMediaPlayerActivity(this, streamUrl);
+        Kickflip.startMediaPlayerActivity(this, streamUrl, false);
 
         // Play via Intent for 3rd party Media Player
         //Intent i = new Intent(Intent.ACTION_VIEW);
@@ -137,5 +143,15 @@ public class MainActivity extends Activity implements MainFragmentInteractionLis
                 .withVideoResolution(1280, 720)
                 .build();
         Kickflip.setSessionConfig(config);
+    }
+
+    private boolean handleLaunchingIntent() {
+        Uri intentData = getIntent().getData();
+        if (isKickflipUrl(intentData)) {
+            Kickflip.startMediaPlayerActivity(this, intentData.toString(), true);
+            finish();
+            return true;
+        }
+        return false;
     }
 }

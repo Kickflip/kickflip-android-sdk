@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.Uri;
 
 import com.google.common.eventbus.EventBus;
 
@@ -13,6 +14,8 @@ import java.io.IOException;
 
 import io.kickflip.sdk.activity.BroadcastActivity;
 import io.kickflip.sdk.activity.MediaPlayerActivity;
+import io.kickflip.sdk.api.KickflipApiClient;
+import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
@@ -31,12 +34,23 @@ public class Kickflip {
     private static String sApiKey;
     private static String sApiSecret;
 
+    private static KickflipApiClient sKickflip;
+
     // Per-Stream settings
     private static SessionConfig sSessionConfig;          // Absolute path to root storage location
-
     private static BroadcastListener sBroadcastListener;
 
-    public static void setupWithApiKey(String key, String secret) {
+    public static KickflipApiClient setup(Context c, String key, String secret) {
+        setupWithApiKey(key, secret);
+        return getKickflip(c, null);
+    }
+
+    public static KickflipApiClient setup(Context c, String key, String secret, KickflipCallback cb) {
+        setupWithApiKey(key, secret);
+        return getKickflip(c, cb);
+    }
+
+    private static void setupWithApiKey(String key, String secret) {
         sApiKey = key;
         sApiSecret = secret;
     }
@@ -44,15 +58,20 @@ public class Kickflip {
     public static void startBroadcastActivity(Activity host, BroadcastListener listener) {
         checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
         checkNotNull(sSessionConfig, host.getString(R.string.error_no_recorderconfig));
+        checkNotNull(sApiKey);
+        checkNotNull(sApiSecret);
         sBroadcastListener = listener;
         Intent broadcastIntent = new Intent(host, BroadcastActivity.class);
         broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         host.startActivity(broadcastIntent);
     }
 
-    public static void startMediaPlayerActivity(Activity host, String streamUrl) {
+    public static void startMediaPlayerActivity(Activity host, String streamUrl, boolean newTask) {
         Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
         playbackIntent.putExtra("mediaUrl", streamUrl);
+        if (newTask) {
+            playbackIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        }
         host.startActivity(playbackIntent);
     }
 
@@ -109,5 +128,42 @@ public class Kickflip {
         return sApiKey != null && sApiSecret != null && sSessionConfig != null;
     }
 
+    public static boolean isKickflipUrl(Uri uri) {
+        return uri != null && uri.getAuthority().contains("kickflip.io");
+    }
+
+    /**
+     * Given a Kickflip.io url, return the stream id.
+     *
+     * e.g: https://kickflip.io/39df392c-4afe-4bf5-9583-acccd8212277/ returns
+     * "39df392c-4afe-4bf5-9583-acccd8212277"
+     * @param uri
+     * @return
+     */
+    public static String getStreamIdFromKickflipUrl(Uri uri) {
+        if (uri == null) throw new IllegalArgumentException("uri cannot be null");
+        return uri.getLastPathSegment().toString();
+    }
+
+    /**
+     * Create a new instance of the KickflipApiClient if one hasn't
+     * yet been created, or the provided API keys don't match
+     * the existing client.
+     *
+     * @param c the context of the host application
+     * @param cb an optional callback to be notified with the Kickflip user
+     *           corresponding to the provided API keys.
+     * @return
+     */
+    public static KickflipApiClient getKickflip(Context c, KickflipCallback cb) {
+        checkNotNull(sApiKey);
+        checkNotNull(sApiSecret);
+        if (sKickflip == null || !sKickflip.getConfig().getClientId().equals(sApiKey)) {
+            sKickflip = new KickflipApiClient(c, sApiKey, sApiSecret, cb);
+        } else if (cb != null) {
+            cb.onSuccess(sKickflip.getCachedUser());
+        }
+        return sKickflip;
+    }
 
 }

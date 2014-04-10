@@ -4,6 +4,7 @@ package io.kickflip.sdk.fragment;
 import android.app.Fragment;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,13 +22,19 @@ import net.chilicat.m3u8.Playlist;
 
 import java.io.IOException;
 
+import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
+import io.kickflip.sdk.api.KickflipApiClient;
+import io.kickflip.sdk.api.KickflipCallback;
+import io.kickflip.sdk.api.json.Response;
+import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.M3u8Parser;
 
 public class MediaPlayerFragment extends Fragment implements TextureView.SurfaceTextureListener, MediaController.MediaPlayerControl {
     public static final String TAG = "MediaPlayerFragment";
     public static final boolean VERBOSE = true;
     private static final String ARG_URL = "url";
+    private KickflipApiClient mKickflip;
 
     private ProgressBar mProgress;
     private TextureView mTextureView;
@@ -39,6 +46,21 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
     // M3u8 Media properties inferred from .m3u8
     private int mDurationMs;
     private boolean mIsLive;
+
+    private Surface mSurface;
+
+    private M3u8Parser.M3u8ParserCallback m3u8ParserCallback = new M3u8Parser.M3u8ParserCallback() {
+        @Override
+        public void onSuccess(Playlist playlist) {
+            updateUIWithM3u8Playlist(playlist);
+            setupMediaPlayer(mSurface);
+        }
+
+        @Override
+        public void onError(Exception e) {
+            if (VERBOSE) Log.i(TAG, "m3u8 parse failed " + e.getMessage());
+        }
+    };
 
     private View.OnTouchListener mTextureViewTouchListener = new View.OnTouchListener() {
 
@@ -67,17 +89,30 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mMediaUrl = getArguments().getString(ARG_URL);
-            M3u8Parser.parseM3u8(mMediaUrl, new M3u8Parser.M3u8ParserCallback() {
-                @Override
-                public void onSuccess(Playlist playlist) {
-                    updateUIWithM3u8Playlist(playlist);
-                }
+            // NOTE: the kickflip client may not be fully initialized immediately.
+            mKickflip = Kickflip.getKickflip(getActivity(), null);
+            if (Kickflip.isKickflipUrl(Uri.parse(mMediaUrl))) {
+                Log.i(TAG, "MediaPlayerFragment got kickflip url");
+                String streamId = Kickflip.getStreamIdFromKickflipUrl(Uri.parse(mMediaUrl));
+                mKickflip.getStreamInfo(streamId, new KickflipCallback() {
+                    @Override
+                    public void onSuccess(Response response) {
+                        Stream stream = (Stream) response;
+                        Log.i(TAG, "got kickflip stream meta: " + stream.getStreamUrl());
+                        mMediaUrl = stream.getStreamUrl();
+                        parseM3u8FromMediaUrl();
+                    }
 
-                @Override
-                public void onError(Exception e) {
-                    if (VERBOSE) Log.i(TAG, "m3u8 parse failed " + e.getMessage());
-                }
-            });
+                    @Override
+                    public void onError(Object response) {
+                        Log.i(TAG, "get kickflip stream meta failed");
+                    }
+                });
+            } else if (mMediaUrl.substring(mMediaUrl.lastIndexOf(".")+1).equals("m3u8")){
+                parseM3u8FromMediaUrl();
+            } else {
+                throw new IllegalArgumentException("Unknown HLS media url format: " + mMediaUrl);
+            }
         }
     }
 
@@ -159,11 +194,14 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         return root;
     }
 
+    private void parseM3u8FromMediaUrl() {
+        M3u8Parser.parseM3u8(mMediaUrl, m3u8ParserCallback);
+    }
+
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-        Surface surface = new Surface(surfaceTexture);
-        setupMediaPlayer(surface);
+        mSurface = new Surface(surfaceTexture);
     }
 
     @Override

@@ -48,7 +48,8 @@ public class KickflipApiClient extends OAuthClient {
     public static final String NEW_USER = "/api/user/new";
     public static final String START_STREAM = "/api/stream/start";
     public static final String STOP_STREAM = "/api/stream/stop";
-    public static final String SET_META = "/api/stream/info";
+    public static final String SET_META = "/api/stream/change";
+    public static final String GET_META = "/api/stream/info";
     public static final String FLAG_STREAM = "/api/stream/flag";
     public static final String SEARCH = "/api/search";
     public static final String SEARCH_USER = "/api/search/user";
@@ -128,7 +129,7 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Start a new Stream.
+     * Start a new Stream with the cached user.
      * Delivers stream endpoint destination data via cb.
      * Uses the cached User
      *
@@ -141,7 +142,7 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Start a new Stream.
+     * Start a new Stream with the given user.
      * Delivers stream endpoint destination data via cb.
      *
      * @param cb This callback will receive a Stream subclass in #onSuccess(response)
@@ -167,7 +168,18 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Stop a Stream.
+     * Stop a Stream the cached user owns
+     *
+     * @param cb This callback will receive a Stream subclass in #onSuccess(response)
+     *           depending on the Kickflip account type. Implementors should
+     *           check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
+     */
+    public void stopStream(Stream stream, final KickflipCallback cb) {
+        stopStream(getCachedUser(), stream, cb);
+    }
+
+    /**
+     * Stop a Stream the given user owns
      *
      * @param cb This callback will receive a Stream subclass in #onSuccess(response)
      *           depending on the Kickflip account type. Implementors should
@@ -190,7 +202,7 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Send Stream meta data.
+     * Send Stream meta data for a stream the cached user owns
      *
      * @param stream
      * @param cb
@@ -233,6 +245,35 @@ public class KickflipApiClient extends OAuthClient {
         data.put("deleted", stream.isDeleted());
 
         post(BASE_URL + SET_META, new UrlEncodedContent(data), Stream.class, cb);
+    }
+
+    /**
+     * Get Stream meta data for a a public stream within the cached user's
+     * Kickflip app
+     *
+     * @param stream
+     * @param cb
+     */
+    public void getStreamInfo(Stream stream, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        data.put("stream_id", stream.getStreamId());
+
+        post(BASE_URL + GET_META, new UrlEncodedContent(data), Stream.class, cb);
+    }
+
+    /**
+     * Get Stream meta data for a a public stream within the cached user's
+     * Kickflip app
+     *
+     * @param streamId the stream Id of the given stream. This is the value that appears
+     *                 in urls of form kickflip.io/<stream_id>
+     * @param cb
+     */
+    public void getStreamInfo(String streamId, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        data.put("stream_id", streamId);
+
+        post(BASE_URL + GET_META, new UrlEncodedContent(data), Stream.class, cb);
     }
 
     /**
@@ -399,6 +440,7 @@ public class KickflipApiClient extends OAuthClient {
                                 httpException.getStatusCode(),
                                 httpException.getMessage()));
                 }
+                if (VERBOSE) Log.i(TAG, "RESPONSE: " + shortenUrlString(url) + " " + exception.getMessage());
                 postExceptionToCallback(cb, exception);
             } catch (ClassCastException e) {
                 // A non-HTTP releated error occured.
@@ -490,8 +532,13 @@ public class KickflipApiClient extends OAuthClient {
 //        } else if(User.class.isAssignableFrom(responseClass)){
 //            kickFlipResponse = response.parseAs(User.class);
 //        }
-        if (kickFlipResponse == null || !kickFlipResponse.isSuccessful()) {
+        if (kickFlipResponse == null ) {
             postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
+        } else if (!kickFlipResponse.isSuccessful()) {
+            String reason = kickFlipResponse.getReason() == null ?
+                    getContext().getString(R.string.generic_error) :
+                    kickFlipResponse.getReason();
+            postExceptionToCallback(cb, new KickflipApiException(reason));
         } else {
             postResponseToCallback(cb, kickFlipResponse);
         }

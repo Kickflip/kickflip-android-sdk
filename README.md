@@ -76,7 +76,7 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
 4. Provide your Kickflip keys and start `BroadcastActivity` when appropriate:
 
 	```java
-	Kickflip.setupWithApiKey(API_KEY, API_SECRET);
+	Kickflip.setup(this, API_KEY, API_SECRET);
 	Kickflip.startBroadcastActivity(this, new BroadcastListener() {
         @Override
         public void onBroadcastStart() {

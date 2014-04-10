@@ -10,11 +10,18 @@ public class Response {
     @Key("success")
     private boolean mSuccess;
 
-    public boolean isSuccessful(){
+    @Key("reason")
+    private String mReason;
+
+    public Response() {
+        // Required default Constructor
+    }
+
+    public boolean isSuccessful() {
         return mSuccess;
     }
 
-    public Response(){
-        // Required default Constructor
+    public String getReason() {
+        return mReason;
     }
 }
