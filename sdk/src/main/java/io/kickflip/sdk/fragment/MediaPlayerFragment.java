@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -25,6 +26,7 @@ import io.kickflip.sdk.av.M3u8Parser;
 
 public class MediaPlayerFragment extends Fragment implements TextureView.SurfaceTextureListener, MediaController.MediaPlayerControl {
     public static final String TAG = "MediaPlayerFragment";
+    public static final boolean VERBOSE = true;
     private static final String ARG_URL = "url";
 
     private ProgressBar mProgress;
@@ -72,7 +74,9 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
                 }
 
                 @Override
-                public void onError(Exception e) {}
+                public void onError(Exception e) {
+                    if (VERBOSE) Log.i(TAG, "m3u8 parse failed " + e.getMessage());
+                }
             });
         }
     }
@@ -98,6 +102,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
             mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
+                    if (VERBOSE) Log.i(TAG, "media player prepared");
                     mProgress.setVisibility(View.GONE);
                     mMediaController.setEnabled(true);
                     mTextureView.setOnTouchListener(mTextureViewTouchListener);
@@ -108,6 +113,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
                 @Override
                 public void onCompletion(MediaPlayer mp) {
                     if (getActivity() != null) {
+                        if (VERBOSE) Log.i(TAG, "media player complete. finishing");
                         getActivity().finish();
                     }
                 }
@@ -133,10 +139,13 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
     @Override
     public void onPause() {
         super.onPause();
-        if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.stop();
+
+        if (mMediaPlayer != null) {
+            if (mMediaPlayer.isPlaying()) {
+                mMediaPlayer.stop();
+            }
+            mMediaPlayer.release();
         }
-        mMediaPlayer.release();
     }
 
     @Override
@@ -222,7 +231,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
 
     @Override
     public boolean canSeekForward() {
-        return true;
+        return !mIsLive;
     }
 
     @Override

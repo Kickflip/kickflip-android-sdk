@@ -53,15 +53,14 @@
 
     <TextView
         android:id="@+id/liveLabel"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/broadcast_live_banner_width"
         android:layout_height="50dp"
         android:layout_marginTop="@dimen/status_bar_margin"
         android:background="@drawable/live_orange_bg"
         android:fontFamily="sans-serif-condensed"
         android:gravity="center"
         android:drawablePadding="5dp"
-        android:paddingLeft="10dp"
-        android:text="@string/buffering"
+        android:text="@string/live"
         android:clickable="true"
         android:textColor="#FFFFFF"
         android:textSize="30sp"

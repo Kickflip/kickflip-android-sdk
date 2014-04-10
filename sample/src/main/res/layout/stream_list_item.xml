@@ -18,13 +18,12 @@
 
     <TextView
         android:id="@+id/liveLabel"
-        android:layout_width="70dp"
+        android:layout_width="80dp"
         android:layout_height="30dp"
         android:paddingLeft="8dp"
-        android:drawableLeft="@drawable/red_dot_small"
         android:layout_alignLeft="@id/image"
         android:layout_alignTop="@id/image"
-        android:background="@drawable/live_bg"
+        android:background="@drawable/live_red_bg"
         android:fontFamily="sans-serif-condensed"
         android:text="@string/live"
         android:drawablePadding="8dp"
@@ -32,7 +31,7 @@
         android:textColor="#ffffff"
         android:gravity="left|center_vertical"
         android:textSize="16sp"
-        android:visibility="invisible"
+        android:visibility="visible"
         android:layout_marginTop="8dp"/>
 
     <TextView
