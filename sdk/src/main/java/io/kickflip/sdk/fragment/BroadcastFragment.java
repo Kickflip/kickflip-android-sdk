@@ -126,7 +126,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (VERBOSE) Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         if (!Kickflip.readyToBroadcast()) {
-            Log.e(TAG, "Kickflip not properly prepared by BroadcastFragment's onCreate. SessionConfig: " + Kickflip.getRecorderConfig() + " key " + Kickflip.getApiKey() + " secret " + Kickflip.getApiSecret());
+            Log.e(TAG, "Kickflip not properly prepared by BroadcastFragment's onCreate. SessionConfig: " + Kickflip.getSessionConfig() + " key " + Kickflip.getApiKey() + " secret " + Kickflip.getApiSecret());
         } else {
             setupBroadcaster();
         }
@@ -211,11 +211,11 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             if (mBroadcaster == null) {
                 if (VERBOSE)
-                    Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getRecorderConfig().getOutputPath() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
+                    Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getSessionConfig().getOutputPath() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
                 // TODO: Don't start recording until stream start response, so we can determine stream type...
                 //File outputFile = new File(new File(Kickflip.getOutputDirectory()), "index.m3u8");
                 Context context = getActivity().getApplicationContext();
-                mBroadcaster = new Broadcaster(context, Kickflip.getRecorderConfig(), Kickflip.getApiKey(), Kickflip.getApiSecret());
+                mBroadcaster = new Broadcaster(context, Kickflip.getSessionConfig(), Kickflip.getApiKey(), Kickflip.getApiSecret());
                 mBroadcaster.getEventBus().register(this);
                 mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
             }

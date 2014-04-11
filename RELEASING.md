@@ -41,6 +41,8 @@ Signed .aar will be in `./sdk/build/libs/`.
 		
 ## Publish the SDK to Maven
 
+Remember to update the `versionName` in `./sdk/build.gradle`!
+
 	$ ./gradlew clean && ./gradlew build && ./gradlew uploadArchives
 	
 	

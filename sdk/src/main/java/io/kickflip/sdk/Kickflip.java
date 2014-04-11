@@ -25,9 +25,7 @@ import io.kickflip.sdk.location.DeviceLocation;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Static convenience methods for interacting with Kickflip's
- * BroadcastActivity and Broadcaster. The static setters will only take effect
- * if called before startBroadcastActivity
+ * Static convenience methods for interacting with Kickflip.
  */
 public class Kickflip {
 
@@ -40,21 +38,51 @@ public class Kickflip {
     private static SessionConfig sSessionConfig;          // Absolute path to root storage location
     private static BroadcastListener sBroadcastListener;
 
+    /**
+     * Register with Kickflip, creating a new user identity per app installation.
+     *
+     * @param c      the host application's {@link android.content.Context}
+     * @param key    your Kickflip Client Key
+     * @param secret your Kickflip Client Secret
+     * @return a {@link io.kickflip.sdk.api.KickflipApiClient} used to perform actions on behalf of a
+     * {@link io.kickflip.sdk.api.json.User}.
+     */
     public static KickflipApiClient setup(Context c, String key, String secret) {
-        setupWithApiKey(key, secret);
+        setApiCredentials(key, secret);
         return getKickflip(c, null);
     }
 
+    /**
+     * Register with Kickflip, creating a new user identity per app installation.
+     *
+     * @param c      the host application's {@link android.content.Context}
+     * @param key    your Kickflip Client Key
+     * @param secret your Kickflip Client Secret
+     * @param cb     A callback to be invoked when Kickflip user credentials are available.
+     * @return a {@link io.kickflip.sdk.api.KickflipApiClient} used to perform actions on behalf of
+     * a {@link io.kickflip.sdk.api.json.User}.
+     */
     public static KickflipApiClient setup(Context c, String key, String secret, KickflipCallback cb) {
-        setupWithApiKey(key, secret);
+        setApiCredentials(key, secret);
         return getKickflip(c, cb);
     }
 
-    private static void setupWithApiKey(String key, String secret) {
+    private static void setApiCredentials(String key, String secret) {
         sApiKey = key;
         sApiSecret = secret;
     }
 
+    /**
+     * Start {@link io.kickflip.sdk.activity.BroadcastActivity}. This Activity
+     * facilitates control over a single live broadcast.
+     * <p/>
+     * <b>Must be called after {@link Kickflip#setup(android.content.Context, String, String)} or
+     * {@link Kickflip#setup(android.content.Context, String, String, io.kickflip.sdk.api.KickflipCallback)}.</b>
+     *
+     * @param host     the host {@link android.app.Activity} initiating this action
+     * @param listener an optional {@link io.kickflip.sdk.av.BroadcastListener} to be notified on
+     *                 broadcast events
+     */
     public static void startBroadcastActivity(Activity host, BroadcastListener listener) {
         checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
         checkNotNull(sSessionConfig, host.getString(R.string.error_no_recorderconfig));
@@ -66,6 +94,18 @@ public class Kickflip {
         host.startActivity(broadcastIntent);
     }
 
+    /**
+     * Start {@link io.kickflip.sdk.activity.MediaPlayerActivity}. This Activity
+     * facilitates playing back a Kickflip broadcast.
+     * <p/>
+     * <b>Must be called after {@link Kickflip#setup(android.content.Context, String, String)} or
+     * {@link Kickflip#setup(android.content.Context, String, String, io.kickflip.sdk.api.KickflipCallback)}.</b>
+     *
+     * @param host      the host {@link android.app.Activity} initiating this action
+     * @param streamUrl a path of format https://kickflip.io/<stream_id> or https://xxx.xxx/xxx.m3u8
+     * @param newTask   Whether this Activity should be started as part of a new task. If so, when this Activity finishes
+     *                  the host application will be concluded.
+     */
     public static void startMediaPlayerActivity(Activity host, String streamUrl, boolean newTask) {
         Intent playbackIntent = new Intent(host, MediaPlayerActivity.class);
         playbackIntent.putExtra("mediaUrl", streamUrl);
@@ -75,6 +115,14 @@ public class Kickflip {
         host.startActivity(playbackIntent);
     }
 
+    /**
+     * Convenience method for attaching the current reverse geocoded device location to a given
+     * {@link io.kickflip.sdk.api.json.Stream}
+     *
+     * @param context the host application {@link android.content.Context}
+     * @param stream the {@link io.kickflip.sdk.api.json.Stream} to attach location to
+     * @param eventBus an {@link com.google.common.eventbus.EventBus} to be notified of the complete action
+     */
     public static void addLocationToStream(final Context context, final Stream stream, final EventBus eventBus) {
         DeviceLocation.getLastKnownLocation(context, false, new DeviceLocation.LocationResult() {
             @Override
@@ -100,45 +148,85 @@ public class Kickflip {
 
     }
 
+    /**
+     * Get the {@link io.kickflip.sdk.av.BroadcastListener} to be notified on broadcast events.
+     */
     public static BroadcastListener getBroadcastListener() {
         return sBroadcastListener;
     }
 
+    /**
+     * Set a {@link io.kickflip.sdk.av.BroadcastListener} to be notified on broadcast events.
+     *
+     * @param listener a {@link io.kickflip.sdk.av.BroadcastListener}
+     */
     public static void setBroadcastListener(BroadcastListener listener) {
         sBroadcastListener = listener;
     }
 
+    /**
+     * Get the provided Kickflip Client Key
+     *
+     * @return the provided Kickflip Client Key
+     */
     public static String getApiKey() {
         return sApiKey;
     }
 
+    /**
+     * Get the provided Kickflip Client Secret
+     *
+     * @return the provided Kickflip Client Secret
+     */
     public static String getApiSecret() {
         return sApiSecret;
     }
 
+    /**
+     * Set the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
+     *
+     * @param config the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
+     */
     public static void setSessionConfig(SessionConfig config) {
         sSessionConfig = config;
     }
 
-    public static SessionConfig getRecorderConfig() {
+    /**
+     * Return the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
+     *
+     * @return the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
+     */
+    public static SessionConfig getSessionConfig() {
         return sSessionConfig;
     }
 
+    /**
+     * Check whether credentials required for broadcast are provided
+     *
+     * @return true if credentials required for broadcast are provided. false otherwise
+     */
     public static boolean readyToBroadcast() {
         return sApiKey != null && sApiSecret != null && sSessionConfig != null;
     }
 
+    /**
+     * Return whether the given Uri belongs to the kickflip.io authority.
+     *
+     * @param uri uri to test
+     * @return true if the uri is of the kickflip.io authority.
+     */
     public static boolean isKickflipUrl(Uri uri) {
         return uri != null && uri.getAuthority().contains("kickflip.io");
     }
 
     /**
      * Given a Kickflip.io url, return the stream id.
-     *
+     * <p/>
      * e.g: https://kickflip.io/39df392c-4afe-4bf5-9583-acccd8212277/ returns
      * "39df392c-4afe-4bf5-9583-acccd8212277"
-     * @param uri
-     * @return
+     *
+     * @param uri the uri to test
+     * @return the last path segment of the given uri, corresponding to the Kickflip {@link Stream#mStreamId}
      */
     public static String getStreamIdFromKickflipUrl(Uri uri) {
         if (uri == null) throw new IllegalArgumentException("uri cannot be null");
@@ -150,7 +238,7 @@ public class Kickflip {
      * yet been created, or the provided API keys don't match
      * the existing client.
      *
-     * @param c the context of the host application
+     * @param c  the context of the host application
      * @param cb an optional callback to be notified with the Kickflip user
      *           corresponding to the provided API keys.
      * @return

@@ -1,7 +1,7 @@
 apply plugin: 'android-library'
 
-versionInt=1
-versionName="0.9"
+versionInt=2
+versionName="0.9.9"
 
 android {
     compileSdkVersion 19
@@ -16,7 +16,7 @@ android {
     }
     buildTypes {
         release {
-            runProguard false
+            runProguard true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
@@ -55,7 +55,7 @@ dependencies {
 // Maven publish task
 // Uncomment this line to enable publishing to Maven Central. Requires maven
 // credentials in gradle.properties
-//apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
+apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
 
 // Generate JavaDoc
 android.libraryVariants.all { variant ->
