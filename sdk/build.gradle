@@ -1,7 +1,7 @@
 apply plugin: 'android-library'
 
-versionInt=2
-versionName="0.9.9"
+versionInt=3
+versionName="0.9.10"
 
 android {
     compileSdkVersion 19
