@@ -102,47 +102,55 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
    	
 `BroadcastActivity` provides a pre-built UI including a camera preview and controls for starting, stopping, and sharing the broadcast.
 
-## Building this project
+## Developing on the bleeding edge
+
+If you'd like to modify the sdk or just develop on the bleeding edge,
+add the kickflip-android-sdk to your project as a git submodule. See the [kickflip-android-example dev branch](https://github.com/Kickflip/kickflip-android-example/tree/dev)
+repo for an example application configured with the Kickflip SDK as a submodule.
+
+1. Clone the kickflip-android-sdk repo:
+
+        $ cd /path/to/yourapp
+		$ git submodule add https://github.com/Kickflip/kickflip-android-sdk ./submodules/kickflip-android-sdk/
+
+2. Add the sdk to your top-level `settings.gradle`:
+
+		// settings.gradle
+		include ':yourapp'
+		include ':submodules:kickflip-android-sdk:sdk'
+
+3. Add the sdk as a dependency to your app module's `build.gradle`:
+
+		// ./yourapp/build.gradle
+		...
+		dependencies {
+				...
+				compile project(':submodules:kickflip-android-sdk:sdk')
+		}
+
+## Building the Kickflip Android SDK
 
 ### Set up Java, the Android SDK & Build-Tools
 
 1. [Download and install JDK 1.7](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
 2. [Download and install the Android SDK](http://developer.android.com/sdk/)
 3. Run `/android-sdk/tools/android` to install the following packages:
-    
+
 ![Installing packages from the Android SDK Manager](http://i.imgur.com/PuWsBEB.png)
 
 **ProTip**: You should have the Android SDK root, along with the `/tools` and `/platform-tools` sub-directories added to your PATH.
 
-### Build
+### Building
 
 1. Define the Android SDK location as $ANDROID_HOME in your environment, or create a file named `local.properties` in this directory with the following contents:
-    
+
 	    sdk.dir=/path/to/android-sdk
-	    
-2. Create a file named `SECRETS.java` in `./sample/src/main/java/io/kickflip/sample/`:
 
-		package io.kickflip.sample;
-		public class SECRETS {
-		    public static final String CLIENT_KEY = "YourKickflipKey";
-		    public static final String CLIENT_SECRET = "YourKickflipSecret";
-		}
-
-
-3. From this directory run:
+2. From this directory run:
 
 	    $ ./gradlew assembleDebug
 
 The Kickflip SDK .aar will be in `./sdk/build/libs`.
-
-## Using the library
-
-The Kickflip SDK is available from the [Maven Central Repository](http://search.maven.org/), and can be easily added to your project's `build.gradle`:
-
-    dependencies {
-	   compile 'io.kickflip:sdk:0.9.9'
-	}
-
 
 ## License
 
