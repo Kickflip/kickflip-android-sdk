@@ -19,6 +19,7 @@ public class SessionConfig {
 
     private final VideoEncoderConfig mVideoConfig;
     private final AudioEncoderConfig mAudioConfig;
+    private File mOutputDirectory;
     private final UUID mUUID;
     private Muxer mMuxer;
     private Stream mStream;
@@ -59,6 +60,14 @@ public class SessionConfig {
 
     public Stream getStream() {
         return mStream;
+    }
+
+    public void setOutputDirectory(File outputDirectory) {
+        mOutputDirectory = outputDirectory;
+    }
+
+    public File getOutputDirectory() {
+        return mOutputDirectory;
     }
 
     public String getOutputPath() {
@@ -160,6 +169,7 @@ public class SessionConfig {
 
         private Muxer mMuxer;
 
+        private File mOutputDirectory;
         private UUID mUUID;
         private String mTitle;
         private String mDescription;
@@ -223,6 +233,7 @@ public class SessionConfig {
             setAVDefaults();
             setMetaDefaults();
             mMuxer = checkNotNull(muxer);
+            mOutputDirectory = new File(mMuxer.getOutputPath()).getParentFile();
             mUUID = UUID.randomUUID();
         }
 
@@ -237,6 +248,7 @@ public class SessionConfig {
             File desiredFile = new File(outputPath);
             String desiredFilename = desiredFile.getName();
             File outputDir = new File(desiredFile.getParent(), mUUID.toString());
+            mOutputDirectory = outputDir;
             outputDir.mkdirs();
             return new File(outputDir, desiredFilename).getAbsolutePath();
         }
@@ -337,6 +349,7 @@ public class SessionConfig {
             session.setAttachLocation(mAttachLocation);
             session.setExtraInfo(mExtraInfo);
             session.setHlsSegmentDuration(mHlsSegmentDuration);
+            session.setOutputDirectory(mOutputDirectory);
 
             return session;
         }

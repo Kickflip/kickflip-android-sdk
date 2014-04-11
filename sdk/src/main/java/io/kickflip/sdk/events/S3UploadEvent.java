@@ -1,15 +1,20 @@
 package io.kickflip.sdk.events;
 
+import java.io.File;
+
 /**
  * Created by davidbrodsky on 2/19/14.
  */
 public class S3UploadEvent extends BroadcastEvent implements UploadEvent {
     private static final String TAG = "S3UploadEvent";
 
+    private File mFile;
     private String mUrl;
-
     private int mBytesPerSecond;
-    private long mTotalBytes;
+
+    public File getFile() {
+        return mFile;
+    }
 
     @Override
     public String getUrl() {
@@ -21,10 +26,10 @@ public class S3UploadEvent extends BroadcastEvent implements UploadEvent {
         return mBytesPerSecond;
     }
 
-    public S3UploadEvent(String url, int bytesPerSecond, long totalBytes) {
-        this.mUrl = url;
-        this.mBytesPerSecond = bytesPerSecond;
-        this.mTotalBytes = totalBytes;
+    public S3UploadEvent(File file, String url, int bytesPerSecond) {
+        mFile = file;
+        mUrl = url;
+        mBytesPerSecond = bytesPerSecond;
     }
 
     public String toString(){

@@ -44,8 +44,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class Broadcaster extends AVRecorder {
     private static final String TAG = "Broadcaster";
     private static final boolean VERBOSE = true;
-
+    private static final int MIN_BITRATE = 3 * 100 * 1000;              // 300 kbps
     private static ExecutorService mExecutorService;
+    private final String VOD_FILENAME = "vod.m3u8";
     private Context mContext;
     private KickflipApiClient mKickflip;
     private User mUser;
@@ -62,10 +63,8 @@ public class Broadcaster extends AVRecorder {
     private File mManifestSnapshotDir;                                  // Directory where manifest snapshots are stored
     private File mVodManifest;                                          // VOD HLS Manifest containing complete history
     private int mNumSegmentsWritten;
-    private final String VOD_FILENAME = "vod.m3u8";
     private int mLastRealizedBandwidthBytesPerSec;                      // Bandwidth snapshot for adapting bitrate
-
-    private static final int MIN_BITRATE = 3 * 100 * 1000;              // 300 kbps
+    private boolean mDeleteAfterUploading;                              // Should recording files be deleted as they're uploaded?
 
 
     public Broadcaster(Context context, SessionConfig config, String API_KEY, String API_SECRET) {
@@ -105,6 +104,7 @@ public class Broadcaster extends AVRecorder {
     }
 
     private void init() {
+        mDeleteAfterUploading = true;
         mLastRealizedBandwidthBytesPerSec = 0;
         mNumSegmentsWritten = 0;
         mSentBroadcastLiveEvent = false;
@@ -112,10 +112,23 @@ public class Broadcaster extends AVRecorder {
         mEventBus.register(this);
     }
 
-    private ExecutorService getExecutorService(){
-        if(mExecutorService == null)
+    private ExecutorService getExecutorService() {
+        if (mExecutorService == null)
             mExecutorService = Executors.newSingleThreadExecutor();
         return mExecutorService;
+    }
+
+    /**
+     * Set whether local recording files be deleted after successful upload. Default is true.
+     * <p/>
+     * Must be called before recording begins. Otherwise this method has no effect.
+     *
+     * @param doDelete whether local recording files be deleted after successful upload.
+     */
+    public void setDeleteLocalFilesAfterUpload(boolean doDelete) {
+        if (!isRecording()) {
+            mDeleteAfterUploading = doDelete;
+        }
     }
 
     public void setBroadcastListener(BroadcastListener listener) {
@@ -146,7 +159,7 @@ public class Broadcaster extends AVRecorder {
 
     private void onGotStreamResponse(HlsStream stream) {
         mStream = stream;
-        if(mConfig.shouldAttachLocation()) {
+        if (mConfig.shouldAttachLocation()) {
             Kickflip.addLocationToStream(mContext, mStream, mEventBus);
         }
         mStream.setTitle(mConfig.getTitle());
@@ -189,7 +202,7 @@ public class Broadcaster extends AVRecorder {
 
     /**
      * An S3 Upload completed.
-     *
+     * <p/>
      * Called on a background thread
      */
     @Subscribe
@@ -206,10 +219,10 @@ public class Broadcaster extends AVRecorder {
 
     /**
      * A .ts file was written in the recording directory.
-     *
+     * <p/>
      * Use this opportunity to verify the segment is of expected size
      * given the target bitrate
-     *
+     * <p/>
      * Called on a background thread
      */
     @Subscribe
@@ -222,7 +235,7 @@ public class Broadcaster extends AVRecorder {
                 long expectedSizeBytes = ((mConfig.getAudioBitrate() / 8) + (mVideoBitrate / 8)) * mConfig.getHlsSegmentDuration();
                 float filesizeRatio = actualSegmentSizeBytes / (float) expectedSizeBytes;
                 if (VERBOSE)
-                    Log.i(TAG, "OnSegmentWritten. Segment size: " + (actualSegmentSizeBytes / 1000) + "kB. ratio: " + filesizeRatio );
+                    Log.i(TAG, "OnSegmentWritten. Segment size: " + (actualSegmentSizeBytes / 1000) + "kB. ratio: " + filesizeRatio);
                 if (filesizeRatio < .7) {
                     if (mLastRealizedBandwidthBytesPerSec != 0) {
                         // Scale bitrate while not exceeding available bandwidth
@@ -246,13 +259,14 @@ public class Broadcaster extends AVRecorder {
 
     /**
      * An S3 .ts segment upload completed.
-     *
+     * <p/>
      * Use this opportunity to adjust bitrate based on the bandwidth
      * measured during this segment's transmission.
-     *
+     * <p/>
      * Called on a background thread
      */
     private void onSegmentUploaded(S3UploadEvent uploadEvent) {
+        if (mDeleteAfterUploading) uploadEvent.getFile().delete();
         try {
             if (Build.VERSION.SDK_INT >= 19 && mConfig.isAdaptiveBitrate()) {
                 mLastRealizedBandwidthBytesPerSec = uploadEvent.getUploadByteRate();
@@ -265,7 +279,7 @@ public class Broadcaster extends AVRecorder {
                     mVideoBitrate = Math.max(Math.min(mLastRealizedBandwidthBytesPerSec * 8, mConfig.getVideoBitrate()), MIN_BITRATE);
                     if (VERBOSE) {
                         Log.i(TAG, String.format("Adjusting video bitrate to %f kBps. Bandwidth: %f kBps",
-                                mVideoBitrate / (8 *1000.0), mLastRealizedBandwidthBytesPerSec / 1000.0));
+                                mVideoBitrate / (8 * 1000.0), mLastRealizedBandwidthBytesPerSec / 1000.0));
                     }
                     adjustVideoBitrate(mVideoBitrate);
                 }
@@ -278,10 +292,17 @@ public class Broadcaster extends AVRecorder {
 
     /**
      * An S3 .m3u8 upload completed.
-     *
+     * <p/>
      * Called on a background thread
      */
     private void onManifestUploaded(S3UploadEvent uploadEvent) {
+        if (mDeleteAfterUploading){
+            uploadEvent.getFile().delete();
+            String uploadUrl = uploadEvent.getUrl();
+            if (uploadUrl.substring(uploadUrl.lastIndexOf(File.separator)+1).equals("vod.m3u8")) {
+                mConfig.getOutputDirectory().delete();
+            }
+        }
         if (!mSentBroadcastLiveEvent) {
             mEventBus.post(new BroadcastIsLiveEvent(((HlsStream) mStream).getKickflipUrl()));
             mSentBroadcastLiveEvent = true;
@@ -292,11 +313,12 @@ public class Broadcaster extends AVRecorder {
 
     /**
      * A thumbnail upload completed.
-     *
+     * <p/>
      * Called on a background thread
      */
     private void onThumbnailUploaded(S3UploadEvent uploadEvent) {
-        if(mStream != null) {
+        if (mDeleteAfterUploading) uploadEvent.getFile().delete();
+        if (mStream != null) {
             mStream.setThumbnailUrl(uploadEvent.getUrl());
             sendStreamMetaData();
         }
@@ -314,7 +336,7 @@ public class Broadcaster extends AVRecorder {
 
     /**
      * A .m3u8 file was written in the recording directory.
-     *
+     * <p/>
      * Called on a background thread
      */
     @Subscribe
@@ -337,7 +359,7 @@ public class Broadcaster extends AVRecorder {
 
     /**
      * A thumbnail was written in the recording directory.
-     *
+     * <p/>
      * Called on a background thread
      */
     @Subscribe
@@ -354,7 +376,7 @@ public class Broadcaster extends AVRecorder {
     }
 
     private void sendStreamMetaData() {
-        if(mStream != null) {
+        if (mStream != null) {
             mKickflip.setStreamInfo(mStream, null);
         }
     }
@@ -410,7 +432,8 @@ public class Broadcaster extends AVRecorder {
                         "#EXT-X-VERSION:3\n" +
                         "#EXT-X-MEDIA-SEQUENCE:0\n" +
                         "#EXT-X-TARGETDURATION:%d\n", targetDuration + 1),
-                mVodManifest, false);
+                mVodManifest, false
+        );
     }
 
     private void appendLastManifestEntryToEventManifest(File sourceManifest, boolean lastEntry) {

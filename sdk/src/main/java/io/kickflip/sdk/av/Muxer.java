@@ -44,6 +44,12 @@ public abstract class Muxer {
         mEventBus = eventBus;
     }
 
+    /**
+     * Returns the absolute output path.
+     *
+     * e.g /sdcard/app/uuid/index.m3u8
+     * @return
+     */
     public String getOutputPath(){
         return mOutputPath;
     }

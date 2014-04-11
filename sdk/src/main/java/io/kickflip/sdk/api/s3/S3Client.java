@@ -51,7 +51,7 @@ public class
      * @param source File reference to be uploaded.
      * @return
      */
-    public void upload(String key, File source) {
+    public void upload(String key, final File source) {
         if (mBucket == null) {
             Log.e(TAG, "Bucket not set! Call setBucket(bucketStr)");
             return;
@@ -68,7 +68,7 @@ public class
                 if (progressEvent.getEventCode() == com.amazonaws.event.ProgressEvent.COMPLETED_EVENT_CODE) {
                     int bytesPerSecond = (int) (fileLength / ((System.currentTimeMillis() - startTime)/1000.0));
                     if (VERBOSE) Log.i(TAG, "Uploaded " + fileLength / 1000.0 + " KB in " + (System.currentTimeMillis() - startTime) + "ms (" + bytesPerSecond / 10000 + " KBps)");
-                    mEventBus.post(new S3UploadEvent(url, bytesPerSecond, fileLength));
+                    mEventBus.post(new S3UploadEvent(source, url, bytesPerSecond));
                 } else if (progressEvent.getEventCode() == ProgressEvent.FAILED_EVENT_CODE) {
                     Log.w(TAG, "Upload failed for " + url);
                 }
