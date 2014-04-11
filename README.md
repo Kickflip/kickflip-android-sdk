@@ -36,7 +36,7 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
     **Dependencies:**
 	```groovy
 	dependencies {
-   		compile 'io.kickflip:sdk:0.9'
+   		compile 'io.kickflip:sdk:0.9.9'
 	}
 	```
 
@@ -133,8 +133,6 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
 
 	    $ ./gradlew assembleDebug
 
-The Kickflip Sample .apk will be in `./sample/build/apk`. 
-
 The Kickflip SDK .aar will be in `./sdk/build/libs`.
 
 ## Using the library
@@ -142,7 +140,7 @@ The Kickflip SDK .aar will be in `./sdk/build/libs`.
 The Kickflip SDK is available from the [Maven Central Repository](http://search.maven.org/), and can be easily added to your project's `build.gradle`:
 
     dependencies {
-	   compile 'io.kickflip:sdk:0.9'
+	   compile 'io.kickflip:sdk:0.9.9'
 	}
 
 

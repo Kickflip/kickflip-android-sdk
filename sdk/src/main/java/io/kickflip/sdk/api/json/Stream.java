@@ -3,10 +3,12 @@ package io.kickflip.sdk.api.json;
 import com.amazonaws.util.json.Jackson;
 import com.google.api.client.util.Key;
 
+import java.io.Serializable;
+
 /**
  * Kickflip base Stream response
  */
-public class Stream extends Response implements Comparable<Stream> {
+public class Stream extends Response implements Comparable<Stream>, Serializable {
 
     @Key("stream_id")
     private String mStreamId;
