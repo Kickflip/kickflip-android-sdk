@@ -2,9 +2,9 @@
 
 **note:** This is a pre-release preview. Consider nothing stable.
 
-The Kickflip platform is a complete video streaming solution for your Android 4.3+ (API 18+) application. Our built-in `BroadcastActivity` makes broadcasting live HD video to your Kickflip account possible with a few lines of code.
+**The Kickflip Android SDK manages all the plumbing for your cloud video application**. With this SDK you can broadcast Live, High Definition [HTTP-HLS](http://en.wikipedia.org/wiki/HTTP_Live_Streaming) video, associate these broadcasts with users, and query broadcasts made by your users. All you need is a [Kickflip.io](https://kickflip.io) account.
 
-Besides live broadcasting, Kickflip supports an array of output formats beyond the capabilities of Android's [MediaRecorder](http://developer.android.com/reference/android/media/MediaRecorder.html) and [MediaMuxer](https://developer.android.com/reference/android/media/MediaMuxer.html) with a dead-simple API.
+The Kickflip Android SDK requires Android 4.3+ (API 18+).
 
 ## Features
 
@@ -16,7 +16,9 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
 
 ## Quickstart
 
-0. Ensure the `minSdkVersion` of your application is **18** (Android 4.3) and the `compileSdkVersion` is **19** (Android 4.4).
+0. Make a [kickflip.io](https://kickflip.io) account to register an Application and receive your **Client Key** and **Client Secret**. You'll need these later.
+
+1. Ensure the `minSdkVersion` of your application is **18** (Android 4.3) and the `compileSdkVersion` is **19** (Android 4.4).
 
 	```groovy
 	android {
@@ -31,17 +33,17 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
     }
     ```
 
-1. Add Kickflip to your app's `build.gradle`:
+2. Add Kickflip to your app's `build.gradle`:
 
     **Dependencies:**
 	```groovy
 	dependencies {
-   		compile 'io.kickflip:sdk:0.9.9'
+   		compile 'io.kickflip:sdk:0.9.10'
 	}
 	```
 
 
-2. Add the following to your app's `AndroidManifest.xml`:
+3. Add the following to your app's `AndroidManifest.xml`:
 
     **Permissions:**
 	```xml	       
@@ -76,7 +78,7 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
 4. Provide your Kickflip keys and start `BroadcastActivity` when appropriate:
 
 	```java
-	Kickflip.setup(this, API_KEY, API_SECRET);
+	Kickflip.setup(this, CLIENT_ID, CLIENT_SECRET);
 	Kickflip.startBroadcastActivity(this, new BroadcastListener() {
         @Override
         public void onBroadcastStart() {
@@ -85,7 +87,7 @@ Besides live broadcasting, Kickflip supports an array of output formats beyond t
 
         @Override
         public void onBroadcastLive(String watchUrl) { 
-        	Log.i("Kickflp", "This phone is live at " + watchUrl);       
+        	Log.i("Kickflip", "This phone is live at " + watchUrl);       
         }
 
         @Override
