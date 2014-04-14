@@ -36,8 +36,9 @@ import io.kickflip.sdk.events.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.events.BroadcastIsLiveEvent;
 
 /**
- * This is a drop-in video-streaming fragment.
- * Currently, only one BroadcastFragment may be instantiated at a time.
+ * This is a drop-in broadcasting fragment.
+ * Currently, only one BroadcastFragment may be instantiated at a time by
+ * design of {@link io.kickflip.sdk.av.Broadcaster}.
  */
 public class BroadcastFragment extends Fragment implements AdapterView.OnItemSelectedListener {
     private static final String TAG = "BroadcastFragment";

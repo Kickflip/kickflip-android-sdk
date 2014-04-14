@@ -37,8 +37,18 @@ import io.kickflip.sdk.events.ThumbnailWrittenEvent;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Broadcaster is an AVRecorder that broadcasts its output
- * to Kickflip.
+ * Broadcasts HLS video and audio to <a href="https://kickflip.io">Kickflip.io</a>.
+ * The lifetime of this class correspond to a single broadcast. When performing multiple broadcasts,
+ * ensure reference to only one {@link io.kickflip.sdk.av.Broadcaster} is held at any one time.
+ * {@link io.kickflip.sdk.fragment.BroadcastFragment} illustrates how to use Broadcaster in this pattern.
+ * <p/>
+ * Example Usage:
+ * <p/>
+ * 1. Construct {@link Broadcaster()} with your Kickflip.io Client ID and Secret
+ * 2. Call {@link Broadcaster#setPreviewDisplay(io.kickflip.sdk.view.GLCameraView)} to assign a
+ * {@link io.kickflip.sdk.view.GLCameraView} for displaying the live Camera feed.
+ * 3. Call {@link io.kickflip.sdk.av.Broadcaster#startRecording()} to begin broadcasting
+ * 4. Call {@link io.kickflip.sdk.av.Broadcaster#stopRecording()} to end the broadcast.
  */
 // TODO: Make HLS / RTMP Agnostic
 public class Broadcaster extends AVRecorder {
@@ -67,9 +77,17 @@ public class Broadcaster extends AVRecorder {
     private boolean mDeleteAfterUploading;                              // Should recording files be deleted as they're uploaded?
 
 
-    public Broadcaster(Context context, SessionConfig config, String API_KEY, String API_SECRET) {
+    /**
+     * Construct a Broadcaster with Session settings and Kickflip credentials
+     *
+     * @param context       the host application {@link android.content.Context}.
+     * @param config        the Session configuration. Specifies bitrates, resolution etc.
+     * @param CLIENT_ID     the Client ID available from your Kickflip.io dashboard.
+     * @param CLIENT_SECRET the Client Secret available from your Kickflip.io dashboard.
+     */
+    public Broadcaster(Context context, SessionConfig config, String CLIENT_ID, String CLIENT_SECRET) {
         super(config);
-        checkArgument(API_KEY != null && API_SECRET != null);
+        checkArgument(CLIENT_ID != null && CLIENT_SECRET != null);
         init();
         mContext = context;
         mConfig = config;
@@ -86,7 +104,7 @@ public class Broadcaster extends AVRecorder {
         mFileObserver.startWatching();
 
         mReadyToBroadcast = false;
-        mKickflip = Kickflip.setup(context, API_KEY, API_SECRET, new KickflipCallback() {
+        mKickflip = Kickflip.setup(context, CLIENT_ID, CLIENT_SECRET, new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
                 User user = (User) response;
@@ -131,14 +149,37 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
+    /**
+     * Set a Listener to be notified of basic Broadcast events relevant to
+     * updating a broadcasting UI.
+     * e.g: Broadcast begun, went live, stopped, or encountered an error.
+     * <p/>
+     * See {@link io.kickflip.sdk.av.BroadcastListener}
+     *
+     * @param listener
+     */
     public void setBroadcastListener(BroadcastListener listener) {
         mBroadcastListener = listener;
     }
 
+    /**
+     * Set an {@link com.google.common.eventbus.EventBus} to be notified
+     * of events between {@link io.kickflip.sdk.av.Broadcaster},
+     * {@link io.kickflip.sdk.av.HlsFileObserver}, {@link io.kickflip.sdk.api.s3.S3Manager}
+     * e.g: A HLS MPEG-TS segment or .m3u8 Manifest was written to disk, or uploaded.
+     * See a list of events in {@link io.kickflip.sdk.events}
+     *
+     * @return
+     */
     public EventBus getEventBus() {
         return mEventBus;
     }
 
+    /**
+     * Start broadcasting.
+     * <p/>
+     * Must be called after {@link Broadcaster#setPreviewDisplay(io.kickflip.sdk.view.GLCameraView)}
+     */
     @Override
     public void startRecording() {
         super.startRecording();
@@ -177,10 +218,19 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
+    /**
+     * Check if the broadcast has gone live
+     *
+     * @return
+     */
     public boolean isLive() {
         return mSentBroadcastLiveEvent;
     }
 
+    /**
+     * Stop broadcasting and release resources.
+     * After this call this Broadcaster can no longer be used.
+     */
     @Override
     public void stopRecording() {
         super.stopRecording();
@@ -296,10 +346,10 @@ public class Broadcaster extends AVRecorder {
      * Called on a background thread
      */
     private void onManifestUploaded(S3UploadEvent uploadEvent) {
-        if (mDeleteAfterUploading){
+        if (mDeleteAfterUploading) {
             uploadEvent.getFile().delete();
             String uploadUrl = uploadEvent.getUrl();
-            if (uploadUrl.substring(uploadUrl.lastIndexOf(File.separator)+1).equals("vod.m3u8")) {
+            if (uploadUrl.substring(uploadUrl.lastIndexOf(File.separator) + 1).equals("vod.m3u8")) {
                 mConfig.getOutputDirectory().delete();
             }
         }

@@ -34,17 +34,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Kickflip OAuth API Client
- * Configured for "Client Credentials" OAuth Flow
  * <p/>
- * After construction, requests can be immediately performed
+ * After construction, requests can be immediately performed.
  * The client will handle acquiring and refreshing the OAuth
- * Access tokens as needed
+ * Access tokens as needed.
+ * <p/>
+ * The client is intended to manage a unique Kickflip user per Android device installation.
  */
 // TODO: Standardize Kickflip server error responses to have detail message
 public class KickflipApiClient extends OAuthClient {
     public static final boolean VERBOSE = false;
     public static final boolean DEV_ENDPOINT = false;
-    private static final int MAX_EOF_RETRIES = 1;
     public static final String NEW_USER = "/api/user/new";
     public static final String START_STREAM = "/api/stream/start";
     public static final String STOP_STREAM = "/api/stream/stop";
@@ -54,6 +54,7 @@ public class KickflipApiClient extends OAuthClient {
     public static final String SEARCH = "/api/search";
     public static final String SEARCH_USER = "/api/search/user";
     public static final String SEARCH_GEO = "/api/search/location";
+    private static final int MAX_EOF_RETRIES = 1;
     private static final String TAG = "KickflipApiClient";
     public static String BASE_URL;
     private JsonObjectParser mJsonObjectParser;         // Re-used across requests
@@ -104,11 +105,12 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Create a new Kickflip user.
-     * The response is cached locally.
+     * Create a new Kickflip User.
+     * The User created as a result of this request is cached and managed by this KickflipApiClient
+     * throughout the life of the host Android application install.
      *
-     * @param cb This callback will receive a User in #onSuccess(response),
-     *           or an Error object onError(). Error object type TBD.
+     * @param cb This callback will receive a User in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
+     *           or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(Object)}.
      */
     public void createNewUser(final KickflipCallback cb) {
         post(BASE_URL + NEW_USER, User.class, new KickflipCallback() {
@@ -129,25 +131,27 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Start a new Stream with the cached user.
-     * Delivers stream endpoint destination data via cb.
-     * Uses the cached User
+     * Start a new Stream with this application's managed Kickflip User. Must be called after
+     * {@link io.kickflip.sdk.api.KickflipApiClient#createNewUser(KickflipCallback)}
+     * Delivers stream endpoint destination data via a {@link io.kickflip.sdk.api.KickflipCallback}.
      *
-     * @param cb This callback will receive a Stream subclass in #onSuccess(response)
+     * @param cb This callback will receive a Stream subclass in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
      *           depending on the Kickflip account type. Implementors should
-     *           check if the response is instanceof HlsStream,RtmpStream, etc.
+     *           check if the response is instanceof HlsStream, RtmpStream, etc.
      */
     public void startStream(Stream stream, final KickflipCallback cb) {
         startStreamWithUser(getCachedUser(), stream, cb);
     }
 
     /**
-     * Start a new Stream with the given user.
-     * Delivers stream endpoint destination data via cb.
+     * Start a new Stream owned by the managed Kickflip User. Must be called after
+     * {@link io.kickflip.sdk.api.KickflipApiClient#createNewUser(KickflipCallback)}
+     * Delivers stream endpoint destination data via a {@link io.kickflip.sdk.api.KickflipCallback}.
      *
-     * @param cb This callback will receive a Stream subclass in #onSuccess(response)
-     *           depending on the Kickflip account type. Implementors should
-     *           check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
+     * @param user The Kickflip User on whose behalf this request is performed.
+     * @param cb   This callback will receive a Stream subclass in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
+     *             depending on the Kickflip account type. Implementors should
+     *             check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
      */
     public void startStreamWithUser(User user, Stream stream, final KickflipCallback cb) {
         checkNotNull(user);
@@ -168,9 +172,11 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Stop a Stream the cached user owns
+     * Stop a Stream owned by the managed Kickflip User. Must be called after
+     * {@link io.kickflip.sdk.api.KickflipApiClient#createNewUser(KickflipCallback)} and
+     * {@link io.kickflip.sdk.api.KickflipApiClient#startStream(io.kickflip.sdk.api.json.Stream, KickflipCallback)}
      *
-     * @param cb This callback will receive a Stream subclass in #onSuccess(response)
+     * @param cb This callback will receive a Stream subclass in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
      *           depending on the Kickflip account type. Implementors should
      *           check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
      */
@@ -179,7 +185,7 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Stop a Stream the given user owns
+     * Stop a Stream owned by the given Kickflip User.
      *
      * @param cb This callback will receive a Stream subclass in #onSuccess(response)
      *           depending on the Kickflip account type. Implementors should
@@ -202,10 +208,10 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Send Stream meta data for a stream the cached user owns
+     * Send Stream Meta data for a {@link io.kickflip.sdk.api.json.Stream} the managed Kickflip User owns
      *
-     * @param stream
-     * @param cb
+     * @param stream the {@link io.kickflip.sdk.api.json.Stream} to get Meta data for
+     * @param cb     A callback to receive the updated Stream upon request completion
      */
     public void setStreamInfo(Stream stream, final KickflipCallback cb) {
         GenericData data = new GenericData();
@@ -248,11 +254,11 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Get Stream meta data for a a public stream within the cached user's
+     * Get Stream Meta data for a a public {@link io.kickflip.sdk.api.json.Stream} within the managed Kickflip User's
      * Kickflip app
      *
-     * @param stream
-     * @param cb
+     * @param stream the {@link io.kickflip.sdk.api.json.Stream} to get Meta data for
+     * @param cb     A callback to receive the updated Stream upon request completion
      */
     public void getStreamInfo(Stream stream, final KickflipCallback cb) {
         GenericData data = new GenericData();
@@ -262,12 +268,12 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Get Stream meta data for a a public stream within the cached user's
+     * Get Stream Meta data for a a public stream within the managed Kickflip User's
      * Kickflip app
      *
      * @param streamId the stream Id of the given stream. This is the value that appears
      *                 in urls of form kickflip.io/<stream_id>
-     * @param cb
+     * @param cb       A callback to receive the current {@link io.kickflip.sdk.api.json.Stream} upon request completion
      */
     public void getStreamInfo(String streamId, final KickflipCallback cb) {
         GenericData data = new GenericData();
@@ -277,10 +283,10 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Flag a Stream, or delete if user-owned
+     * Flag a {@link io.kickflip.sdk.api.json.Stream}. Typically used when the managed Kickflip User does not own the Stream.
      *
-     * @param stream
-     * @param cb
+     * @param stream The Stream to flag.
+     * @param cb     A callback to receive the result of the flagging operation.
      */
     public void flagStream(Stream stream, final KickflipCallback cb) {
         GenericData data = new GenericData();
@@ -291,12 +297,12 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Get broadcasts created by a particular username
+     * Get a List of {@link io.kickflip.sdk.api.json.Stream} objects created by a particular Kickflip User
      *
-     * @param user
-     * @param cb
+     * @param user the target Kickflip User
+     * @param cb A callback to receive the resulting List of Streams
      */
-    public void getBroadcastsByUser(User user, String username, final KickflipCallback cb) {
+    public void getStreamsByUser(User user, String username, final KickflipCallback cb) {
         GenericData data = new GenericData();
         data.put("uuid", user.getUUID());
         data.put("username", username);
@@ -304,12 +310,14 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Get broadcasts containing a keyword
+     * Get a List of {@link io.kickflip.sdk.api.json.Stream} objects containing a keyword within the
+     * managed Kickflip User's App.
      *
-     * @param user
-     * @param cb
+     * @param user The Kickflip User on whose behalf this request is performed.
+     * @param keyword The String keyword to query
+     * @param cb A callback to receive the resulting List of Streams
      */
-    public void getBroadcastsByKeyword(User user, String keyword, final KickflipCallback cb) {
+    public void getStreamsByKeyword(User user, String keyword, final KickflipCallback cb) {
         GenericData data = new GenericData();
         data.put("uuid", user.getUUID());
         if (keyword != null) {
@@ -319,15 +327,15 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Get broadcasts created near a particular location
+     * Get a List of {@link io.kickflip.sdk.api.json.Stream} objects near a geographic location
      *
-     * @param user
-     * @param lat
-     * @param lon
-     * @param radius
-     * @param cb
+     * @param user The Kickflip User on whose behalf this request is performed.
+     * @param lat The target Latitude in decimal degrees
+     * @param lon The target Longitude in decimal degrees
+     * @param radius The target Radius in meters
+     * @param cb A callback to receive the resulting List of Streams
      */
-    public void getBroadcastsByLocation(User user, float lat, float lon, int radius, final KickflipCallback cb) {
+    public void getStreamsByLocation(User user, float lat, float lon, int radius, final KickflipCallback cb) {
         GenericData data = new GenericData();
         data.put("uuid", user.getUUID());
         data.put("lat", lat);
@@ -440,7 +448,8 @@ public class KickflipApiClient extends OAuthClient {
                                 httpException.getStatusCode(),
                                 httpException.getMessage()));
                 }
-                if (VERBOSE) Log.i(TAG, "RESPONSE: " + shortenUrlString(url) + " " + exception.getMessage());
+                if (VERBOSE)
+                    Log.i(TAG, "RESPONSE: " + shortenUrlString(url) + " " + exception.getMessage());
                 postExceptionToCallback(cb, exception);
             } catch (ClassCastException e) {
                 // A non-HTTP releated error occured.
@@ -454,7 +463,7 @@ public class KickflipApiClient extends OAuthClient {
     /**
      * Execute a HTTPRequest and retry up to {@link io.kickflip.sdk.api.KickflipApiClient#MAX_EOF_RETRIES} times if an EOFException occurs.
      * This is an attempt to address what appears to be a bug in NetHttpTransport
-     *
+     * <p/>
      * See <a href="https://code.google.com/p/google-api-java-client/issues/detail?id=869&can=4&colspec=Milestone%20Priority%20Component%20Type%20Summary%20ID%20Status%20Owner">This issue</a>
      *
      * @param request
@@ -472,8 +481,8 @@ public class KickflipApiClient extends OAuthClient {
                 return;
             } catch (EOFException eof) {
                 if (VERBOSE) Log.i(TAG, "Got EOFException. Retrying..");
-               // An EOFException may be due to a bug in the way Connections are recycled
-               // within the NetHttpTransport package. Ignore and retry
+                // An EOFException may be due to a bug in the way Connections are recycled
+                // within the NetHttpTransport package. Ignore and retry
             }
             numRetries++;
         }
@@ -505,7 +514,8 @@ public class KickflipApiClient extends OAuthClient {
             //cb.onSuccess(responseClass.cast(parsedResponse));
         } else {
             // Http Failure
-            if (VERBOSE) Log.i(TAG, String.format("RESPONSE (F): %s body: %s", shortenUrlString(response.getRequest().getUrl().toString()), response.getContent().toString()));
+            if (VERBOSE)
+                Log.i(TAG, String.format("RESPONSE (F): %s body: %s", shortenUrlString(response.getRequest().getUrl().toString()), response.getContent().toString()));
             postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
         }
     }
@@ -522,7 +532,8 @@ public class KickflipApiClient extends OAuthClient {
         if (cb == null) return;
         HashMap responseMap = null;
         Response kickFlipResponse = response.parseAs(responseClass);
-        if (VERBOSE) Log.i(TAG, String.format("RESPONSE: %s body: %s", shortenUrlString(response.getRequest().getUrl().toString()), Jackson.toJsonPrettyString(kickFlipResponse)));
+        if (VERBOSE)
+            Log.i(TAG, String.format("RESPONSE: %s body: %s", shortenUrlString(response.getRequest().getUrl().toString()), Jackson.toJsonPrettyString(kickFlipResponse)));
 //        if (Stream.class.isAssignableFrom(responseClass)) {
 //            if( ((String) responseMap.get("stream_type")).compareTo("HLS") == 0){
 //                kickFlipResponse = response.parseAs(HlsStream.class);
@@ -532,7 +543,7 @@ public class KickflipApiClient extends OAuthClient {
 //        } else if(User.class.isAssignableFrom(responseClass)){
 //            kickFlipResponse = response.parseAs(User.class);
 //        }
-        if (kickFlipResponse == null ) {
+        if (kickFlipResponse == null) {
             postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
         } else if (!kickFlipResponse.isSuccessful()) {
             String reason = kickFlipResponse.getReason() == null ?
@@ -621,18 +632,10 @@ public class KickflipApiClient extends OAuthClient {
         }
     }
 
-    public static enum METHOD {GET, POST}
-
-    static {
-        if (DEV_ENDPOINT)
-            BASE_URL = "http://funkcity.ngrok.com";
-        else
-            BASE_URL = "https://www.kickflip.io";
-    }
-
     /**
      * Given a string like https://api.kickflip.io/api/search
      * return /api/search
+     *
      * @param url
      * @return
      */
@@ -642,6 +645,15 @@ public class KickflipApiClient extends OAuthClient {
 
     public boolean userOwnsStream(Stream stream) {
         return getCachedUser().getName().compareTo(stream.getOwnerName()) == 0;
+    }
+
+    public static enum METHOD {GET, POST}
+
+    static {
+        if (DEV_ENDPOINT)
+            BASE_URL = "http://funkcity.ngrok.com";
+        else
+            BASE_URL = "https://www.kickflip.io";
     }
 
     public class KickflipApiException extends Exception {
