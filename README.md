@@ -1,6 +1,6 @@
 # Kickflip SDK for Android
 
-![kickflip live broadcast screenshot](http://i.imgur.com/dbqVqzL.jpg)
+![kickflip live broadcast screenshot](http://i.imgur.com/ELljE1a.jpg)
 
 **The Kickflip Android SDK manages all the plumbing for your cloud video application**. With this SDK you can broadcast Live, High Definition [HTTP-HLS](http://en.wikipedia.org/wiki/HTTP_Live_Streaming) video, associate these broadcasts with users, and query broadcasts made by your users. All you need is a [Kickflip.io](https://kickflip.io) account.
 
