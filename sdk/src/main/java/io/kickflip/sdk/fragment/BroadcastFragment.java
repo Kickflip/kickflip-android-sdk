@@ -338,7 +338,8 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
 
     private void stopMonitoringOrientation() {
         if (getActivity() != null) {
-            getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.GONE);
+            View deviceHint = getActivity().findViewById(R.id.rotateDeviceHint);
+            if (deviceHint != null) deviceHint.setVisibility(View.GONE);
             SensorManager sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
             sensorManager.unregisterListener(mOrientationListener);
         }
