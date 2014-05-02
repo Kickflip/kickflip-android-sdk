@@ -221,6 +221,7 @@ public class KickflipApiClient extends OAuthClient {
      *                    or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
      */
     public void setUserInfo(final String newPassword, String email, String displayName, Map extraInfo, final KickflipCallback cb) {
+        if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
         if (newPassword != null) data.put("new_password", newPassword);
         if (email != null) data.put("email", email);
@@ -252,6 +253,7 @@ public class KickflipApiClient extends OAuthClient {
      *                 or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
      */
     public void getUserInfo(String username, final KickflipCallback cb) {
+        if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
         data.put("username", username);
 
@@ -282,6 +284,8 @@ public class KickflipApiClient extends OAuthClient {
      *           check if the response is instanceof HlsStream, RtmpStream, etc.
      */
     public void startStream(Stream stream, final KickflipCallback cb) {
+        if (!assertActiveUserAvailable(cb)) return;
+        checkNotNull(stream);
         startStreamWithUser(getActiveUser(), stream, cb);
     }
 
@@ -297,6 +301,7 @@ public class KickflipApiClient extends OAuthClient {
      */
     private void startStreamWithUser(User user, Stream stream, final KickflipCallback cb) {
         checkNotNull(user);
+        checkNotNull(stream);
         // TODO: Be HLS / RTMP Agnostic
         GenericData data = new GenericData();
         data.put("uuid", user.getUUID());
@@ -323,6 +328,7 @@ public class KickflipApiClient extends OAuthClient {
      *           check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
      */
     public void stopStream(Stream stream, final KickflipCallback cb) {
+        if (!assertActiveUserAvailable(cb)) return;
         stopStream(getActiveUser(), stream, cb);
     }
 
@@ -358,6 +364,7 @@ public class KickflipApiClient extends OAuthClient {
      * @param cb     A callback to receive the updated Stream upon request completion
      */
     public void setStreamInfo(Stream stream, final KickflipCallback cb) {
+        if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
         data.put("stream_id", stream.getStreamId());
         data.put("uuid", getActiveUser().getUUID());
@@ -438,6 +445,7 @@ public class KickflipApiClient extends OAuthClient {
      * @param cb     A callback to receive the result of the flagging operation.
      */
     public void flagStream(Stream stream, final KickflipCallback cb) {
+        if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
         data.put("uuid", getActiveUser().getUUID());
         data.put("stream_id", stream.getStreamId());
@@ -452,6 +460,7 @@ public class KickflipApiClient extends OAuthClient {
      * @param cb       A callback to receive the resulting List of Streams
      */
     public void getStreamsByUsername(String username, final KickflipCallback cb) {
+        if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
         data.put("uuid", getActiveUser().getUUID());
         data.put("username", username);
@@ -467,6 +476,7 @@ public class KickflipApiClient extends OAuthClient {
      * @param cb      A callback to receive the resulting List of Streams
      */
     public void getStreamsByKeyword(String keyword, final KickflipCallback cb) {
+        if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
         data.put("uuid", getActiveUser().getUUID());
         if (keyword != null) {
@@ -485,6 +495,7 @@ public class KickflipApiClient extends OAuthClient {
      * @param cb       A callback to receive the resulting List of Streams
      */
     public void getStreamsByLocation(Location location, int radius, final KickflipCallback cb) {
+        if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
         data.put("uuid", getActiveUser().getUUID());
         data.put("lat", location.getLatitude());
@@ -743,9 +754,10 @@ public class KickflipApiClient extends OAuthClient {
         return mJsonObjectParser;
     }
 
-    private void postExceptionToCallback(final KickflipCallback cb, final int code) {
-        final String message = getContext().getResources().getStringArray(R.array.error_messages)[code];
-        KickflipException error = new KickflipException(message, code);
+    private void postExceptionToCallback(final KickflipCallback cb, final int resourceCodeId) {
+        final int errorCode = getContext().getResources().getInteger(resourceCodeId);
+        final String message = getContext().getResources().getStringArray(R.array.error_messages)[errorCode];
+        KickflipException error = new KickflipException(message, errorCode);
         postExceptionToCallback(cb, error);
     }
 
@@ -790,6 +802,18 @@ public class KickflipApiClient extends OAuthClient {
      */
     public boolean activeUserOwnsStream(Stream stream) {
         return getActiveUser().getName().compareTo(stream.getOwnerName()) == 0;
+    }
+
+    private boolean assertActiveUserAvailable(KickflipCallback cb) {
+        if (getActiveUser() == null) {
+            Log.e(TAG, "getStreamsByKeyword called before user acquired. If this request needs to be performed on app start," +
+                    "call it from the KickflipCallback provided to setup()");
+            if (cb != null) {
+                postExceptionToCallback(cb, R.integer.user_not_available);
+            }
+            return false;
+        }
+        return true;
     }
 
     public static enum METHOD {GET, POST}

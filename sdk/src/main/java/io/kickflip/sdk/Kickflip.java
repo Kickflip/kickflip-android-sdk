@@ -29,8 +29,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class Kickflip {
 
-    private static String sApiKey;
-    private static String sApiSecret;
+    private static String sClientKey;
+    private static String sClientSecret;
 
     private static KickflipApiClient sKickflip;
 
@@ -68,8 +68,8 @@ public class Kickflip {
     }
 
     private static void setApiCredentials(String key, String secret) {
-        sApiKey = key;
-        sApiSecret = secret;
+        sClientKey = key;
+        sClientSecret = secret;
     }
 
     /**
@@ -86,8 +86,8 @@ public class Kickflip {
     public static void startBroadcastActivity(Activity host, BroadcastListener listener) {
         checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
         checkNotNull(sSessionConfig, host.getString(R.string.error_no_recorderconfig));
-        checkNotNull(sApiKey);
-        checkNotNull(sApiSecret);
+        checkNotNull(sClientKey);
+        checkNotNull(sClientSecret);
         sBroadcastListener = listener;
         Intent broadcastIntent = new Intent(host, BroadcastActivity.class);
         broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -170,7 +170,7 @@ public class Kickflip {
      * @return the provided Kickflip Client Key
      */
     public static String getApiKey() {
-        return sApiKey;
+        return sClientKey;
     }
 
     /**
@@ -179,7 +179,7 @@ public class Kickflip {
      * @return the provided Kickflip Client Secret
      */
     public static String getApiSecret() {
-        return sApiSecret;
+        return sClientSecret;
     }
 
     /**
@@ -206,7 +206,7 @@ public class Kickflip {
      * @return true if credentials required for broadcast are provided. false otherwise
      */
     public static boolean readyToBroadcast() {
-        return sApiKey != null && sApiSecret != null && sSessionConfig != null;
+        return sClientKey != null && sClientSecret != null && sSessionConfig != null;
     }
 
     /**
@@ -256,10 +256,10 @@ public class Kickflip {
      * @return
      */
     public static KickflipApiClient getApiClient(Context context, KickflipCallback callback) {
-        checkNotNull(sApiKey);
-        checkNotNull(sApiSecret);
-        if (sKickflip == null || !sKickflip.getConfig().getClientId().equals(sApiKey)) {
-            sKickflip = new KickflipApiClient(context, sApiKey, sApiSecret, callback);
+        checkNotNull(sClientKey);
+        checkNotNull(sClientSecret);
+        if (sKickflip == null || !sKickflip.getConfig().getClientId().equals(sClientKey)) {
+            sKickflip = new KickflipApiClient(context, sClientKey, sClientSecret, callback);
         } else if (callback != null) {
             callback.onSuccess(sKickflip.getActiveUser());
         }
