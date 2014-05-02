@@ -16,7 +16,7 @@ public class HlsStream extends Stream {
     @Key("aws_secret_key")
     private String mAwsSecret;
 
-    public String getBucket() {
+    public String getAwsS3Bucket() {
         return mBucket;
     }
 
@@ -29,7 +29,7 @@ public class HlsStream extends Stream {
     }
 
     public String toString(){
-        return "Bucket: " + getBucket() + " streamUrl " + getStreamUrl();
+        return "Bucket: " + getAwsS3Bucket() + " streamUrl " + getStreamUrl();
     }
 
 }

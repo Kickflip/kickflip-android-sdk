@@ -8,7 +8,7 @@ import com.google.common.eventbus.EventBus;
 
 import java.nio.ByteBuffer;
 
-import io.kickflip.sdk.events.MuxerFinishedEvent;
+import io.kickflip.sdk.event.MuxerFinishedEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

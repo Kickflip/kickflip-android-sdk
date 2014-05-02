@@ -25,14 +25,15 @@ import io.kickflip.sdk.api.json.User;
 import io.kickflip.sdk.api.s3.S3Client;
 import io.kickflip.sdk.api.s3.S3Manager;
 import io.kickflip.sdk.api.s3.S3Upload;
-import io.kickflip.sdk.events.BroadcastIsBufferingEvent;
-import io.kickflip.sdk.events.BroadcastIsLiveEvent;
-import io.kickflip.sdk.events.HlsManifestWrittenEvent;
-import io.kickflip.sdk.events.HlsSegmentWrittenEvent;
-import io.kickflip.sdk.events.MuxerFinishedEvent;
-import io.kickflip.sdk.events.S3UploadEvent;
-import io.kickflip.sdk.events.StreamLocationAddedEvent;
-import io.kickflip.sdk.events.ThumbnailWrittenEvent;
+import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
+import io.kickflip.sdk.event.BroadcastIsLiveEvent;
+import io.kickflip.sdk.event.HlsManifestWrittenEvent;
+import io.kickflip.sdk.event.HlsSegmentWrittenEvent;
+import io.kickflip.sdk.event.MuxerFinishedEvent;
+import io.kickflip.sdk.event.S3UploadEvent;
+import io.kickflip.sdk.event.StreamLocationAddedEvent;
+import io.kickflip.sdk.event.ThumbnailWrittenEvent;
+import io.kickflip.sdk.exception.KickflipException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -44,11 +45,13 @@ import static com.google.common.base.Preconditions.checkArgument;
  * <p/>
  * Example Usage:
  * <p/>
- * 1. Construct {@link Broadcaster()} with your Kickflip.io Client ID and Secret
- * 2. Call {@link Broadcaster#setPreviewDisplay(io.kickflip.sdk.view.GLCameraView)} to assign a
- * {@link io.kickflip.sdk.view.GLCameraView} for displaying the live Camera feed.
- * 3. Call {@link io.kickflip.sdk.av.Broadcaster#startRecording()} to begin broadcasting
- * 4. Call {@link io.kickflip.sdk.av.Broadcaster#stopRecording()} to end the broadcast.
+ * <ol>
+ * <li>Construct {@link Broadcaster()} with your Kickflip.io Client ID and Secret</li>
+ * <li>Call {@link Broadcaster#setPreviewDisplay(io.kickflip.sdk.view.GLCameraView)} to assign a
+ * {@link io.kickflip.sdk.view.GLCameraView} for displaying the live Camera feed.</li>
+ * <li>Call {@link io.kickflip.sdk.av.Broadcaster#startRecording()} to begin broadcasting</li>
+ * <li>Call {@link io.kickflip.sdk.av.Broadcaster#stopRecording()} to end the broadcast.</li>
+ * </ol>
  */
 // TODO: Make HLS / RTMP Agnostic
 public class Broadcaster extends AVRecorder {
@@ -113,10 +116,10 @@ public class Broadcaster extends AVRecorder {
             }
 
             @Override
-            public void onError(Object response) {
-                Log.e(TAG, "Failed to get storage credentials" + response.toString());
+            public void onError(KickflipException error) {
+                Log.e(TAG, "Failed to get storage credentials" + error.toString());
                 if (mBroadcastListener != null)
-                    mBroadcastListener.onBroadcastError();
+                    mBroadcastListener.onBroadcastError(error);
             }
         });
     }
@@ -167,7 +170,7 @@ public class Broadcaster extends AVRecorder {
      * of events between {@link io.kickflip.sdk.av.Broadcaster},
      * {@link io.kickflip.sdk.av.HlsFileObserver}, {@link io.kickflip.sdk.api.s3.S3Manager}
      * e.g: A HLS MPEG-TS segment or .m3u8 Manifest was written to disk, or uploaded.
-     * See a list of events in {@link io.kickflip.sdk.events}
+     * See a list of events in {@link io.kickflip.sdk.event}
      *
      * @return
      */
@@ -192,8 +195,8 @@ public class Broadcaster extends AVRecorder {
             }
 
             @Override
-            public void onError(Object response) {
-                Log.w(TAG, "Error getting start stream response! " + response);
+            public void onError(KickflipException error) {
+                Log.w(TAG, "Error getting start stream response! " + error);
             }
         });
     }
@@ -209,7 +212,7 @@ public class Broadcaster extends AVRecorder {
         mStream.setIsPrivate(mConfig.isPrivate());
         if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
         mS3Client = new S3Client(S3Client.getBasicAWSCredentials(mStream.getAwsKey(), mStream.getAwsSecret()), mEventBus);
-        mS3Client.setBucket(mStream.getBucket());
+        mS3Client.setBucket(mStream.getAwsS3Bucket());
         mReadyToBroadcast = true;
         submitQueuedUploadsToS3();
         mEventBus.post(new BroadcastIsBufferingEvent());
@@ -236,15 +239,15 @@ public class Broadcaster extends AVRecorder {
         super.stopRecording();
         mSentBroadcastLiveEvent = false;
         if (mStream != null) {
-            mKickflip.stopStream(mUser, mStream, new KickflipCallback() {
+            mKickflip.stopStream(mStream, new KickflipCallback() {
                 @Override
                 public void onSuccess(Response response) {
                     if (VERBOSE) Log.i(TAG, "Got stop stream response " + response);
                 }
 
                 @Override
-                public void onError(Object response) {
-                    Log.w(TAG, "Error getting stop stream response! " + response);
+                public void onError(KickflipException error) {
+                    Log.w(TAG, "Error getting stop stream response! " + error);
                 }
             });
         }
@@ -357,7 +360,7 @@ public class Broadcaster extends AVRecorder {
             mEventBus.post(new BroadcastIsLiveEvent(((HlsStream) mStream).getKickflipUrl()));
             mSentBroadcastLiveEvent = true;
             if (mBroadcastListener != null)
-                mBroadcastListener.onBroadcastLive(((HlsStream) mStream).getKickflipUrl());
+                mBroadcastListener.onBroadcastLive(mStream);
         }
     }
 

@@ -12,7 +12,7 @@ import com.google.common.eventbus.EventBus;
 
 import java.io.File;
 
-import io.kickflip.sdk.events.S3UploadEvent;
+import io.kickflip.sdk.event.S3UploadEvent;
 
 public class
         S3Client {

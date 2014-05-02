@@ -24,9 +24,9 @@ import com.google.common.eventbus.EventBus;
 
 import java.io.File;
 
-import io.kickflip.sdk.events.HlsManifestWrittenEvent;
-import io.kickflip.sdk.events.HlsSegmentWrittenEvent;
-import io.kickflip.sdk.events.ThumbnailWrittenEvent;
+import io.kickflip.sdk.event.HlsManifestWrittenEvent;
+import io.kickflip.sdk.event.HlsSegmentWrittenEvent;
+import io.kickflip.sdk.event.ThumbnailWrittenEvent;
 
 /**
  * A FileObserver that listens for actions

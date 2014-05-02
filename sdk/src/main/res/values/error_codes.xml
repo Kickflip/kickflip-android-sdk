@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="generic_error">0</integer>
+    <array name="error_messages">
+        <!-- Code 0 -->
+        <item>A Kickflip server error occurred</item>
+    </array>
+</resources>

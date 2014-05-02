@@ -29,6 +29,7 @@ import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.Response;
 import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.M3u8Parser;
+import io.kickflip.sdk.exception.KickflipException;
 
 public class MediaPlayerFragment extends Fragment implements TextureView.SurfaceTextureListener, MediaController.MediaPlayerControl {
     public static final String TAG = "MediaPlayerFragment";
@@ -90,7 +91,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         if (getArguments() != null) {
             mMediaUrl = getArguments().getString(ARG_URL);
             // NOTE: the kickflip client may not be fully initialized immediately.
-            mKickflip = Kickflip.getKickflip(getActivity(), null);
+            mKickflip = Kickflip.getApiClient(getActivity(), null);
             if (Kickflip.isKickflipUrl(Uri.parse(mMediaUrl))) {
                 Log.i(TAG, "MediaPlayerFragment got kickflip url");
                 String streamId = Kickflip.getStreamIdFromKickflipUrl(Uri.parse(mMediaUrl));
@@ -104,7 +105,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
                     }
 
                     @Override
-                    public void onError(Object response) {
+                    public void onError(KickflipException error) {
                         Log.i(TAG, "get kickflip stream meta failed");
                     }
                 });

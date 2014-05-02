@@ -32,8 +32,8 @@ import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
 import io.kickflip.sdk.Share;
 import io.kickflip.sdk.av.Broadcaster;
-import io.kickflip.sdk.events.BroadcastIsBufferingEvent;
-import io.kickflip.sdk.events.BroadcastIsLiveEvent;
+import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
+import io.kickflip.sdk.event.BroadcastIsLiveEvent;
 
 /**
  * This is a drop-in broadcasting fragment.

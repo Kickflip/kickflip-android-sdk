@@ -61,11 +61,21 @@ apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
 android.libraryVariants.all { variant ->
 
     task("generate${variant.name}Javadoc", type: Javadoc) {
+        title = "Kickflip Android SDK"
+        options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PUBLIC
         description "Generates Javadoc for $variant.name."
         source = variant.javaCompile.source
         ext.androidJar = "${android.plugin.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
         classpath = files(variant.javaCompile.classpath.files) + files(ext.androidJar)
-        exclude '**/R.html', '**/R.*.html'
+        //exclude '**/sdk/**'
+        include 'io/kickflip/sdk/Kickflip.java'
+        include 'io/kickflip/sdk/api/KickflipApiClient.java'
+        include 'io/kickflip/sdk/api/KickflipCallback.java'
+        include 'io/kickflip/sdk/api/json/Stream.java'
+        include 'io/kickflip/sdk/api/json/User.java'
+        include 'io/kickflip/sdk/av/Broadcaster.java'
+        include 'io/kickflip/sdk/av/BroadcastListener.java'
+        exclude 'pro/dbro/ffmpegwrapper/**'
     }
 
 }

@@ -211,18 +211,4 @@ public class Stream extends Response implements Comparable<Stream>, Serializable
         return Jackson.toJsonPrettyString(this);
     }
 
-//    stream.start_lat = float(request.POST.get("lat", 0))
-//    stream.start_lon = float(request.POST.get("lon", 0))
-//    stream.city = request.POST.get("city", None)
-//    stream.state = request.POST.get("state", None)
-//    stream.country = request.POST.get("country", None)
-//    stream.private = bool(request.POST.get("private", False))
-//
-//    stream.ip_address = get_client_ip(request)
-//    stream.hostname = get_client_hostname(request)
-//
-//    stream.title = request.POST.get("title", None)
-//    stream.description = request.POST.get("description", None)
-//    stream.extra_info = request.POST.get("extra_info", None)
-
 }

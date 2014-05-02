@@ -1,6 +1,4 @@
-package io.kickflip.sdk.events;
-
-import io.kickflip.sdk.api.json.Stream;
+package io.kickflip.sdk.event;
 
 /**
  * Created by davidbrodsky on 2/19/14.

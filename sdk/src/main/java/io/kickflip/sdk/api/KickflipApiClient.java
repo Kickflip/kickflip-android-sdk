@@ -2,6 +2,7 @@ package io.kickflip.sdk.api;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Handler;
 import android.util.Log;
 
@@ -21,7 +22,10 @@ import com.google.api.client.util.GenericData;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.HashMap;
+import java.util.Map;
 
 import io.kickflip.sdk.R;
 import io.kickflip.sdk.api.json.HlsStream;
@@ -29,34 +33,39 @@ import io.kickflip.sdk.api.json.Response;
 import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.api.json.StreamList;
 import io.kickflip.sdk.api.json.User;
+import io.kickflip.sdk.exception.KickflipException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Kickflip OAuth API Client
+ * Kickflip API Client
  * <p/>
  * After construction, requests can be immediately performed.
- * The client will handle acquiring and refreshing the OAuth
+ * The client will handle acquiring and refreshing OAuth
  * Access tokens as needed.
  * <p/>
  * The client is intended to manage a unique Kickflip user per Android device installation.
  */
 // TODO: Standardize Kickflip server error responses to have detail message
 public class KickflipApiClient extends OAuthClient {
-    public static final boolean VERBOSE = false;
-    public static final boolean DEV_ENDPOINT = false;
-    public static final String NEW_USER = "/api/user/new";
-    public static final String START_STREAM = "/api/stream/start";
-    public static final String STOP_STREAM = "/api/stream/stop";
-    public static final String SET_META = "/api/stream/change";
-    public static final String GET_META = "/api/stream/info";
-    public static final String FLAG_STREAM = "/api/stream/flag";
-    public static final String SEARCH = "/api/search";
-    public static final String SEARCH_USER = "/api/search/user";
-    public static final String SEARCH_GEO = "/api/search/location";
+    private static final boolean VERBOSE = false;
+    private static final boolean DEV_ENDPOINT = false;
+    private static final String NEW_USER = "/api/user/new";
+    private static final String GET_USER_PUBLIC = "/api/user/info";
+    private static final String GET_USER_PRIVATE = "/api/user/uuid";
+    private static final String EDIT_USER = "/api/user/change";
+    private static final String START_STREAM = "/api/stream/start";
+    private static final String STOP_STREAM = "/api/stream/stop";
+    private static final String SET_META = "/api/stream/change";
+    private static final String GET_META = "/api/stream/info";
+    private static final String FLAG_STREAM = "/api/stream/flag";
+    private static final String SEARCH = "/api/search";
+    private static final String SEARCH_USER = "/api/search/user";
+    private static final String SEARCH_GEO = "/api/search/location";
     private static final int MAX_EOF_RETRIES = 1;
+    private static final int UNKNOWN_ERROR_CODE = 0;    // Error code used when none provided from server
     private static final String TAG = "KickflipApiClient";
-    public static String BASE_URL;
+    private static String BASE_URL;
     private JsonObjectParser mJsonObjectParser;         // Re-used across requests
     private JsonFactory mJsonFactory;                   // Re-used across requests
 
@@ -95,10 +104,10 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     private void initialize(KickflipCallback cb) {
-        if (!credentialsAcquired()) {
+        if (getActiveUser() == null) {
             createNewUser(cb);
         } else {
-            postResponseToCallback(cb, getCachedUser());
+            postResponseToCallback(cb, getActiveUser());
             if (VERBOSE)
                 Log.i(TAG, "Credentials stored " + getAWSCredentials());
         }
@@ -107,31 +116,164 @@ public class KickflipApiClient extends OAuthClient {
     /**
      * Create a new Kickflip User.
      * The User created as a result of this request is cached and managed by this KickflipApiClient
-     * throughout the life of the host Android application install.
+     * throughout the life of the host Android application installation.
+     * <p/>
+     * The other methods of this client will be performed on behalf of the user created by this request,
+     * unless noted otherwise.
      *
-     * @param cb This callback will receive a User in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
-     *           or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(Object)}.
+     * @param username  The desired username for this Kickflip User. Will be altered if not unique for this Kickflip app.
+     * @param password  The password for this Kickflip user.
+     * @param extraInfo String data to be associated with this Kickflip User.
+     * @param cb        This callback will receive a User in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
+     *                  or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
      */
-    public void createNewUser(final KickflipCallback cb) {
-        post(BASE_URL + NEW_USER, User.class, new KickflipCallback() {
+    public void createNewUser(String username, final String password, String extraInfo, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        data.put("username", username);
+        data.put("password", password);
+        data.put("extra_info", extraInfo);
+        post(BASE_URL + NEW_USER, new UrlEncodedContent(data), User.class, new KickflipCallback() {
             @Override
             public void onSuccess(final Response response) {
                 if (VERBOSE)
                     Log.i(TAG, "createNewUser response: " + response);
-                storeNewUserResponse((User) response);
+                storeNewUserResponse((User) response, password);
                 postResponseToCallback(cb, response);
             }
 
             @Override
-            public void onError(final Object response) {
-                Log.w(TAG, "createNewUser Error: " + response);
-                postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
+            public void onError(final KickflipException error) {
+                Log.w(TAG, "createNewUser Error: " + error);
+                postExceptionToCallback(cb, error);
             }
         });
     }
 
     /**
-     * Start a new Stream with this application's managed Kickflip User. Must be called after
+     * Create a new Kickflip User.
+     * The User created as a result of this request is active for this KickflipApiClient instance
+     * throughout the life of the host Android application installation, until a subsequent call to this method
+     * or {@link #loginUser(String, String, KickflipCallback)} }
+     * <p/>
+     * The other methods of this client will be performed on behalf of the user created by this request,
+     * unless noted otherwise.
+     *
+     * @param cb This callback will receive a User in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
+     *           or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
+     */
+    public void createNewUser(final KickflipCallback cb) {
+        final String password = new BigInteger(130, new SecureRandom()).toString(32);
+        post(BASE_URL + NEW_USER, User.class, new KickflipCallback() {
+            @Override
+            public void onSuccess(final Response response) {
+                if (VERBOSE)
+                    Log.i(TAG, "createNewUser response: " + response);
+                storeNewUserResponse((User) response, password);
+                postResponseToCallback(cb, response);
+            }
+
+            @Override
+            public void onError(final KickflipException error) {
+                Log.w(TAG, "createNewUser Error: " + error);
+                postExceptionToCallback(cb, error);
+            }
+        });
+    }
+
+    /**
+     * Login an exiting Kickflip User and make it active.
+     *
+     * @param username The Kickflip user's username
+     * @param password The Kickflip user's password
+     * @param cb       This callback will receive a User in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
+     *                 or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
+     */
+    public void loginUser(String username, final String password, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        data.put("username", username);
+        data.put("password", password);
+
+        post(BASE_URL + GET_USER_PRIVATE, new UrlEncodedContent(data), User.class, new KickflipCallback() {
+            @Override
+            public void onSuccess(final Response response) {
+                if (VERBOSE)
+                    Log.i(TAG, "loginUser response: " + response);
+                storeNewUserResponse((User) response, password);
+                postResponseToCallback(cb, response);
+            }
+
+            @Override
+            public void onError(final KickflipException error) {
+                Log.w(TAG, "loginUser Error: " + error);
+                postExceptionToCallback(cb, error);
+            }
+        });
+    }
+
+    /**
+     * Set the current active user's meta info. Pass a null argument to leave it as-is.
+     *
+     * @param newPassword the user's new password
+     * @param email       the user's new email address
+     * @param displayName The desired display name
+     * @param extraInfo   Arbitrary String data to associate with this user.
+     * @param cb          This callback will receive a User in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
+     *                    or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
+     */
+    public void setUserInfo(final String newPassword, String email, String displayName, Map extraInfo, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        if (newPassword != null) data.put("new_password", newPassword);
+        if (email != null) data.put("email", email);
+        if (displayName != null) data.put("display_name", displayName);
+        if (extraInfo != null) data.put("extra_info", Jackson.toJsonString(extraInfo));
+
+        post(BASE_URL + EDIT_USER, new UrlEncodedContent(data), User.class, new KickflipCallback() {
+            @Override
+            public void onSuccess(final Response response) {
+                if (VERBOSE)
+                    Log.i(TAG, "setUserInfo response: " + response);
+                storeNewUserResponse((User) response, newPassword);
+                postResponseToCallback(cb, response);
+            }
+
+            @Override
+            public void onError(final KickflipException error) {
+                Log.w(TAG, "setUserInfo Error: " + error);
+                postExceptionToCallback(cb, error);
+            }
+        });
+    }
+
+    /**
+     * Get public user info
+     *
+     * @param username The Kickflip user's username
+     * @param cb       This callback will receive a User in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
+     *                 or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
+     */
+    public void getUserInfo(String username, final KickflipCallback cb) {
+        GenericData data = new GenericData();
+        data.put("username", username);
+
+        post(BASE_URL + GET_USER_PUBLIC, new UrlEncodedContent(data), User.class, new KickflipCallback() {
+            @Override
+            public void onSuccess(final Response response) {
+                if (VERBOSE)
+                    Log.i(TAG, "getUserInfo response: " + response);
+                postResponseToCallback(cb, response);
+            }
+
+            @Override
+            public void onError(final KickflipException error) {
+                Log.w(TAG, "getUserInfo Error: " + error);
+                postExceptionToCallback(cb, error);
+            }
+        });
+    }
+
+
+    /**
+     * Start a new Stream. Must be called after
      * {@link io.kickflip.sdk.api.KickflipApiClient#createNewUser(KickflipCallback)}
      * Delivers stream endpoint destination data via a {@link io.kickflip.sdk.api.KickflipCallback}.
      *
@@ -140,11 +282,11 @@ public class KickflipApiClient extends OAuthClient {
      *           check if the response is instanceof HlsStream, RtmpStream, etc.
      */
     public void startStream(Stream stream, final KickflipCallback cb) {
-        startStreamWithUser(getCachedUser(), stream, cb);
+        startStreamWithUser(getActiveUser(), stream, cb);
     }
 
     /**
-     * Start a new Stream owned by the managed Kickflip User. Must be called after
+     * Start a new Stream owned by the given User. Must be called after
      * {@link io.kickflip.sdk.api.KickflipApiClient#createNewUser(KickflipCallback)}
      * Delivers stream endpoint destination data via a {@link io.kickflip.sdk.api.KickflipCallback}.
      *
@@ -153,7 +295,7 @@ public class KickflipApiClient extends OAuthClient {
      *             depending on the Kickflip account type. Implementors should
      *             check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
      */
-    public void startStreamWithUser(User user, Stream stream, final KickflipCallback cb) {
+    private void startStreamWithUser(User user, Stream stream, final KickflipCallback cb) {
         checkNotNull(user);
         // TODO: Be HLS / RTMP Agnostic
         GenericData data = new GenericData();
@@ -172,7 +314,7 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Stop a Stream owned by the managed Kickflip User. Must be called after
+     * Stop a Stream. Must be called after
      * {@link io.kickflip.sdk.api.KickflipApiClient#createNewUser(KickflipCallback)} and
      * {@link io.kickflip.sdk.api.KickflipApiClient#startStream(io.kickflip.sdk.api.json.Stream, KickflipCallback)}
      *
@@ -181,7 +323,7 @@ public class KickflipApiClient extends OAuthClient {
      *           check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
      */
     public void stopStream(Stream stream, final KickflipCallback cb) {
-        stopStream(getCachedUser(), stream, cb);
+        stopStream(getActiveUser(), stream, cb);
     }
 
     /**
@@ -191,7 +333,7 @@ public class KickflipApiClient extends OAuthClient {
      *           depending on the Kickflip account type. Implementors should
      *           check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
      */
-    public void stopStream(User user, Stream stream, final KickflipCallback cb) {
+    private void stopStream(User user, Stream stream, final KickflipCallback cb) {
         checkNotNull(stream);
         // TODO: Be HLS / RTMP Agnostic
         // TODO: Add start / stop lat lon to Stream?
@@ -208,7 +350,9 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Send Stream Meta data for a {@link io.kickflip.sdk.api.json.Stream} the managed Kickflip User owns
+     * Send Stream Metadata for a {@link io.kickflip.sdk.api.json.Stream}.
+     * The target Stream must be owned by the User created with {@link io.kickflip.sdk.api.KickflipApiClient#createNewUser(KickflipCallback)}
+     * from this KickflipApiClient.
      *
      * @param stream the {@link io.kickflip.sdk.api.json.Stream} to get Meta data for
      * @param cb     A callback to receive the updated Stream upon request completion
@@ -216,8 +360,7 @@ public class KickflipApiClient extends OAuthClient {
     public void setStreamInfo(Stream stream, final KickflipCallback cb) {
         GenericData data = new GenericData();
         data.put("stream_id", stream.getStreamId());
-        // TODO: Allow feeding User as argument
-        data.put("uuid", getCachedUser().getUUID());
+        data.put("uuid", getActiveUser().getUUID());
         if (stream.getTitle() != null) {
             data.put("title", stream.getTitle());
         }
@@ -254,8 +397,8 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Get Stream Meta data for a a public {@link io.kickflip.sdk.api.json.Stream} within the managed Kickflip User's
-     * Kickflip app
+     * Get Stream Metadata for a a public {@link io.kickflip.sdk.api.json.Stream}.
+     * The target Stream must belong a User of your Kickflip app.
      *
      * @param stream the {@link io.kickflip.sdk.api.json.Stream} to get Meta data for
      * @param cb     A callback to receive the updated Stream upon request completion
@@ -268,8 +411,11 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Get Stream Meta data for a a public stream within the managed Kickflip User's
-     * Kickflip app
+     * Get Stream Metadata for a a public {@link io.kickflip.sdk.api.json.Stream#mStreamId}.
+     * The target Stream must belong a User within your Kickflip app.
+     * <p/>
+     * This method is useful when digesting a Kickflip.io/<stream_id> url, where only
+     * the StreamId String is known.
      *
      * @param streamId the stream Id of the given stream. This is the value that appears
      *                 in urls of form kickflip.io/<stream_id>
@@ -283,43 +429,46 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Flag a {@link io.kickflip.sdk.api.json.Stream}. Typically used when the managed Kickflip User does not own the Stream.
+     * Flag a {@link io.kickflip.sdk.api.json.Stream}. Used when the active Kickflip User does not own the Stream.
+     * <p/>
+     * To delete a recording the active Kickflip User owns, use
+     * {@link io.kickflip.sdk.api.KickflipApiClient#setStreamInfo(io.kickflip.sdk.api.json.Stream, KickflipCallback)}
      *
      * @param stream The Stream to flag.
      * @param cb     A callback to receive the result of the flagging operation.
      */
     public void flagStream(Stream stream, final KickflipCallback cb) {
         GenericData data = new GenericData();
-        data.put("uuid", getCachedUser().getUUID());
+        data.put("uuid", getActiveUser().getUUID());
         data.put("stream_id", stream.getStreamId());
 
         post(BASE_URL + FLAG_STREAM, new UrlEncodedContent(data), Stream.class, cb);
     }
 
     /**
-     * Get a List of {@link io.kickflip.sdk.api.json.Stream} objects created by a particular Kickflip User
+     * Get a List of {@link io.kickflip.sdk.api.json.Stream} objects created by the given Kickflip User.
      *
-     * @param user the target Kickflip User
-     * @param cb A callback to receive the resulting List of Streams
+     * @param username the target Kickflip username
+     * @param cb       A callback to receive the resulting List of Streams
      */
-    public void getStreamsByUser(User user, String username, final KickflipCallback cb) {
+    public void getStreamsByUsername(String username, final KickflipCallback cb) {
         GenericData data = new GenericData();
-        data.put("uuid", user.getUUID());
+        data.put("uuid", getActiveUser().getUUID());
         data.put("username", username);
         post(BASE_URL + SEARCH_USER, new UrlEncodedContent(data), StreamList.class, cb);
     }
 
     /**
-     * Get a List of {@link io.kickflip.sdk.api.json.Stream} objects containing a keyword within the
-     * managed Kickflip User's App.
+     * Get a List of {@link io.kickflip.sdk.api.json.Stream}s containing a keyword.
+     * <p/>
+     * This method searches all public recordings made by Users of your Kickflip app.
      *
-     * @param user The Kickflip User on whose behalf this request is performed.
      * @param keyword The String keyword to query
-     * @param cb A callback to receive the resulting List of Streams
+     * @param cb      A callback to receive the resulting List of Streams
      */
-    public void getStreamsByKeyword(User user, String keyword, final KickflipCallback cb) {
+    public void getStreamsByKeyword(String keyword, final KickflipCallback cb) {
         GenericData data = new GenericData();
-        data.put("uuid", user.getUUID());
+        data.put("uuid", getActiveUser().getUUID());
         if (keyword != null) {
             data.put("keyword", keyword);
         }
@@ -327,44 +476,23 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Get a List of {@link io.kickflip.sdk.api.json.Stream} objects near a geographic location
+     * Get a List of {@link io.kickflip.sdk.api.json.Stream}s near a geographic location.
+     * <p/>
+     * This method searches all public recordings made by Users of your Kickflip app.
      *
-     * @param user The Kickflip User on whose behalf this request is performed.
-     * @param lat The target Latitude in decimal degrees
-     * @param lon The target Longitude in decimal degrees
-     * @param radius The target Radius in meters
-     * @param cb A callback to receive the resulting List of Streams
+     * @param location The target Location
+     * @param radius   The target Radius in meters
+     * @param cb       A callback to receive the resulting List of Streams
      */
-    public void getStreamsByLocation(User user, float lat, float lon, int radius, final KickflipCallback cb) {
+    public void getStreamsByLocation(Location location, int radius, final KickflipCallback cb) {
         GenericData data = new GenericData();
-        data.put("uuid", user.getUUID());
-        data.put("lat", lat);
-        data.put("lon", lon);
+        data.put("uuid", getActiveUser().getUUID());
+        data.put("lat", location.getLatitude());
+        data.put("lon", location.getLongitude());
         if (radius != 0) {
             data.put("radius", radius);
         }
         post(BASE_URL + SEARCH_GEO, new UrlEncodedContent(data), StreamList.class, cb);
-    }
-
-    /**
-     * Do a GET Request, creating a new user if necessary
-     *
-     * @param url           String url to GET
-     * @param responseClass Class of the expected response
-     * @param cb            Callback that will receive an instance of responseClass
-     */
-    private void get(final String url, final Class responseClass, final KickflipCallback cb) {
-        acquireAccessToken(new OAuthCallback() {
-            @Override
-            public void onSuccess(HttpRequestFactory requestFactory) {
-                request(requestFactory, METHOD.GET, url, null, responseClass, cb);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                postExceptionToCallback(cb, e);
-            }
-        });
     }
 
     /**
@@ -395,7 +523,7 @@ public class KickflipApiClient extends OAuthClient {
 
             @Override
             public void onFailure(Exception e) {
-                postExceptionToCallback(cb, e);
+                postExceptionToCallback(cb, UNKNOWN_ERROR_CODE);
             }
         });
     }
@@ -435,7 +563,7 @@ public class KickflipApiClient extends OAuthClient {
 
                             @Override
                             public void onFailure(Exception e) {
-                                postExceptionToCallback(cb, e);
+                                postExceptionToCallback(cb, UNKNOWN_ERROR_CODE);
                             }
                         });
                         break;
@@ -450,12 +578,12 @@ public class KickflipApiClient extends OAuthClient {
                 }
                 if (VERBOSE)
                     Log.i(TAG, "RESPONSE: " + shortenUrlString(url) + " " + exception.getMessage());
-                postExceptionToCallback(cb, exception);
+                postExceptionToCallback(cb, UNKNOWN_ERROR_CODE);
             } catch (ClassCastException e) {
                 // A non-HTTP releated error occured.
                 Log.w(TAG, String.format("Unhandled Error: %s. Stack trace follows:", e.getMessage()));
                 exception.printStackTrace();
-                postExceptionToCallback(cb, exception);
+                postExceptionToCallback(cb, UNKNOWN_ERROR_CODE);
             }
         }
     }
@@ -486,7 +614,7 @@ public class KickflipApiClient extends OAuthClient {
             }
             numRetries++;
         }
-        postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
+        postExceptionToCallback(cb, UNKNOWN_ERROR_CODE);
     }
 
     private void executeAndHandleHttpRequest(HttpRequest request, Class responseClass, KickflipCallback cb) throws IOException {
@@ -516,7 +644,7 @@ public class KickflipApiClient extends OAuthClient {
             // Http Failure
             if (VERBOSE)
                 Log.i(TAG, String.format("RESPONSE (F): %s body: %s", shortenUrlString(response.getRequest().getUrl().toString()), response.getContent().toString()));
-            postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
+            postExceptionToCallback(cb, UNKNOWN_ERROR_CODE);
         }
     }
 
@@ -544,29 +672,26 @@ public class KickflipApiClient extends OAuthClient {
 //            kickFlipResponse = response.parseAs(User.class);
 //        }
         if (kickFlipResponse == null) {
-            postExceptionToCallback(cb, new KickflipApiException(getContext().getString(R.string.generic_error)));
+            postExceptionToCallback(cb, UNKNOWN_ERROR_CODE);
         } else if (!kickFlipResponse.isSuccessful()) {
-            String reason = kickFlipResponse.getReason() == null ?
-                    getContext().getString(R.string.generic_error) :
-                    kickFlipResponse.getReason();
-            postExceptionToCallback(cb, new KickflipApiException(reason));
+            postExceptionToCallback(cb, UNKNOWN_ERROR_CODE);
         } else {
             postResponseToCallback(cb, kickFlipResponse);
         }
     }
 
-    private void storeNewUserResponse(User response) {
+    private void storeNewUserResponse(User response, String password) {
         getStorage().edit()
                 .putString("app_name", response.getApp())
                 .putString("name", response.getName())
+                .putString("password", password)
                 .putString("uuid", response.getUUID())
                 .putString("uuid", response.getUUID())
                 .apply();
     }
 
-    public boolean credentialsAcquired() {
-        //TODO: Detect account type: HLS or RTMP
-        return isUserCached();
+    private String getPasswordForCachedUser() {
+        return getStorage().getString("password", null);
     }
 
     private boolean isUserCached() {
@@ -582,19 +707,27 @@ public class KickflipApiClient extends OAuthClient {
     }
 
     /**
-     * Craft a User with data cached in SharedPrefs
+     * Get the current active Kickflip User. If no User has been created, returns null.
+     * <p/>
+     * This will be the User created on the last call to
+     * {@link io.kickflip.sdk.api.KickflipApiClient#createNewUser(KickflipCallback)}
      *
      * @return
      */
-    public User getCachedUser() {
+    public User getActiveUser() {
         SharedPreferences prefs = getStorage();
-        return new User(
-                prefs.getString("app_name", ""),
-                prefs.getString("name", ""),
-                prefs.getString("uuid", ""));
+        if (prefs.contains("uuid") && prefs.contains("name")) {
+            return new User(
+                    prefs.getString("app_name", ""),
+                    prefs.getString("name", ""),
+                    prefs.getString("uuid", ""),
+                    null);
+        } else {
+            return null;
+        }
     }
 
-    public String getAWSBucket() {
+    private String getAWSBucket() {
         return getStorage().getString("app_name", "");
     }
 
@@ -610,12 +743,18 @@ public class KickflipApiClient extends OAuthClient {
         return mJsonObjectParser;
     }
 
-    private void postExceptionToCallback(final KickflipCallback cb, final Exception e) {
+    private void postExceptionToCallback(final KickflipCallback cb, final int code) {
+        final String message = getContext().getResources().getStringArray(R.array.error_messages)[code];
+        KickflipException error = new KickflipException(message, code);
+        postExceptionToCallback(cb, error);
+    }
+
+    private void postExceptionToCallback(final KickflipCallback cb, final KickflipException exception) {
         if (cb != null) {
             mCallbackHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    cb.onError(e);
+                    cb.onError(exception);
                 }
             });
         }
@@ -643,8 +782,14 @@ public class KickflipApiClient extends OAuthClient {
         return url.substring(BASE_URL.length());
     }
 
-    public boolean userOwnsStream(Stream stream) {
-        return getCachedUser().getName().compareTo(stream.getOwnerName()) == 0;
+    /**
+     * Check if a Stream is owned by the active Kickflip User.
+     *
+     * @param stream the Stream to test.
+     * @return true if the active Kickflip User owns the Stream. false otherwise.
+     */
+    public boolean activeUserOwnsStream(Stream stream) {
+        return getActiveUser().getName().compareTo(stream.getOwnerName()) == 0;
     }
 
     public static enum METHOD {GET, POST}
@@ -654,12 +799,6 @@ public class KickflipApiClient extends OAuthClient {
             BASE_URL = "http://funkcity.ngrok.com";
         else
             BASE_URL = "https://www.kickflip.io";
-    }
-
-    public class KickflipApiException extends Exception {
-        public KickflipApiException(String detail) {
-            super(detail);
-        }
     }
 
 }

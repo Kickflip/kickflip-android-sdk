@@ -1,4 +1,4 @@
-package io.kickflip.sdk.events;
+package io.kickflip.sdk.event;
 
 import java.io.File;
 

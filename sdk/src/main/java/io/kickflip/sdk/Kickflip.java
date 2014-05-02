@@ -19,7 +19,7 @@ import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
-import io.kickflip.sdk.events.StreamLocationAddedEvent;
+import io.kickflip.sdk.event.StreamLocationAddedEvent;
 import io.kickflip.sdk.location.DeviceLocation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,30 +41,30 @@ public class Kickflip {
     /**
      * Register with Kickflip, creating a new user identity per app installation.
      *
-     * @param c      the host application's {@link android.content.Context}
-     * @param key    your Kickflip Client Key
-     * @param secret your Kickflip Client Secret
+     * @param context the host application's {@link android.content.Context}
+     * @param key     your Kickflip Client Key
+     * @param secret  your Kickflip Client Secret
      * @return a {@link io.kickflip.sdk.api.KickflipApiClient} used to perform actions on behalf of a
      * {@link io.kickflip.sdk.api.json.User}.
      */
-    public static KickflipApiClient setup(Context c, String key, String secret) {
+    public static KickflipApiClient setup(Context context, String key, String secret) {
         setApiCredentials(key, secret);
-        return getKickflip(c, null);
+        return getApiClient(context, null);
     }
 
     /**
      * Register with Kickflip, creating a new user identity per app installation.
      *
-     * @param c      the host application's {@link android.content.Context}
-     * @param key    your Kickflip Client Key
-     * @param secret your Kickflip Client Secret
-     * @param cb     A callback to be invoked when Kickflip user credentials are available.
+     * @param context the host application's {@link android.content.Context}
+     * @param key     your Kickflip Client Key
+     * @param secret  your Kickflip Client Secret
+     * @param cb      A callback to be invoked when Kickflip user credentials are available.
      * @return a {@link io.kickflip.sdk.api.KickflipApiClient} used to perform actions on behalf of
      * a {@link io.kickflip.sdk.api.json.User}.
      */
-    public static KickflipApiClient setup(Context c, String key, String secret, KickflipCallback cb) {
+    public static KickflipApiClient setup(Context context, String key, String secret, KickflipCallback cb) {
         setApiCredentials(key, secret);
-        return getKickflip(c, cb);
+        return getApiClient(context, cb);
     }
 
     private static void setApiCredentials(String key, String secret) {
@@ -119,8 +119,8 @@ public class Kickflip {
      * Convenience method for attaching the current reverse geocoded device location to a given
      * {@link io.kickflip.sdk.api.json.Stream}
      *
-     * @param context the host application {@link android.content.Context}
-     * @param stream the {@link io.kickflip.sdk.api.json.Stream} to attach location to
+     * @param context  the host application {@link android.content.Context}
+     * @param stream   the {@link io.kickflip.sdk.api.json.Stream} to attach location to
      * @param eventBus an {@link com.google.common.eventbus.EventBus} to be notified of the complete action
      */
     public static void addLocationToStream(final Context context, final Stream stream, final EventBus eventBus) {
@@ -183,21 +183,21 @@ public class Kickflip {
     }
 
     /**
-     * Set the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
-     *
-     * @param config the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
-     */
-    public static void setSessionConfig(SessionConfig config) {
-        sSessionConfig = config;
-    }
-
-    /**
      * Return the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
      *
      * @return the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
      */
     public static SessionConfig getSessionConfig() {
         return sSessionConfig;
+    }
+
+    /**
+     * Set the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
+     *
+     * @param config the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
+     */
+    public static void setSessionConfig(SessionConfig config) {
+        sSessionConfig = config;
     }
 
     /**
@@ -238,18 +238,30 @@ public class Kickflip {
      * yet been created, or the provided API keys don't match
      * the existing client.
      *
-     * @param c  the context of the host application
-     * @param cb an optional callback to be notified with the Kickflip user
-     *           corresponding to the provided API keys.
+     * @param context  the context of the host application
      * @return
      */
-    public static KickflipApiClient getKickflip(Context c, KickflipCallback cb) {
+    public static KickflipApiClient getApiClient(Context context) {
+        return getApiClient(context, null);
+    }
+
+    /**
+     * Create a new instance of the KickflipApiClient if one hasn't
+     * yet been created, or the provided API keys don't match
+     * the existing client.
+     *
+     * @param context  the context of the host application
+     * @param callback an optional callback to be notified with the Kickflip user
+     *                 corresponding to the provided API keys.
+     * @return
+     */
+    public static KickflipApiClient getApiClient(Context context, KickflipCallback callback) {
         checkNotNull(sApiKey);
         checkNotNull(sApiSecret);
         if (sKickflip == null || !sKickflip.getConfig().getClientId().equals(sApiKey)) {
-            sKickflip = new KickflipApiClient(c, sApiKey, sApiSecret, cb);
-        } else if (cb != null) {
-            cb.onSuccess(sKickflip.getCachedUser());
+            sKickflip = new KickflipApiClient(context, sApiKey, sApiSecret, callback);
+        } else if (callback != null) {
+            callback.onSuccess(sKickflip.getActiveUser());
         }
         return sKickflip;
     }

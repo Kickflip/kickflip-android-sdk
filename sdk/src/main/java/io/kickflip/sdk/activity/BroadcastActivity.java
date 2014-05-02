@@ -2,9 +2,11 @@ package io.kickflip.sdk.activity;
 
 import android.os.Bundle;
 
-import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
+import io.kickflip.sdk.api.json.Stream;
+import io.kickflip.sdk.av.BroadcastListener;
+import io.kickflip.sdk.exception.KickflipException;
 import io.kickflip.sdk.fragment.BroadcastFragment;
 
 public class BroadcastActivity extends ImmersiveActivity implements BroadcastListener {
@@ -33,8 +35,8 @@ public class BroadcastActivity extends ImmersiveActivity implements BroadcastLis
     }
 
     @Override
-    public void onBroadcastLive(String watchUrl) {
-        Kickflip.getBroadcastListener().onBroadcastLive(watchUrl);
+    public void onBroadcastLive(Stream stream) {
+        Kickflip.getBroadcastListener().onBroadcastLive(stream);
     }
 
     @Override
@@ -44,8 +46,8 @@ public class BroadcastActivity extends ImmersiveActivity implements BroadcastLis
     }
 
     @Override
-    public void onBroadcastError() {
-        Kickflip.getBroadcastListener().onBroadcastError();
+    public void onBroadcastError(KickflipException error) {
+        Kickflip.getBroadcastListener().onBroadcastError(error);
     }
 
 }

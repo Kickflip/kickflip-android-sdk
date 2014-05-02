@@ -3,7 +3,7 @@ package io.kickflip.sdk.av;
 import io.kickflip.sdk.view.GLCameraView;
 
 /**
- * Created by davidbrodsky on 1/24/14.
+ * Records an Audio / Video stream to disk.
  */
 public class AVRecorder {
 
