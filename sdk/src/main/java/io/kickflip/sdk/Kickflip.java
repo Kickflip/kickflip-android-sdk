@@ -25,10 +25,45 @@ import io.kickflip.sdk.location.DeviceLocation;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Static convenience methods for interacting with Kickflip.
+ * Entry point for interacting with Kickflip.
+ * <p/>
+ * <h2>Setup</h2>
+ * Before use Kickflip must be setup with your Kickflip Client ID and Client Secret with
+ * {@link #setup(android.content.Context, String, String)}. These tokens are available in your kickflip
+ * account dashboard.
+ * <h2>Example Usage</h2>
+ * <b>Starting a single live broadcast</b>
+ * <p/>
+ * <ol>
+ * <li>{@link #setup(android.content.Context, String, String)}</li>
+ * <li>(Optional) {@link #setSessionConfig(io.kickflip.sdk.av.SessionConfig)}</li>
+ * <li>{@link #startBroadcastActivity(android.app.Activity, io.kickflip.sdk.av.BroadcastListener)}</li>
+ * </ol>
+ * The {@link io.kickflip.sdk.activity.BroadcastActivity} will present a standard camera UI with controls
+ * for starting and stopping the broadcast. When the broadcast is stopped, BroadcastActivity will finish
+ * after notifying {@link io.kickflip.sdk.av.BroadcastListener#onBroadcastStop()}.
+ * <p/>
+ * <b>Customizing broadcast parameters</b>
+ * <p/>
+ * As noted above, you can optionally call {@link #setSessionConfig(io.kickflip.sdk.av.SessionConfig)} before
+ * each call to {@link #startBroadcastActivity(android.app.Activity, io.kickflip.sdk.av.BroadcastListener)}.
+ * Here's an example of how to build a {@link io.kickflip.sdk.av.SessionConfig} with {@link io.kickflip.sdk.av.SessionConfig.Builder}:
+ * <p/>
+ * <code>
+ *   SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
+ *     &nbsp.withTitle(Util.getHumanDateString())
+ *     &nbsp.withDescription("Example Description")
+ *     &nbsp.withExtraInfo("{'foo': 'bar'}")
+ *     .withPrivateVisibility(false)
+ *     .withLocation(true)
+ *     .withVideoResolution(1280, 720)
+ *     .build();
+ *   Kickflip.setSessionConfig(config);
+ *
+ * </code>
  */
 public class Kickflip {
-
+    private static Context sContext;
     private static String sClientKey;
     private static String sClientSecret;
 
@@ -48,8 +83,7 @@ public class Kickflip {
      * {@link io.kickflip.sdk.api.json.User}.
      */
     public static KickflipApiClient setup(Context context, String key, String secret) {
-        setApiCredentials(key, secret);
-        return getApiClient(context, null);
+        return setup(context, key, secret, null);
     }
 
     /**
@@ -63,6 +97,7 @@ public class Kickflip {
      * a {@link io.kickflip.sdk.api.json.User}.
      */
     public static KickflipApiClient setup(Context context, String key, String secret, KickflipCallback cb) {
+        sContext = context;
         setApiCredentials(key, secret);
         return getApiClient(context, cb);
     }
@@ -85,7 +120,9 @@ public class Kickflip {
      */
     public static void startBroadcastActivity(Activity host, BroadcastListener listener) {
         checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
-        checkNotNull(sSessionConfig, host.getString(R.string.error_no_recorderconfig));
+        if (sSessionConfig == null) {
+            setupDefaultSessionConfig();
+        }
         checkNotNull(sClientKey);
         checkNotNull(sClientSecret);
         sBroadcastListener = listener;
@@ -186,9 +223,21 @@ public class Kickflip {
      * Return the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
      *
      * @return the {@link io.kickflip.sdk.av.SessionConfig} responsible for configuring this broadcast.
+     * @hide
      */
     public static SessionConfig getSessionConfig() {
         return sSessionConfig;
+    }
+
+    /**
+     * Clear the current SessionConfig, marking it as in use by a Broadcaster.
+     * This is typically safe to do after constructing a Broadcaster, as it will
+     * hold reference.
+     *
+     * @hide
+     */
+    public static void clearSessionConfig() {
+        sSessionConfig = null;
     }
 
     /**
@@ -238,7 +287,7 @@ public class Kickflip {
      * yet been created, or the provided API keys don't match
      * the existing client.
      *
-     * @param context  the context of the host application
+     * @param context the context of the host application
      * @return
      */
     public static KickflipApiClient getApiClient(Context context) {
@@ -264,6 +313,15 @@ public class Kickflip {
             callback.onSuccess(sKickflip.getActiveUser());
         }
         return sKickflip;
+    }
+
+    private static void setupDefaultSessionConfig() {
+        checkNotNull(sContext);
+        Kickflip.setSessionConfig(new SessionConfig.Builder(sContext.getFilesDir().getAbsolutePath())
+                .withPrivateVisibility(false)
+                .withLocation(true)
+                .withVideoResolution(1280, 720)
+                .build());
     }
 
 }

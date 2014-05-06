@@ -63,7 +63,7 @@ public class KickflipApiClient extends OAuthClient {
     private static final String SEARCH_USER = "/api/search/user";
     private static final String SEARCH_GEO = "/api/search/location";
     private static final int MAX_EOF_RETRIES = 1;
-    private static final int UNKNOWN_ERROR_CODE = 0;    // Error code used when none provided from server
+    private static int UNKNOWN_ERROR_CODE = R.integer.generic_error;;    // Error code used when none provided from server
     private static final String TAG = "KickflipApiClient";
     private static String BASE_URL;
     private JsonObjectParser mJsonObjectParser;         // Re-used across requests
@@ -121,23 +121,44 @@ public class KickflipApiClient extends OAuthClient {
      * The other methods of this client will be performed on behalf of the user created by this request,
      * unless noted otherwise.
      *
-     * @param username  The desired username for this Kickflip User. Will be altered if not unique for this Kickflip app.
-     * @param password  The password for this Kickflip user.
-     * @param extraInfo String data to be associated with this Kickflip User.
-     * @param cb        This callback will receive a User in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
-     *                  or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
+     * @param username    The desired username for this Kickflip User. Will be altered if not unique for this Kickflip app.
+     * @param password    The password for this Kickflip user.
+     * @param email       The email address for this Kickflip user.
+     * @param displayName The display name for this Kickflip user.
+     * @param extraInfo   Map data to be associated with this Kickflip User.
+     * @param cb          This callback will receive a User in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
+     *                    or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
      */
-    public void createNewUser(String username, final String password, String extraInfo, final KickflipCallback cb) {
+    public void createNewUser(String username, String password, String email, String displayName, Map extraInfo, final KickflipCallback cb) {
         GenericData data = new GenericData();
-        data.put("username", username);
-        data.put("password", password);
-        data.put("extra_info", extraInfo);
+        if (username != null) {
+            data.put("username", username);
+        }
+
+        final String finalPassword;
+        if (password != null) {
+            finalPassword = password;
+        } else {
+            finalPassword = generateRandomPassword();
+        }
+        data.put("password", finalPassword);
+
+        if (displayName != null) {
+            data.put("display_name", displayName);
+        }
+        if (email != null) {
+            data.put("email", email);
+        }
+        if (extraInfo != null) {
+            data.put("extra_info", Jackson.toJsonString(extraInfo));
+        }
+
         post(BASE_URL + NEW_USER, new UrlEncodedContent(data), User.class, new KickflipCallback() {
             @Override
             public void onSuccess(final Response response) {
                 if (VERBOSE)
                     Log.i(TAG, "createNewUser response: " + response);
-                storeNewUserResponse((User) response, password);
+                storeNewUserResponse((User) response, finalPassword);
                 postResponseToCallback(cb, response);
             }
 
@@ -162,7 +183,7 @@ public class KickflipApiClient extends OAuthClient {
      *           or an Exception {@link io.kickflip.sdk.api.KickflipCallback#onError(io.kickflip.sdk.exception.KickflipException)}.
      */
     public void createNewUser(final KickflipCallback cb) {
-        final String password = new BigInteger(130, new SecureRandom()).toString(32);
+        final String password = generateRandomPassword();
         post(BASE_URL + NEW_USER, User.class, new KickflipCallback() {
             @Override
             public void onSuccess(final Response response) {
@@ -223,7 +244,13 @@ public class KickflipApiClient extends OAuthClient {
     public void setUserInfo(final String newPassword, String email, String displayName, Map extraInfo, final KickflipCallback cb) {
         if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
-        if (newPassword != null) data.put("new_password", newPassword);
+        final String finalPassword;
+        if (newPassword != null){
+            data.put("new_password", newPassword);
+            finalPassword = newPassword;
+        } else {
+            finalPassword = getPasswordForActiveUser();
+        }
         if (email != null) data.put("email", email);
         if (displayName != null) data.put("display_name", displayName);
         if (extraInfo != null) data.put("extra_info", Jackson.toJsonString(extraInfo));
@@ -233,7 +260,7 @@ public class KickflipApiClient extends OAuthClient {
             public void onSuccess(final Response response) {
                 if (VERBOSE)
                     Log.i(TAG, "setUserInfo response: " + response);
-                storeNewUserResponse((User) response, newPassword);
+                storeNewUserResponse((User) response, finalPassword);
                 postResponseToCallback(cb, response);
             }
 
@@ -459,9 +486,10 @@ public class KickflipApiClient extends OAuthClient {
      * @param username the target Kickflip username
      * @param cb       A callback to receive the resulting List of Streams
      */
-    public void getStreamsByUsername(String username, final KickflipCallback cb) {
+    public void getStreamsByUsername(String username, int pageNumber, int itemsPerPage, final KickflipCallback cb) {
         if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
+        addPaginationData(pageNumber, itemsPerPage, data);
         data.put("uuid", getActiveUser().getUUID());
         data.put("username", username);
         post(BASE_URL + SEARCH_USER, new UrlEncodedContent(data), StreamList.class, cb);
@@ -475,9 +503,10 @@ public class KickflipApiClient extends OAuthClient {
      * @param keyword The String keyword to query
      * @param cb      A callback to receive the resulting List of Streams
      */
-    public void getStreamsByKeyword(String keyword, final KickflipCallback cb) {
+    public void getStreamsByKeyword(String keyword, int pageNumber, int itemsPerPage, final KickflipCallback cb) {
         if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
+        addPaginationData(pageNumber, itemsPerPage, data);
         data.put("uuid", getActiveUser().getUUID());
         if (keyword != null) {
             data.put("keyword", keyword);
@@ -494,7 +523,7 @@ public class KickflipApiClient extends OAuthClient {
      * @param radius   The target Radius in meters
      * @param cb       A callback to receive the resulting List of Streams
      */
-    public void getStreamsByLocation(Location location, int radius, final KickflipCallback cb) {
+    public void getStreamsByLocation(Location location, int radius, int pageNumber, int itemsPerPage, final KickflipCallback cb) {
         if (!assertActiveUserAvailable(cb)) return;
         GenericData data = new GenericData();
         data.put("uuid", getActiveUser().getUUID());
@@ -701,7 +730,7 @@ public class KickflipApiClient extends OAuthClient {
                 .apply();
     }
 
-    private String getPasswordForCachedUser() {
+    private String getPasswordForActiveUser() {
         return getStorage().getString("password", null);
     }
 
@@ -816,13 +845,22 @@ public class KickflipApiClient extends OAuthClient {
         return true;
     }
 
-    public static enum METHOD {GET, POST}
+    private static enum METHOD {GET, POST}
 
     static {
         if (DEV_ENDPOINT)
             BASE_URL = "http://funkcity.ngrok.com";
         else
             BASE_URL = "https://www.kickflip.io";
+    }
+
+    private String generateRandomPassword() {
+        return new BigInteger(130, new SecureRandom()).toString(32);
+    }
+
+    private void addPaginationData(int pageNumber, int itemsPerPage, GenericData target) {
+        target.put("results_per_page", itemsPerPage);
+        target.put("page", pageNumber);
     }
 
 }

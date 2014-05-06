@@ -24,6 +24,7 @@ import android.view.Surface;
  * <p>
  * It's good practice to explicitly release() the surface, preferably from a "finally" block.
  * This object owns the Surface; releasing this object will release the Surface as well.
+ * @hide
  */
 public class WindowSurface extends EglSurfaceBase {
     private Surface mSurface;

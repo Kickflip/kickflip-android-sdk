@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Created by davidbrodsky on 1/23/14.
+ * @hide
  */
 public class MicrophoneEncoder implements Runnable{
     private static final boolean TRACE = false;

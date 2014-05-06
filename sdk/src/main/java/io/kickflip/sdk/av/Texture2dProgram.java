@@ -25,6 +25,7 @@ import java.nio.FloatBuffer;
 
 /**
  * GL program and supporting functions for textured 2D shapes.
+ * @hide
  */
 public class Texture2dProgram {
     private static final String TAG ="Texture2dProgram";

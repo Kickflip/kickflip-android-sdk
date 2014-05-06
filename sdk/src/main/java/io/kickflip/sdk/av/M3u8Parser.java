@@ -17,6 +17,7 @@ import static io.kickflip.sdk.Kickflip.isKickflipUrl;
 
 /**
  * Created by David Brodsky on 4/8/14.
+ * @hide
  */
 public class M3u8Parser {
     public static final String TAG = "M3u8Parser";

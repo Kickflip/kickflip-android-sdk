@@ -6,7 +6,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 
 /**
- * Created by davidbrodsky on 1/23/14.
+ * @hide
  */
 public class AudioEncoderCore extends AndroidEncoder {
 

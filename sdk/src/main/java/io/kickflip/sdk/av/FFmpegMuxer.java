@@ -23,6 +23,7 @@ import pro.dbro.ffmpegwrapper.FFmpegWrapper.AVOptions;
 
 /**
  * Created by davidbrodsky on 1/23/14.
+ * @hide
  */
 //TODO: Remove hard-coded track indexes
 //      Remove 2 track assumption

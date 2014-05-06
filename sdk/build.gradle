@@ -28,6 +28,11 @@ android {
 
 }
 
+configurations {
+    jaxDoclet
+    classpaths
+}
+
 
 dependencies {
     compile 'com.google.guava:guava:16.0'
@@ -50,6 +55,12 @@ dependencies {
 
     // m3u8 parser
     compile files('libs/m3u8parser-0.2.jar')
+
+    // For Doclava JavaDoc
+    jaxDoclet("com.google.doclava:doclava:1.0.5")
+    //classpaths files('build/classes/release')
+    classpaths fileTree(dir: 'build/classes/release').matching { include 'io/kickflip/sdk/Kickflip.java' }
+    classpaths files(new File(System.getenv('ANDROID_HOME') + '/platforms/android-19/android.jar'))
 }
 
 // Maven publish task
@@ -61,21 +72,20 @@ apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
 android.libraryVariants.all { variant ->
 
     task("generate${variant.name}Javadoc", type: Javadoc) {
-        title = "Kickflip Android SDK"
-        options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PUBLIC
-        description "Generates Javadoc for $variant.name."
-        source = variant.javaCompile.source
-        ext.androidJar = "${android.plugin.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
-        classpath = files(variant.javaCompile.classpath.files) + files(ext.androidJar)
-        //exclude '**/sdk/**'
-        include 'io/kickflip/sdk/Kickflip.java'
-        include 'io/kickflip/sdk/api/KickflipApiClient.java'
-        include 'io/kickflip/sdk/api/KickflipCallback.java'
-        include 'io/kickflip/sdk/api/json/Stream.java'
-        include 'io/kickflip/sdk/api/json/User.java'
-        include 'io/kickflip/sdk/av/Broadcaster.java'
-        include 'io/kickflip/sdk/av/BroadcastListener.java'
-        exclude 'pro/dbro/ffmpegwrapper/**'
+        source = android.sourceSets.main.allJava
+        title = null
+        options.docletpath = configurations.jaxDoclet.files.asType(List)
+        options.classpath = configurations.classpaths.files.asType(List)
+        options {
+            doclet "com.google.doclava.Doclava"
+            bootClasspath new File(System.getenv('JAVA_HOME') + "/jre/lib/rt.jar")
+            addStringOption "warning", '110'  // Allow undocumented types
+            addStringOption "overview", "/Users/davidbrodsky/Code/android/kickflip-android-example/submodules/kickflip-android-sdk/sdk/src/javadoc-overview.html"
+            addStringOption "public"
+            addStringOption "hdf project.name", "Kickflip Android SDK"
+            addStringOption "federate android", "http://d.android.com/reference"
+            addStringOption "federationxml android", "http://doclava.googlecode.com/svn/static/api/android-10.xml"
+        }
     }
 
 }

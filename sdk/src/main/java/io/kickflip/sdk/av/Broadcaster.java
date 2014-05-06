@@ -52,6 +52,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * <li>Call {@link io.kickflip.sdk.av.Broadcaster#startRecording()} to begin broadcasting</li>
  * <li>Call {@link io.kickflip.sdk.av.Broadcaster#stopRecording()} to end the broadcast.</li>
  * </ol>
+ * @hide
  */
 // TODO: Make HLS / RTMP Agnostic
 public class Broadcaster extends AVRecorder {

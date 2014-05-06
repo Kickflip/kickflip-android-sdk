@@ -22,7 +22,7 @@ import io.kickflip.sdk.view.GLCameraView;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Created by davidbrodsky on 1/22/14.
+ * @hide
  */
 public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, Runnable {
     private static final String TAG = "CameraEncoder";

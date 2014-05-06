@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 
 /**
- * Created by davidbrodsky on 2/19/14.
+ * @hide
  */
 public class Share {
 

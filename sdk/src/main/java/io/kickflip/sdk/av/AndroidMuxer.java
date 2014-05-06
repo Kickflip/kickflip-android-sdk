@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * Created by davidbrodsky on 1/23/14.
+ * @hide
  */
 public class AndroidMuxer extends Muxer {
     private static final String TAG = "AndroidMuxer";

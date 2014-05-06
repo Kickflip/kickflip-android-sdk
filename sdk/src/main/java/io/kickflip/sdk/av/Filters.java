@@ -6,7 +6,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * This class matches descriptive final int
- * variables to Texture2dProgram.ProgramType s
+ * variables to Texture2dProgram.ProgramType
+ * @hide
  */
 public class Filters {
     private static final String TAG = "Filters";

@@ -23,7 +23,7 @@ import java.util.ArrayDeque;
  * Manage the OAuth Client Credentials authentication
  * to be negotiated prior to any API Requests being performed
  *
- * Created by davidbrodsky on 1/14/14.
+ * @hide
  */
 public abstract class OAuthClient {
     private static final String TAG = "OAuthClient";

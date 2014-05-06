@@ -1,5 +1,8 @@
 package io.kickflip.sdk.av;
 
+/**
+ * @hide
+ */
 public class AudioEncoderConfig {
     protected final int mNumChannels;
     protected final int mSampleRate;

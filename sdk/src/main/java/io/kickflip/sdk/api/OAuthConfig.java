@@ -2,6 +2,7 @@ package io.kickflip.sdk.api;
 
 /**
  * Immutable OAuth configuration state
+ * @hide
  */
 public class OAuthConfig {
     private String credentialStoreName;

@@ -15,6 +15,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Base Muxer class for interaction with MediaCodec based
  * encoders
+ * @hide
  */
 public abstract class Muxer {
     private static final String TAG = "Muxer";

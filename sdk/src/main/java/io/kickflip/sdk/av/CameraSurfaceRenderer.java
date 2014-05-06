@@ -9,7 +9,9 @@ import javax.microedition.khronos.opengles.GL10;
 
 import io.kickflip.sdk.view.GLCameraView;
 
-
+/**
+ * @hide
+ */
 class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
     private static final String TAG = "CameraSurfaceRenderer";
     private static final boolean VERBOSE = false;

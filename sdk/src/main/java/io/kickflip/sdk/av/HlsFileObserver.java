@@ -35,6 +35,7 @@ import io.kickflip.sdk.event.ThumbnailWrittenEvent;
  * or a .m3u8 manifest is modified
  *
  * @author davidbrodsky
+ * @hide
  */
 public class HlsFileObserver extends FileObserver {
     private static final String TAG = "HlsFileObserver";

@@ -19,7 +19,6 @@ package io.kickflip.sdk.av;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.opengl.GLES20;
@@ -33,6 +32,7 @@ import java.nio.FloatBuffer;
 
 /**
  * Some OpenGL utility functions.
+ * @hide
  */
 public class GlUtil {
     private static final String TAG = "GlUtil";

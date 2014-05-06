@@ -28,6 +28,7 @@ import android.view.Surface;
 
 /**
  * Core EGL state (display, context, config).
+ * @hide
  */
 public final class EglCore {
     private static final String TAG = "EglCore";

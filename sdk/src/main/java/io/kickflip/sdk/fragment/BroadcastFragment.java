@@ -219,6 +219,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
                 mBroadcaster = new Broadcaster(context, Kickflip.getSessionConfig(), Kickflip.getApiKey(), Kickflip.getApiSecret());
                 mBroadcaster.getEventBus().register(this);
                 mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
+                Kickflip.clearSessionConfig();
             }
         }
     }

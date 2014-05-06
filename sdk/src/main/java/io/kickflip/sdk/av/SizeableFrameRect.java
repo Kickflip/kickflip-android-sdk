@@ -26,6 +26,7 @@ import java.nio.FloatBuffer;
  * a texture, usually from an external source like the camera or video decoder.
  *
  * Placeholder. Not yet implemented.
+ * @hide
  */
 public class SizeableFrameRect{
     private final Drawable2d mRectDrawable = new Drawable2d(Drawable2d.Prefab.RECTANGLE);

@@ -8,7 +8,7 @@ import android.util.Log;
 
 
 /**
- * Created by davidbrodsky on 1/22/14.
+ * @hide
  */
 public class EglStateSaver {
     private static final String TAG = "EglStateSaver";

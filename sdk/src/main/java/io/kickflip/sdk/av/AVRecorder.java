@@ -4,6 +4,7 @@ import io.kickflip.sdk.view.GLCameraView;
 
 /**
  * Records an Audio / Video stream to disk.
+ * @hide
  */
 public class AVRecorder {
 
