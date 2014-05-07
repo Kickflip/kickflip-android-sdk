@@ -40,6 +40,10 @@ public class AVRecorder {
         mCamEncoder.requestCamera(camera);
     }
 
+    public void toggleFlash(){
+        mCamEncoder.toggleFlashMode();
+    }
+
     public void adjustVideoBitrate(int targetBitRate){
         mCamEncoder.adjustBitrate(targetBitRate);
     }
