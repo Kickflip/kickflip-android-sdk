@@ -17,10 +17,12 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import io.kickflip.sdk.event.CameraOpenedEvent;
 import io.kickflip.sdk.view.GLCameraEncoderView;
 import io.kickflip.sdk.view.GLCameraView;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.eventbus.EventBus;
 
 /**
  * @hide
@@ -64,6 +66,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private final Object mReadyFence = new Object();            // guards ready/running
     private boolean mReady;                                     // mHandler created on Encoder thread
     private boolean mRunning;                                   // Encoder thread running
+
+    private EventBus mEventBus;
 
     private boolean mEncodedFirstFrame;
     private long mStartTimeNs;
@@ -658,6 +662,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
         Camera.Parameters parms = mCamera.getParameters();
 
+        postCameraOpenedEvent(parms);
+
         List<String> focusModes = parms.getSupportedFocusModes();
         if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
             parms.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
@@ -864,5 +870,15 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     /** @return returns the flash mode set in the camera */
     public String getFlashMode() {
         return (mDesiredFlash != null) ? mDesiredFlash : mCurrentFlash;
+    }
+
+    private void postCameraOpenedEvent(Parameters params) {
+        if(mEventBus != null) {
+            mEventBus.post(new CameraOpenedEvent(params));
+        }
+    }
+
+    public void setEventBus(EventBus eventBus){
+        mEventBus = eventBus;
     }
 }
