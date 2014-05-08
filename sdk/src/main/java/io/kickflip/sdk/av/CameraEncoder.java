@@ -35,6 +35,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private static final int MSG_SET_SURFACE_TEXTURE = 3;
     private static final int MSG_REOPEN_CAMERA = 4;
     private static final int MSG_RELEASE_CAMERA = 5;
+    private static final int MSG_RELEASE = 6;
+    private static final int MSG_RESET = 7;
 
     // ----- accessed exclusively by encoder thread -----
     private WindowSurface mInputWindowSurface;
@@ -78,6 +80,18 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private int mThumbnailRequestedOnFrame;
 
     public CameraEncoder(SessionConfig config) {
+        init(config);
+        mEglSaver = new EglStateSaver();
+        startEncodingThread();
+    }
+
+    /**
+     * Resets per-recording state. This excludes {@link io.kickflip.sdk.av.EglStateSaver},
+     * which should be re-used across recordings made by this CameraEncoder instance.
+     *
+     * @param config the desired parameters for the next recording.
+     */
+    private void init(SessionConfig config) {
         mEncodedFirstFrame = false;
         mReadyForFrames = false;
         mRecording = false;
@@ -93,8 +107,31 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mThumbnailRequestedOnFrame = -1;
 
         mSessionConfig = checkNotNull(config);
-        mEglSaver = new EglStateSaver();
-        startEncodingThread();
+    }
+
+    /**
+     * Prepare for a new recording with the given parameters.
+     * This must be called after {@link #stopRecording()} and before {@link #release()}
+     *
+     * @param config the desired parameters for the next recording. Make sure you're
+     *               providing a new {@link io.kickflip.sdk.av.SessionConfig} to avoid
+     *               overwriting a previous recording.
+     */
+    public void reset(SessionConfig config) {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_RESET, config));
+    }
+
+    private void handleReset(SessionConfig config) {
+        Log.i(TAG, "handleReset");
+        init(config);
+        // Make display EGLContext current
+        mEglSaver.makeSavedStateCurrent();
+        prepareEncoder(mEglSaver.getSavedEGLContext(),
+                mSessionConfig.getVideoWidth(),
+                mSessionConfig.getVideoHeight(),
+                mSessionConfig.getVideoBitrate(),
+                mSessionConfig.getMuxer());
+        mReadyForFrames = true;
     }
 
     public SessionConfig getConfig() {
@@ -237,7 +274,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     /**
      * Apply a filter to the camera input
-     * TODO: Apply to display and encoder
      *
      * @param filter
      */
@@ -257,8 +293,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * @param ev onTouchEvent event to handle
      */
     public void handleCameraPreviewTouchEvent(MotionEvent ev) {
-        mFullScreen.handleTouchEvent(ev);
-        mDisplayRenderer.handleTouchEvent(ev);
+        if (mFullScreen != null) mFullScreen.handleTouchEvent(ev);
+        if (mDisplayRenderer != null) mDisplayRenderer.handleTouchEvent(ev);
     }
 
     /**
@@ -301,6 +337,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     }
 
     /**
+     * Stop recording. After this call you must call either {@link #release()} to release resources if you're not going to
+     * make any subsequent recordings, or {@link #reset(io.kickflip.sdk.av.SessionConfig)} to prepare
+     * the encoder for the next recording
+     * <p/>
      * Called from UI thread
      */
     public void stopRecording() {
@@ -318,15 +358,27 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     }
 
     /**
-     * Called on next call to handleFrameAavilable
-     * following handleStopRecording. Last frame is submitted
-     * to encoder, and drainEncoder(true) has been called.
+     * Release resources, including the Camera.
+     * After this call this instance of CameraEncoder is no longer usable.
+     * <p/>
+     * Called from UI thread
+     */
+    public void release() {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_RELEASE));
+    }
+
+    private void handleRelease() {
+        shutdown();
+    }
+
+    /**
+     * Called by release()
      * Safe to release resources
      * <p/>
      * Called on Encoder thread
      */
     private void shutdown() {
-        releaseEncoder();
+        releaseEglResources();
         releaseCamera();
         Looper.myLooper().quit();
     }
@@ -403,7 +455,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     mVideoEncoder.drainEncoder(true);
                     mRecording = false;
                     mEosRequested = false;
-                    shutdown();
+                    releaseEncoder();
+                    // The Egl Resources previously released by a call to shutdown()
+                    // will be handled when the CameraEncoder is released()s
+                    //shutdown();
                 }
             }
         }
@@ -560,11 +615,15 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private void prepareEncoder(EGLContext sharedContext, int width, int height, int bitRate,
                                 Muxer muxer) {
         mVideoEncoder = new VideoEncoderCore(width, height, bitRate, muxer);
-        mEglCore = new EglCore(sharedContext, EglCore.FLAG_RECORDABLE);
+        if (mEglCore == null) {
+            // This is the first prepare called for this CameraEncoder instance
+            mEglCore = new EglCore(sharedContext, EglCore.FLAG_RECORDABLE);
+        }
+        if (mInputWindowSurface != null) mInputWindowSurface.release();
         mInputWindowSurface = new WindowSurface(mEglCore, mVideoEncoder.getInputSurface());
         mInputWindowSurface.makeCurrent();
 
-        //mFullScreen = new FullFrameRect(Texture2dProgram.ProgramType.TEXTURE_EXT);
+        if (mFullScreen != null) mFullScreen.release();
         mFullScreen = new FullFrameRect(
                 new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
         mFullScreen.getProgram().setTexSize(width, height);
@@ -573,6 +632,14 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     private void releaseEncoder() {
         mVideoEncoder.release();
+    }
+
+    /**
+     * Release all recording-specific resources.
+     * The Encoder, EGLCore and FullFrameRect are tied to capture resolution,
+     * and other parameters.
+     */
+    private void releaseEglResources() {
         if (mInputWindowSurface != null) {
             mInputWindowSurface.release();
             mInputWindowSurface = null;
@@ -763,6 +830,12 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     break;
                 case MSG_RELEASE_CAMERA:
                     encoder.releaseCamera();
+                    break;
+                case MSG_RELEASE:
+                    encoder.handleRelease();
+                    break;
+                case MSG_RESET:
+                    encoder.handleReset((SessionConfig) obj);
                     break;
                 default:
                     throw new RuntimeException("Unexpected msg what=" + what);

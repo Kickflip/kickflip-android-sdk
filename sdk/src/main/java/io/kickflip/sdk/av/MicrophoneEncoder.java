@@ -11,9 +11,10 @@ import java.nio.ByteBuffer;
 
 /**
  * Created by davidbrodsky on 1/23/14.
+ *
  * @hide
  */
-public class MicrophoneEncoder implements Runnable{
+public class MicrophoneEncoder implements Runnable {
     private static final boolean TRACE = false;
     private static final boolean VERBOSE = false;
     private static final String TAG = "MicrophoneEncoder";
@@ -22,8 +23,10 @@ public class MicrophoneEncoder implements Runnable{
     protected static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
 
     private final Object mReadyFence = new Object();    // Synchronize audio thread readiness
-    private boolean mReady;                             // Is audio thread ready
-    private boolean mRunning;                           // Is audio thread running
+    private boolean mThreadReady;                       // Is audio thread ready
+    private boolean mThreadRunning;                     // Is audio thread running
+    private final Object mPreparedFence = new Object(); // Synchronize resource preparation
+    private boolean mPrepared;                          // Are resources prepared for recording?
 
     private AudioRecord mAudioRecord;
     private AudioEncoderCore mEncoderCore;
@@ -31,18 +34,29 @@ public class MicrophoneEncoder implements Runnable{
     private long mStartTimeNs;
     private boolean mRecordingRequested;
 
-    public MicrophoneEncoder(SessionConfig config){
+    public MicrophoneEncoder(SessionConfig config) {
+        init(config);
+    }
+
+    private void init(SessionConfig config) {
+        mPrepared = false;
         mEncoderCore = new AudioEncoderCore(config.getNumAudioChannels(),
                 config.getAudioBitrate(),
                 config.getAudioSamplerate(),
                 config.getMuxer());
-        mReady = false;
-        mRunning = false;
+        mMediaCodec = null;
+        mThreadReady = false;
+        mThreadRunning = false;
         mRecordingRequested = false;
         setupAudioRecord();
+        mPrepared = true;
+        synchronized (mPreparedFence) {
+            mPreparedFence.notify();
+        }
+        if (VERBOSE) Log.i(TAG, "Finished init. encoder : " + mEncoderCore.mEncoder);
     }
 
-    private void setupAudioRecord(){
+    private void setupAudioRecord() {
         int minBufferSize = AudioRecord.getMinBufferSize(mEncoderCore.mSampleRate,
                 mEncoderCore.mChannelConfig, AUDIO_FORMAT);
         int bufferSize = SAMPLES_PER_FRAME * 10;
@@ -58,30 +72,37 @@ public class MicrophoneEncoder implements Runnable{
 
     }
 
-    public void stopRecording(){
-        mRecordingRequested = false;
-    }
-
-    public void startRecording(){
+    public void startRecording() {
+        if (VERBOSE) Log.i(TAG, "startRecording");
         mRecordingRequested = true;
         startAudioRecord();
     }
 
-    public boolean isRecording(){
+    public void stopRecording() {
+        mRecordingRequested = false;
+    }
+
+    public void reset(SessionConfig config) {
+        if (VERBOSE) Log.i(TAG, "reset");
+        if (mThreadRunning) Log.e(TAG, "reset called before stop completed");
+        init(config);
+    }
+
+    public boolean isRecording() {
         return mRecordingRequested;
     }
 
 
-    private void startAudioRecord(){
-        synchronized (mReadyFence){
-            if(mRunning){
+    private void startAudioRecord() {
+        synchronized (mReadyFence) {
+            if (mThreadRunning) {
                 Log.w(TAG, "Audio thread running when start requested");
                 return;
             }
             Thread audioThread = new Thread(this, "MicrophoneEncoder");
             audioThread.setPriority(Thread.MAX_PRIORITY);
             audioThread.start();
-            while(!mReady){
+            while (!mThreadReady) {
                 try {
                     mReadyFence.wait();
                 } catch (InterruptedException e) {
@@ -95,12 +116,22 @@ public class MicrophoneEncoder implements Runnable{
     public void run() {
         mAudioRecord.startRecording();
         mStartTimeNs = System.nanoTime();
-        synchronized (mReadyFence){
-            mReady = true;
+        synchronized (mReadyFence) {
+            mThreadReady = true;
             mReadyFence.notify();
         }
-        if (VERBOSE) Log.i(TAG, "Begin Audio transmission to encoder");
-        while(mRecordingRequested){
+        synchronized (mPreparedFence) {
+            while (!mPrepared) {
+                try {
+                    mPreparedFence.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    // ignore
+                }
+            }
+        }
+        if (VERBOSE) Log.i(TAG, "Begin Audio transmission to encoder. encoder : " + mEncoderCore.mEncoder);
+        while (mRecordingRequested) {
 
             if (TRACE) Trace.beginSection("drainAudio");
             mEncoderCore.drainEncoder(false);
@@ -111,7 +142,7 @@ public class MicrophoneEncoder implements Runnable{
             if (TRACE) Trace.endSection();
 
         }
-        mReady = false;
+        mThreadReady = false;
         if (VERBOSE) Log.i(TAG, "Exiting audio encode loop. Draining Audio Encoder");
         if (TRACE) Trace.beginSection("sendAudio");
         sendAudioToEncoder(true);
@@ -121,7 +152,7 @@ public class MicrophoneEncoder implements Runnable{
         mEncoderCore.drainEncoder(true);
         if (TRACE) Trace.endSection();
         mEncoderCore.release();
-        mRunning = false;
+        mThreadRunning = false;
     }
 
     // Variables recycled between calls to sendAudioToEncoder
@@ -131,7 +162,7 @@ public class MicrophoneEncoder implements Runnable{
     long audioRelativePresentationTimeUs;
 
     private void sendAudioToEncoder(boolean endOfStream) {
-        if(mMediaCodec == null)
+        if (mMediaCodec == null)
             mMediaCodec = mEncoderCore.getMediaCodec();
         // send current frame data to encoder
         try {
@@ -140,14 +171,15 @@ public class MicrophoneEncoder implements Runnable{
             if (audioInputBufferIndex >= 0) {
                 ByteBuffer inputBuffer = inputBuffers[audioInputBufferIndex];
                 inputBuffer.clear();
-                audioInputLength =  mAudioRecord.read(inputBuffer, SAMPLES_PER_FRAME * 2);
+                audioInputLength = mAudioRecord.read(inputBuffer, SAMPLES_PER_FRAME * 2);
                 audioRelativePresentationTimeUs = (System.nanoTime() - mStartTimeNs) / 1000;
-                audioRelativePresentationTimeUs -= (audioInputLength / mEncoderCore.mSampleRate ) / 1000000;
-                if(audioInputLength == AudioRecord.ERROR_INVALID_OPERATION)
+                audioRelativePresentationTimeUs -= (audioInputLength / mEncoderCore.mSampleRate) / 1000000;
+                if (audioInputLength == AudioRecord.ERROR_INVALID_OPERATION)
                     Log.e(TAG, "Audio read error: invalid operation");
-                if(audioInputLength == AudioRecord.ERROR_BAD_VALUE)
+                if (audioInputLength == AudioRecord.ERROR_BAD_VALUE)
                     Log.e(TAG, "Audio read error: bad value");
-                if (VERBOSE) Log.i(TAG, "queueing " + audioInputLength + " audio bytes with pts " + audioRelativePresentationTimeUs);
+                if (VERBOSE)
+                    Log.i(TAG, "queueing " + audioInputLength + " audio bytes with pts " + audioRelativePresentationTimeUs);
                 if (endOfStream) {
                     if (VERBOSE) Log.i(TAG, "EOS received in sendAudioToEncoder");
                     mMediaCodec.queueInputBuffer(audioInputBufferIndex, 0, audioInputLength, audioRelativePresentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM);

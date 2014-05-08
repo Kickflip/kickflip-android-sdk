@@ -195,6 +195,8 @@ public class FFmpegMuxer extends Muxer implements Runnable{
         super.writeSampleData(encoder, trackIndex, bufferIndex, encodedData, bufferInfo);
         mPacketCount++;
 
+        // Don't write the samples directly if they're CODEC_CONFIG data
+        // Of if the muxer has already shutdown
         if (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)) {
             if (VERBOSE) Log.i(TAG, "handling BUFFER_FLAG_CODEC_CONFIG for track " + trackIndex);
             if (trackIndex == mVideoTrackIndex) {
@@ -208,6 +210,10 @@ public class FFmpegMuxer extends Muxer implements Runnable{
                 releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
                 return;
             }
+        } else if(allTracksFinished()) {
+            if (VERBOSE) Log.i(TAG, "Ignoring packet received after shutdown");
+            releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
+            return;
         }
 
         if (trackIndex == mAudioTrackIndex && formatRequiresADTS()) {
@@ -218,7 +224,7 @@ public class FFmpegMuxer extends Muxer implements Runnable{
         encodedData.position(bufferInfo.offset);
         encodedData.limit(bufferInfo.offset + bufferInfo.size);
 
-        if (VERBOSE) Log.i(TAG, mPacketCount + " PTS " + bufferInfo.presentationTimeUs + " size: " + bufferInfo.size + " " + (trackIndex == mVideoTrackIndex ? "video " : "audio ") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ? "keyframe" : "") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) ? " EOS" : ""));
+        if (VERBOSE) Log.i(TAG, mPacketCount + " PTS " + getSafePts(bufferInfo.presentationTimeUs) + " size: " + bufferInfo.size + " " + (trackIndex == mVideoTrackIndex ? "video " : "audio ") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ? "keyframe" : "") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) ? " EOS" : ""));
         if (DEBUG_PKTS) writePacketToFile(encodedData, bufferInfo);
         if( !(trackIndex == mAudioTrackIndex && ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0))){
             // Don't write Audio END_OF_STREAM packet. It causes a crash in av_dup_packet. TODO: Check if this is resolved...

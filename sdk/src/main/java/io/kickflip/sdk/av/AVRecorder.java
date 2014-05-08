@@ -4,6 +4,18 @@ import io.kickflip.sdk.view.GLCameraView;
 
 /**
  * Records an Audio / Video stream to disk.
+ *
+ * Example usage:
+ * <ul>
+ *     <li>AVRecorder recorder = new AVRecorder(mSessionConfig);</li>
+ *     <li>recorder.setPreviewDisplay(mPreviewDisplay);</li>
+ *     <li>recorder.startRecording();</li>
+ *     <li>recorder.stopRecording();</li>
+ *     <li>(Optional) recorder.reset(mNewSessionConfig);</li>
+ *     <li>(Optional) recorder.startRecording();</li>
+ *     <li>(Optional) recorder.stopRecording();</li>
+ *     <li>recorder.release();</li>
+ * </ul>
  * @hide
  */
 public class AVRecorder {
@@ -56,12 +68,33 @@ public class AVRecorder {
 
     public void stopRecording(){
         mIsRecording = false;
-        mCamEncoder.stopRecording();
         mMicEncoder.stopRecording();
+        mCamEncoder.stopRecording();
     }
 
+    /**
+     * Prepare for a subsequent recording. Must be called after {@link #stopRecording()}
+     * and before {@link #release()}
+     * @param config
+     */
     public void reset(SessionConfig config){
-        init(mConfig);
+        mCamEncoder.reset(config);
+        mMicEncoder.reset(config);
+        mConfig = config;
+        mIsRecording = false;
+    }
+
+    /**
+     * Release resources. Must be called after {@link #stopRecording()} After this call
+     * this instance may no longer be used.
+     */
+    public void release() {
+        mCamEncoder.release();
+        // MicrophoneEncoder releases all it's resources when stopRecording is called
+        // because it doesn't have any meaningful state
+        // between recordings. It might someday if we decide to present
+        // persistent audio volume meters etc.
+        // Until then, we don't need to write MicrophoneEncoder.release()
     }
 
     public void onHostActivityPaused(){

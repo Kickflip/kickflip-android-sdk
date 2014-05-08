@@ -28,6 +28,7 @@ public abstract class AndroidEncoder {
             mEncoder.stop();
             mEncoder.release();
             mEncoder = null;
+            if (VERBOSE) Log.i(TAG, "Released encoder");
         }
     }
 
