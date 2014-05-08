@@ -13,7 +13,7 @@
 
         <stroke
             android:width="6dp"
-            android:color="@color/kickflip_green"
+            android:color="@color/kickflip_green_shadow"
             android:dashGap="4dp"
             android:dashWidth="12dp" />
     </shape>

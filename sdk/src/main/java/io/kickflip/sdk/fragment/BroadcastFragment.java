@@ -39,6 +39,7 @@ import io.kickflip.sdk.event.BroadcastIsLiveEvent;
  * This is a drop-in broadcasting fragment.
  * Currently, only one BroadcastFragment may be instantiated at a time by
  * design of {@link io.kickflip.sdk.av.Broadcaster}.
+ *
  */
 public class BroadcastFragment extends Fragment implements AdapterView.OnItemSelectedListener {
     private static final String TAG = "BroadcastFragment";
@@ -169,6 +170,13 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     }
 
     @Override
+    public void onStop() {
+        super.onStop();
+        if (mBroadcaster != null && !mBroadcaster.isRecording())
+            mBroadcaster.release();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         if (VERBOSE) Log.i(TAG, "onCreateView");
@@ -214,7 +222,6 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
                 if (VERBOSE)
                     Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getSessionConfig().getOutputPath() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
                 // TODO: Don't start recording until stream start response, so we can determine stream type...
-                //File outputFile = new File(new File(Kickflip.getOutputDirectory()), "index.m3u8");
                 Context context = getActivity().getApplicationContext();
                 mBroadcaster = new Broadcaster(context, Kickflip.getSessionConfig(), Kickflip.getApiKey(), Kickflip.getApiSecret());
                 mBroadcaster.getEventBus().register(this);
@@ -329,6 +336,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     public void stopBroadcasting() {
         mBroadcaster.stopRecording();
     }
+
 
     private void startMonitoringOrientation() {
         if (getActivity() != null) {

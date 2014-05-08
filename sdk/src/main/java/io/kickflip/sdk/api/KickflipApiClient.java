@@ -50,18 +50,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class KickflipApiClient extends OAuthClient {
     private static final boolean VERBOSE = false;
     private static final boolean DEV_ENDPOINT = false;
-    private static final String NEW_USER = "/api/user/new";
-    private static final String GET_USER_PUBLIC = "/api/user/info";
-    private static final String GET_USER_PRIVATE = "/api/user/uuid";
-    private static final String EDIT_USER = "/api/user/change";
-    private static final String START_STREAM = "/api/stream/start";
-    private static final String STOP_STREAM = "/api/stream/stop";
-    private static final String SET_META = "/api/stream/change";
-    private static final String GET_META = "/api/stream/info";
-    private static final String FLAG_STREAM = "/api/stream/flag";
-    private static final String SEARCH = "/api/search";
-    private static final String SEARCH_USER = "/api/search/user";
-    private static final String SEARCH_GEO = "/api/search/location";
+    private static final String NEW_USER = "/user/new";
+    private static final String GET_USER_PUBLIC = "/user/info";
+    private static final String GET_USER_PRIVATE = "/user/uuid";
+    private static final String EDIT_USER = "/user/change";
+    private static final String START_STREAM = "/stream/start";
+    private static final String STOP_STREAM = "/stream/stop";
+    private static final String SET_META = "/stream/change";
+    private static final String GET_META = "/stream/info";
+    private static final String FLAG_STREAM = "/stream/flag";
+    private static final String SEARCH_KEYWORD = "/search";
+    private static final String SEARCH_USER = "/search/user";
+    private static final String SEARCH_GEO = "/search/location";
+    private static final String API_VERSION = "/1.0";
     private static final int MAX_EOF_RETRIES = 1;
     private static int UNKNOWN_ERROR_CODE = R.integer.generic_error;;    // Error code used when none provided from server
     private static final String TAG = "KickflipApiClient";
@@ -153,7 +154,7 @@ public class KickflipApiClient extends OAuthClient {
             data.put("extra_info", Jackson.toJsonString(extraInfo));
         }
 
-        post(BASE_URL + NEW_USER, new UrlEncodedContent(data), User.class, new KickflipCallback() {
+        post(NEW_USER, new UrlEncodedContent(data), User.class, new KickflipCallback() {
             @Override
             public void onSuccess(final Response response) {
                 if (VERBOSE)
@@ -184,7 +185,7 @@ public class KickflipApiClient extends OAuthClient {
      */
     public void createNewUser(final KickflipCallback cb) {
         final String password = generateRandomPassword();
-        post(BASE_URL + NEW_USER, User.class, new KickflipCallback() {
+        post(NEW_USER, User.class, new KickflipCallback() {
             @Override
             public void onSuccess(final Response response) {
                 if (VERBOSE)
@@ -214,7 +215,7 @@ public class KickflipApiClient extends OAuthClient {
         data.put("username", username);
         data.put("password", password);
 
-        post(BASE_URL + GET_USER_PRIVATE, new UrlEncodedContent(data), User.class, new KickflipCallback() {
+        post(GET_USER_PRIVATE, new UrlEncodedContent(data), User.class, new KickflipCallback() {
             @Override
             public void onSuccess(final Response response) {
                 if (VERBOSE)
@@ -255,7 +256,7 @@ public class KickflipApiClient extends OAuthClient {
         if (displayName != null) data.put("display_name", displayName);
         if (extraInfo != null) data.put("extra_info", Jackson.toJsonString(extraInfo));
 
-        post(BASE_URL + EDIT_USER, new UrlEncodedContent(data), User.class, new KickflipCallback() {
+        post(EDIT_USER, new UrlEncodedContent(data), User.class, new KickflipCallback() {
             @Override
             public void onSuccess(final Response response) {
                 if (VERBOSE)
@@ -284,7 +285,7 @@ public class KickflipApiClient extends OAuthClient {
         GenericData data = new GenericData();
         data.put("username", username);
 
-        post(BASE_URL + GET_USER_PUBLIC, new UrlEncodedContent(data), User.class, new KickflipCallback() {
+        post(GET_USER_PUBLIC, new UrlEncodedContent(data), User.class, new KickflipCallback() {
             @Override
             public void onSuccess(final Response response) {
                 if (VERBOSE)
@@ -342,7 +343,7 @@ public class KickflipApiClient extends OAuthClient {
         if (stream.getExtraInfo() != null) {
             data.put("extra_info", stream.getExtraInfo());
         }
-        post(BASE_URL + START_STREAM, new UrlEncodedContent(data), HlsStream.class, cb);
+        post(START_STREAM, new UrlEncodedContent(data), HlsStream.class, cb);
     }
 
     /**
@@ -379,7 +380,7 @@ public class KickflipApiClient extends OAuthClient {
         if (stream.getLongitude() != 0) {
             data.put("lon", stream.getLongitude());
         }
-        post(BASE_URL + STOP_STREAM, new UrlEncodedContent(data), HlsStream.class, cb);
+        post(STOP_STREAM, new UrlEncodedContent(data), HlsStream.class, cb);
     }
 
     /**
@@ -427,7 +428,7 @@ public class KickflipApiClient extends OAuthClient {
         data.put("private", stream.isPrivate());
         data.put("deleted", stream.isDeleted());
 
-        post(BASE_URL + SET_META, new UrlEncodedContent(data), Stream.class, cb);
+        post(SET_META, new UrlEncodedContent(data), Stream.class, cb);
     }
 
     /**
@@ -441,7 +442,7 @@ public class KickflipApiClient extends OAuthClient {
         GenericData data = new GenericData();
         data.put("stream_id", stream.getStreamId());
 
-        post(BASE_URL + GET_META, new UrlEncodedContent(data), Stream.class, cb);
+        post(GET_META, new UrlEncodedContent(data), Stream.class, cb);
     }
 
     /**
@@ -459,7 +460,7 @@ public class KickflipApiClient extends OAuthClient {
         GenericData data = new GenericData();
         data.put("stream_id", streamId);
 
-        post(BASE_URL + GET_META, new UrlEncodedContent(data), Stream.class, cb);
+        post(GET_META, new UrlEncodedContent(data), Stream.class, cb);
     }
 
     /**
@@ -477,7 +478,7 @@ public class KickflipApiClient extends OAuthClient {
         data.put("uuid", getActiveUser().getUUID());
         data.put("stream_id", stream.getStreamId());
 
-        post(BASE_URL + FLAG_STREAM, new UrlEncodedContent(data), Stream.class, cb);
+        post(FLAG_STREAM, new UrlEncodedContent(data), Stream.class, cb);
     }
 
     /**
@@ -492,7 +493,7 @@ public class KickflipApiClient extends OAuthClient {
         addPaginationData(pageNumber, itemsPerPage, data);
         data.put("uuid", getActiveUser().getUUID());
         data.put("username", username);
-        post(BASE_URL + SEARCH_USER, new UrlEncodedContent(data), StreamList.class, cb);
+        post(SEARCH_USER, new UrlEncodedContent(data), StreamList.class, cb);
     }
 
     /**
@@ -511,7 +512,7 @@ public class KickflipApiClient extends OAuthClient {
         if (keyword != null) {
             data.put("keyword", keyword);
         }
-        post(BASE_URL + SEARCH, new UrlEncodedContent(data), StreamList.class, cb);
+        post(SEARCH_KEYWORD, new UrlEncodedContent(data), StreamList.class, cb);
     }
 
     /**
@@ -532,33 +533,33 @@ public class KickflipApiClient extends OAuthClient {
         if (radius != 0) {
             data.put("radius", radius);
         }
-        post(BASE_URL + SEARCH_GEO, new UrlEncodedContent(data), StreamList.class, cb);
+        post(SEARCH_GEO, new UrlEncodedContent(data), StreamList.class, cb);
     }
 
     /**
      * Do a POST Request, creating a new user if necessary
      *
-     * @param url           Url
+     * @param endpoint      Kickflip endpoint. e.g /user/new
      * @param responseClass Class of the expected response
      * @param cb            Callback that will receive an instance of responseClass
      */
-    private void post(final String url, final Class responseClass, final KickflipCallback cb) {
-        post(url, null, responseClass, cb);
+    private void post(final String endpoint, final Class responseClass, final KickflipCallback cb) {
+        post(endpoint, null, responseClass, cb);
     }
 
     /**
      * Do a POST Request, creating a new user if necessary
      *
-     * @param url           Url
+     * @param endpoint      Kickflip endpoint. e.g /user/new
      * @param body          POST body
      * @param responseClass Class of the expected response
      * @param cb            Callback that will receive an instance of responseClass
      */
-    private void post(final String url, final HttpContent body, final Class responseClass, final KickflipCallback cb) {
+    private void post(final String endpoint, final HttpContent body, final Class responseClass, final KickflipCallback cb) {
         acquireAccessToken(new OAuthCallback() {
             @Override
             public void onSuccess(HttpRequestFactory requestFactory) {
-                request(requestFactory, METHOD.POST, url, body, responseClass, cb);
+                request(requestFactory, METHOD.POST, makeApiUrl(endpoint), body, responseClass, cb);
             }
 
             @Override
@@ -861,6 +862,10 @@ public class KickflipApiClient extends OAuthClient {
     private void addPaginationData(int pageNumber, int itemsPerPage, GenericData target) {
         target.put("results_per_page", itemsPerPage);
         target.put("page", pageNumber);
+    }
+
+    private String makeApiUrl(String endpoint) {
+        return BASE_URL + "/api" + API_VERSION + endpoint;
     }
 
 }
