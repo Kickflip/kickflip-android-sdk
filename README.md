@@ -42,7 +42,7 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
     **Dependencies:**
 	```groovy
 	dependencies {
-   		compile 'io.kickflip:sdk:0.9.10'
+   		compile 'io.kickflip:sdk:0.9.11'
 	}
 	```
 
