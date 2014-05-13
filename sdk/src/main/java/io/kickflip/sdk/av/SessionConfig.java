@@ -9,6 +9,7 @@ import io.kickflip.sdk.api.json.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static io.kickflip.sdk.Kickflip.isKitKat;
 
 /**
  * Configuration information for a Broadcasting or Recording session.
@@ -266,7 +267,7 @@ public class SessionConfig {
         private void setMetaDefaults() {
             mPrivate = false;
             mAttachLocation = false;
-            mAdaptiveStreaming = true;
+            mAdaptiveStreaming = isKitKat();
             mHlsSegmentDuration = 10;
         }
 

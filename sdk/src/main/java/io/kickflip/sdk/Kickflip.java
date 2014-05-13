@@ -7,6 +7,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 
 import com.google.common.eventbus.EventBus;
 
@@ -322,6 +323,10 @@ public class Kickflip {
                 .withLocation(true)
                 .withVideoResolution(1280, 720)
                 .build());
+    }
+
+    public static boolean isKitKat() {
+        return Build.VERSION.SDK_INT >= 19;
     }
 
 }

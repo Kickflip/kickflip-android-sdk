@@ -8,6 +8,8 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
+import static io.kickflip.sdk.Kickflip.isKitKat;
+
 public abstract class ImmersiveActivity extends Activity {
     public static final String TAG = "ImmersiveActivity";
     private boolean mUseImmersiveMode = true;
@@ -50,9 +52,5 @@ public abstract class ImmersiveActivity extends Activity {
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             );
         }
-    }
-
-    private boolean isKitKat() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
     }
 }

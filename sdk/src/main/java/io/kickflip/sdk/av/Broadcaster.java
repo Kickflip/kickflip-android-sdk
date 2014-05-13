@@ -1,7 +1,6 @@
 package io.kickflip.sdk.av;
 
 import android.content.Context;
-import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 
@@ -36,6 +35,7 @@ import io.kickflip.sdk.event.ThumbnailWrittenEvent;
 import io.kickflip.sdk.exception.KickflipException;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static io.kickflip.sdk.Kickflip.isKitKat;
 
 /**
  * Broadcasts HLS video and audio to <a href="https://kickflip.io">Kickflip.io</a>.
@@ -282,7 +282,7 @@ public class Broadcaster extends AVRecorder {
     @Subscribe
     public void onSegmentWritten(HlsSegmentWrittenEvent event) {
         try {
-            if (Build.VERSION.SDK_INT >= 19 && mConfig.isAdaptiveBitrate()) {
+            if (isKitKat() && mConfig.isAdaptiveBitrate()) {
                 // Adjust bitrate to match expected filesize
                 File hlsSegment = new File(event.getSegmentLocation());
                 long actualSegmentSizeBytes = hlsSegment.length();
@@ -322,7 +322,7 @@ public class Broadcaster extends AVRecorder {
     private void onSegmentUploaded(S3UploadEvent uploadEvent) {
         if (mDeleteAfterUploading) uploadEvent.getFile().delete();
         try {
-            if (Build.VERSION.SDK_INT >= 19 && mConfig.isAdaptiveBitrate()) {
+            if (isKitKat() && mConfig.isAdaptiveBitrate()) {
                 mLastRealizedBandwidthBytesPerSec = uploadEvent.getUploadByteRate();
                 // Adjust video encoder bitrate per bandwidth of just-completed upload
                 if (VERBOSE) {

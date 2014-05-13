@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, Runnable {
     private static final String TAG = "CameraEncoder";
     private static final boolean TRACE = false;         // Systrace
-    private static final boolean VERBOSE = false;       // Lots of logging
+    private static final boolean VERBOSE = true;       // Lots of logging
 
     // EncoderHandler Message types (Message#what)
     private static final int MSG_STOP_RECORDING = 1;
@@ -412,7 +412,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             if (VERBOSE && (mFrameNum % 30 == 0)) Log.i(TAG, "handleFrameAvailable");
             if (!surfaceTexture.equals(mSurfaceTexture))
                 Log.w(TAG, "SurfaceTexture from OnFrameAvailable does not match saved SurfaceTexture!");
-            mInputWindowSurface.makeCurrent();
+            if (mRecording)
+                mInputWindowSurface.makeCurrent();
             mSurfaceTexture.updateTexImage();
 
             if (mRecording) {
@@ -569,7 +570,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mSurfaceTexture.attachToGLContext(mTextureId);
                 //mEglSaver.makeNothingCurrent();
             } else {
-                // We're setting up the intial SurfaceTexure pre-recording
+                // We're setting up the initial SurfaceTexture
                 prepareEncoder(mEglSaver.getSavedEGLContext(),
                         mSessionConfig.getVideoWidth(),
                         mSessionConfig.getVideoHeight(),
@@ -640,6 +641,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * and other parameters.
      */
     private void releaseEglResources() {
+        mReadyForFrames = false;
         if (mInputWindowSurface != null) {
             mInputWindowSurface.release();
             mInputWindowSurface = null;
@@ -661,12 +663,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         try {
             mCamera.setPreviewTexture(mSurfaceTexture);
             mCamera.startPreview();
-//            mCamera.autoFocus(new Camera.AutoFocusCallback() {
-//                @Override
-//                public void onAutoFocus(boolean success, Camera camera) {
-//                    Log.i(TAG, "autofocus happened")
-//                }
-//            });
             if (VERBOSE)
                 Log.i("CameraRelease", "Opened / Started Camera preview. mDisplayView ready? " + (mDisplayView == null ? " no" : " yes"));
             if (mDisplayView != null) configureDisplayView();
