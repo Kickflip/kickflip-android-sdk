@@ -56,6 +56,20 @@ public class AVRecorder {
         mCamEncoder.adjustBitrate(targetBitRate);
     }
 
+    /**
+     * Signal that the recorder should treat
+     * incoming video frames as Vertical Video, rotating
+     * and cropping them for proper display.
+     *
+     * This method only has effect if {@link io.kickflip.sdk.av.SessionConfig#setConvertVerticalVideo(boolean)}
+     * has been set true for the current recording session.
+     *
+     * @param isVertical
+     */
+    public void signalVerticalVideo(boolean isVertical) {
+        mCamEncoder.signalVerticalVideo(isVertical);
+    }
+
     public void startRecording(){
         mIsRecording = true;
         mMicEncoder.startRecording();

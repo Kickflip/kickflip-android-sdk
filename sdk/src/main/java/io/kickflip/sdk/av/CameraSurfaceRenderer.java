@@ -134,6 +134,10 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         mFrameCount++;
     }
 
+    public void signalVertialVideo(boolean isVertical) {
+        if (mFullScreenCamera != null) mFullScreenCamera.adjustForVerticalVideo(isVertical);
+    }
+
     /**
      * Changes the filter that we're applying to the camera preview.
      */

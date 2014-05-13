@@ -29,6 +29,7 @@ import java.nio.FloatBuffer;
 public class FullFrameRect {
     private final Drawable2d mRectDrawable = new Drawable2d(Drawable2d.Prefab.FULL_RECTANGLE);
     private Texture2dProgram mProgram;
+    private Object mDrawLock = new Object();
 
     private static final int SIZEOF_FLOAT = 4;
 
@@ -54,6 +55,27 @@ public class FullFrameRect {
         mProgram = program;
 
         Matrix.setIdentityM(IDENTITY_MATRIX, 0);
+    }
+
+    /**
+     * Adjust the MVP Matrix to rotate and crop the texture
+     * to make vertical video appear upright
+     *
+     */
+    public void adjustForVerticalVideo(boolean adjust) {
+        synchronized (mDrawLock) {
+            Matrix.setIdentityM(IDENTITY_MATRIX, 0);
+            if (adjust) {
+                Matrix.rotateM(IDENTITY_MATRIX, 0, -90, 0f, 0f, 1f);
+                //Matrix.rotateM(IDENTITY_MATRIX, 0, 180, 0f, 1f, 0f);
+                // Fit the vertical video in viewport with vertical black bars
+                // Note you'll have to provide the "black" background texture,
+                // else you'll see repeated texture bits! It's kind of cool!
+                //Matrix.scaleM(IDENTITY_MATRIX, 0, 1.77777f, 0.5625f, 1f);
+                // Scale the vertical video to fill screen at loss of resolution
+                Matrix.scaleM(IDENTITY_MATRIX, 0, 3.16049230617f, 1.0f, 1f);
+            }
+        }
     }
 
     /**
@@ -93,10 +115,12 @@ public class FullFrameRect {
      */
     public void drawFrame(int textureId, float[] texMatrix) {
         // Use the identity matrix for MVP so our 2x2 FULL_RECTANGLE covers the viewport.
-        mProgram.draw(IDENTITY_MATRIX, mRectDrawable.getVertexArray(), 0,
-                mRectDrawable.getVertexCount(), mRectDrawable.getCoordsPerVertex(),
-                mRectDrawable.getVertexStride(),
-                texMatrix, TEX_COORDS_BUF, textureId, TEX_COORDS_STRIDE);
+        synchronized (mDrawLock) {
+            mProgram.draw(IDENTITY_MATRIX, mRectDrawable.getVertexArray(), 0,
+                    mRectDrawable.getVertexCount(), mRectDrawable.getCoordsPerVertex(),
+                    mRectDrawable.getVertexStride(),
+                    texMatrix, TEX_COORDS_BUF, textureId, TEX_COORDS_STRIDE);
+        }
     }
 
     /**

@@ -24,6 +24,7 @@ public class SessionConfig {
     private final UUID mUUID;
     private Muxer mMuxer;
     private Stream mStream;
+    private boolean mConvertVerticalVideo;
     private boolean mIsAdaptiveBitrate;
     private boolean mAttachLocation;
     private int mHlsSegmentDuration;
@@ -115,12 +116,20 @@ public class SessionConfig {
         return mIsAdaptiveBitrate;
     }
 
+    public boolean isConvertingVerticalVideo() {
+        return mConvertVerticalVideo;
+    }
+
     public int getHlsSegmentDuration() {
         return mHlsSegmentDuration;
     }
 
     public void setUseAdaptiveBitrate(boolean useAdaptiveBit) {
-        this.mIsAdaptiveBitrate = useAdaptiveBit;
+        mIsAdaptiveBitrate = useAdaptiveBit;
+    }
+
+    public void setConvertVerticalVideo(boolean convertVerticalVideo) {
+        mConvertVerticalVideo = convertVerticalVideo;
     }
 
     public boolean shouldAttachLocation() {
@@ -176,6 +185,7 @@ public class SessionConfig {
         private String mDescription;
         private boolean mPrivate;
         private boolean mAttachLocation;
+        private boolean mConvertVerticalVideo;
         private boolean mAdaptiveStreaming;
         private String mExtraInfo;
 
@@ -268,6 +278,7 @@ public class SessionConfig {
             mPrivate = false;
             mAttachLocation = false;
             mAdaptiveStreaming = isKitKat();
+            mConvertVerticalVideo = false;
             mHlsSegmentDuration = 10;
         }
 
@@ -298,6 +309,11 @@ public class SessionConfig {
 
         public Builder withAdaptiveStreaming(boolean adaptiveStreaming) {
             mAdaptiveStreaming = adaptiveStreaming;
+            return this;
+        }
+
+        public Builder withVerticalVideoCorrection(boolean convertVerticalVideo) {
+            mConvertVerticalVideo = convertVerticalVideo;
             return this;
         }
 
@@ -347,6 +363,7 @@ public class SessionConfig {
             session.setDescription(mDescription);
             session.setPrivate(mPrivate);
             session.setUseAdaptiveBitrate(mAdaptiveStreaming);
+            session.setConvertVerticalVideo(mConvertVerticalVideo);
             session.setAttachLocation(mAttachLocation);
             session.setExtraInfo(mExtraInfo);
             session.setHlsSegmentDuration(mHlsSegmentDuration);

@@ -70,7 +70,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
                     mListener.onBroadcastStop();
             } else {
                 mBroadcaster.startRecording();
-                stopMonitoringOrientation();
+                //stopMonitoringOrientation();
                 v.setBackgroundResource(R.drawable.red_dot_stop);
             }
         }
@@ -84,12 +84,20 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
             if (getActivity() != null && getActivity().findViewById(R.id.rotateDeviceHint) != null) {
                 if (event.values[1] < 6.5 && event.values[1] > -6.5) {
                     if (orientation != 1) {
-                        getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.GONE);
+                        if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
+                            mBroadcaster.signalVerticalVideo(false);
+                        } else {
+                            getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.GONE);
+                        }
                     }
                     orientation = 1;
                 } else {
                     if (orientation != 0) {
-                        getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.VISIBLE);
+                        if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
+                            mBroadcaster.signalVerticalVideo(true);
+                        } else {
+                            getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.VISIBLE);
+                        }
                     }
                     orientation = 0;
                 }

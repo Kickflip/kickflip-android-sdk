@@ -232,6 +232,11 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mVideoEncoder.adjustBitrate(targetBitrate);
     }
 
+    public void signalVerticalVideo(boolean isVertical) {
+        if (mFullScreen != null) mFullScreen.adjustForVerticalVideo(isVertical);
+        mDisplayRenderer.signalVertialVideo(isVertical);
+    }
+
     public void logSavedEglState() {
         mEglSaver.logState();
     }
@@ -409,10 +414,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             if (VERBOSE && (mFrameNum % 30 == 0)) Log.i(TAG, "handleFrameAvailable");
             if (!surfaceTexture.equals(mSurfaceTexture))
                 Log.w(TAG, "SurfaceTexture from OnFrameAvailable does not match saved SurfaceTexture!");
-            if (mRecording)
-                mInputWindowSurface.makeCurrent();
-            
+
             if (mRecording) {
+                mInputWindowSurface.makeCurrent();
                 if (TRACE) Trace.beginSection("drainVEncoder");
                 mVideoEncoder.drainEncoder(false);
                 if (TRACE) Trace.endSection();
@@ -834,4 +838,5 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             }
         }
     }
+
 }
