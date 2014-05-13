@@ -1,18 +1,20 @@
 package io.kickflip.sdk.event;
 
+import java.io.File;
+
 /**
  * Created by davidbrodsky on 1/28/14.
  */
 public class ThumbnailWrittenEvent extends BroadcastEvent {
 
-    private String mThumbnailLocation;
+    private File mThumbnail;
 
     public ThumbnailWrittenEvent(String thumbLocation) {
-        this.mThumbnailLocation = thumbLocation;
+        this.mThumbnail = new File(thumbLocation);
     }
 
-    public String getThumbnailLocation() {
-        return mThumbnailLocation;
+    public File getThumbnailFile() {
+        return mThumbnail;
     }
 
 }

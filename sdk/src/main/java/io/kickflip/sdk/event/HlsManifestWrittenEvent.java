@@ -1,18 +1,20 @@
 package io.kickflip.sdk.event;
 
+import java.io.File;
+
 /**
  * Created by davidbrodsky on 1/28/14.
  */
 public class HlsManifestWrittenEvent extends BroadcastEvent {
 
-    private String mManifestLocation;
+    private File mManifest;
 
     public HlsManifestWrittenEvent(String manifestLocation) {
-        this.mManifestLocation = manifestLocation;
+        mManifest = new File(manifestLocation);
     }
 
-    public String getManifestLocation() {
-        return mManifestLocation;
+    public File getManifestFile() {
+        return mManifest;
     }
 
 }

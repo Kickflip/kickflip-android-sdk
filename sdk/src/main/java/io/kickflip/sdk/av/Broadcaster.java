@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import android.util.Pair;
 
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -11,8 +12,6 @@ import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import io.kickflip.sdk.FileUtils;
 import io.kickflip.sdk.Kickflip;
@@ -21,9 +20,7 @@ import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.HlsStream;
 import io.kickflip.sdk.api.json.Response;
 import io.kickflip.sdk.api.json.User;
-import io.kickflip.sdk.api.s3.S3Client;
-import io.kickflip.sdk.api.s3.S3Manager;
-import io.kickflip.sdk.api.s3.S3Upload;
+import io.kickflip.sdk.api.s3.S3BroadcastManager;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.event.BroadcastIsLiveEvent;
 import io.kickflip.sdk.event.HlsManifestWrittenEvent;
@@ -52,6 +49,7 @@ import static io.kickflip.sdk.Kickflip.isKitKat;
  * <li>Call {@link io.kickflip.sdk.av.Broadcaster#startRecording()} to begin broadcasting</li>
  * <li>Call {@link io.kickflip.sdk.av.Broadcaster#stopRecording()} to end the broadcast.</li>
  * </ol>
+ *
  * @hide
  */
 // TODO: Make HLS / RTMP Agnostic
@@ -59,14 +57,13 @@ public class Broadcaster extends AVRecorder {
     private static final String TAG = "Broadcaster";
     private static final boolean VERBOSE = true;
     private static final int MIN_BITRATE = 3 * 100 * 1000;              // 300 kbps
-    private static ExecutorService mExecutorService;
     private final String VOD_FILENAME = "vod.m3u8";
     private Context mContext;
     private KickflipApiClient mKickflip;
     private User mUser;
     private HlsStream mStream;
     private HlsFileObserver mFileObserver;
-    private S3Client mS3Client;
+    private S3BroadcastManager mS3Manager;
     private ArrayDeque<Pair<String, File>> mUploadQueue;
     private SessionConfig mConfig;
     private BroadcastListener mBroadcastListener;
@@ -103,9 +100,10 @@ public class Broadcaster extends AVRecorder {
         mVodManifest = new File(mManifestSnapshotDir, VOD_FILENAME);
         writeEventManifestHeader(mConfig.getHlsSegmentDuration());
 
-        String watchDir = config.getOutputPath().substring(0, config.getOutputPath().lastIndexOf(File.separator) + 1);
+        String watchDir = config.getOutputDirectory().getAbsolutePath();
         mFileObserver = new HlsFileObserver(watchDir, mEventBus);
         mFileObserver.startWatching();
+        if (VERBOSE) Log.i(TAG, "Watching " + watchDir);
 
         mReadyToBroadcast = false;
         mKickflip = Kickflip.setup(context, CLIENT_ID, CLIENT_SECRET, new KickflipCallback() {
@@ -132,12 +130,6 @@ public class Broadcaster extends AVRecorder {
         mSentBroadcastLiveEvent = false;
         mEventBus = new EventBus("Broadcaster");
         mEventBus.register(this);
-    }
-
-    private ExecutorService getExecutorService() {
-        if (mExecutorService == null)
-            mExecutorService = Executors.newSingleThreadExecutor();
-        return mExecutorService;
     }
 
     /**
@@ -169,7 +161,7 @@ public class Broadcaster extends AVRecorder {
     /**
      * Set an {@link com.google.common.eventbus.EventBus} to be notified
      * of events between {@link io.kickflip.sdk.av.Broadcaster},
-     * {@link io.kickflip.sdk.av.HlsFileObserver}, {@link io.kickflip.sdk.api.s3.S3Manager}
+     * {@link io.kickflip.sdk.av.HlsFileObserver}, {@link io.kickflip.sdk.api.s3.S3BroadcastManager}
      * e.g: A HLS MPEG-TS segment or .m3u8 Manifest was written to disk, or uploaded.
      * See a list of events in {@link io.kickflip.sdk.event}
      *
@@ -212,8 +204,7 @@ public class Broadcaster extends AVRecorder {
         mStream.setExtraInfo(mConfig.getExtraInfo());
         mStream.setIsPrivate(mConfig.isPrivate());
         if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
-        mS3Client = new S3Client(S3Client.getBasicAWSCredentials(mStream.getAwsKey(), mStream.getAwsSecret()), mEventBus);
-        mS3Client.setBucket(mStream.getAwsS3Bucket());
+        mS3Manager = new S3BroadcastManager(this, new BasicAWSCredentials(mStream.getAwsKey(), mStream.getAwsSecret()));
         mReadyToBroadcast = true;
         submitQueuedUploadsToS3();
         mEventBus.post(new BroadcastIsBufferingEvent());
@@ -255,23 +246,6 @@ public class Broadcaster extends AVRecorder {
     }
 
     /**
-     * An S3 Upload completed.
-     * <p/>
-     * Called on a background thread
-     */
-    @Subscribe
-    public void onS3UploadComplete(S3UploadEvent uploadEvent) {
-        if (VERBOSE) Log.i(TAG, "Upload completed for " + uploadEvent.getUrl());
-        if (uploadEvent.getUrl().contains(".m3u8")) {
-            onManifestUploaded(uploadEvent);
-        } else if (uploadEvent.getUrl().contains(".ts")) {
-            onSegmentUploaded(uploadEvent);
-        } else if (uploadEvent.getUrl().contains(".jpg")) {
-            onThumbnailUploaded(uploadEvent);
-        }
-    }
-
-    /**
      * A .ts file was written in the recording directory.
      * <p/>
      * Use this opportunity to verify the segment is of expected size
@@ -282,9 +256,10 @@ public class Broadcaster extends AVRecorder {
     @Subscribe
     public void onSegmentWritten(HlsSegmentWrittenEvent event) {
         try {
-            if (isKitKat() && mConfig.isAdaptiveBitrate()) {
+            File hlsSegment = event.getSegment();
+            queueOrSubmitUpload(keyForFilename(hlsSegment.getName()), hlsSegment);
+            if (isKitKat() && mConfig.isAdaptiveBitrate() && isRecording()) {
                 // Adjust bitrate to match expected filesize
-                File hlsSegment = new File(event.getSegmentLocation());
                 long actualSegmentSizeBytes = hlsSegment.length();
                 long expectedSizeBytes = ((mConfig.getAudioBitrate() / 8) + (mVideoBitrate / 8)) * mConfig.getHlsSegmentDuration();
                 float filesizeRatio = actualSegmentSizeBytes / (float) expectedSizeBytes;
@@ -303,8 +278,6 @@ public class Broadcaster extends AVRecorder {
                     if (VERBOSE) Log.i(TAG, "Scaling video bitrate to " + mVideoBitrate + " bps");
                     adjustVideoBitrate(mVideoBitrate);
                 }
-                String fileName = hlsSegment.getName();
-                queueOrSubmitUpload(keyForFilename(fileName), event.getSegmentLocation());
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -320,9 +293,13 @@ public class Broadcaster extends AVRecorder {
      * Called on a background thread
      */
     private void onSegmentUploaded(S3UploadEvent uploadEvent) {
-        if (mDeleteAfterUploading) uploadEvent.getFile().delete();
+        if (mDeleteAfterUploading) {
+            boolean deletedFile = uploadEvent.getFile().delete();
+            if (VERBOSE)
+                Log.i(TAG, "Deleting uploaded segment. " + uploadEvent.getFile().getAbsolutePath() + " Succcess: " + deletedFile);
+        }
         try {
-            if (isKitKat() && mConfig.isAdaptiveBitrate()) {
+            if (isKitKat() && mConfig.isAdaptiveBitrate() && isRecording()) {
                 mLastRealizedBandwidthBytesPerSec = uploadEvent.getUploadByteRate();
                 // Adjust video encoder bitrate per bandwidth of just-completed upload
                 if (VERBOSE) {
@@ -345,16 +322,43 @@ public class Broadcaster extends AVRecorder {
     }
 
     /**
+     * A .m3u8 file was written in the recording directory.
+     * <p/>
+     * Called on a background thread
+     */
+    @Subscribe
+    public void onManifestUpdated(HlsManifestWrittenEvent e) {
+        if (VERBOSE) Log.i(TAG, "onManifestUpdated. Last segment? " + !isRecording());
+        // Copy m3u8 at this moment and queue it to uploading
+        // service
+        final File copy = new File(mManifestSnapshotDir, e.getManifestFile().getName()
+                .replace(".m3u8", "_" + mNumSegmentsWritten + ".m3u8"));
+        try {
+            if (VERBOSE)
+                Log.i(TAG, "Copying " + e.getManifestFile().getAbsolutePath() + " to " + copy.getAbsolutePath());
+            FileUtils.copy(e.getManifestFile(), copy);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        queueOrSubmitUpload(keyForFilename("index.m3u8"), copy);
+        appendLastManifestEntryToEventManifest(copy, !isRecording());
+        mNumSegmentsWritten++;
+    }
+
+    /**
      * An S3 .m3u8 upload completed.
      * <p/>
      * Called on a background thread
      */
     private void onManifestUploaded(S3UploadEvent uploadEvent) {
         if (mDeleteAfterUploading) {
+            if (VERBOSE) Log.i(TAG, "Deleting " + uploadEvent.getFile().getAbsolutePath());
             uploadEvent.getFile().delete();
-            String uploadUrl = uploadEvent.getUrl();
+            String uploadUrl = uploadEvent.getDestinationUrl();
             if (uploadUrl.substring(uploadUrl.lastIndexOf(File.separator) + 1).equals("vod.m3u8")) {
-                mConfig.getOutputDirectory().delete();
+                if (VERBOSE) Log.i(TAG, "Deleting " + mConfig.getOutputDirectory());
+                mFileObserver.stopWatching();
+                FileUtils.deleteDirectory(mConfig.getOutputDirectory());
             }
         }
         if (!mSentBroadcastLiveEvent) {
@@ -366,6 +370,16 @@ public class Broadcaster extends AVRecorder {
     }
 
     /**
+     * A thumbnail was written in the recording directory.
+     * <p/>
+     * Called on a background thread
+     */
+    @Subscribe
+    public void onThumbnailWritten(ThumbnailWrittenEvent e) {
+        queueOrSubmitUpload(keyForFilename("thumb.jpg"), e.getThumbnailFile());
+    }
+
+    /**
      * A thumbnail upload completed.
      * <p/>
      * Called on a background thread
@@ -373,7 +387,7 @@ public class Broadcaster extends AVRecorder {
     private void onThumbnailUploaded(S3UploadEvent uploadEvent) {
         if (mDeleteAfterUploading) uploadEvent.getFile().delete();
         if (mStream != null) {
-            mStream.setThumbnailUrl(uploadEvent.getUrl());
+            mStream.setThumbnailUrl(uploadEvent.getDestinationUrl());
             sendStreamMetaData();
         }
     }
@@ -388,38 +402,6 @@ public class Broadcaster extends AVRecorder {
         if (VERBOSE) Log.i(TAG, "DeadEvent ");
     }
 
-    /**
-     * A .m3u8 file was written in the recording directory.
-     * <p/>
-     * Called on a background thread
-     */
-    @Subscribe
-    public void onManifestUpdated(HlsManifestWrittenEvent e) {
-        if (VERBOSE) Log.i(TAG, "onManifestUpdated");
-        // Copy m3u8 at this moment and queue it to uploading
-        // service
-        final File orig = new File(e.getManifestLocation());
-        final File copy = new File(mManifestSnapshotDir, orig.getName()
-                .replace(".m3u8", "_" + mNumSegmentsWritten + ".m3u8"));
-        try {
-            FileUtils.copy(orig, copy);
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-        queueOrSubmitUpload(keyForFilename("index.m3u8"), copy.getAbsolutePath());
-        appendLastManifestEntryToEventManifest(orig, !isRecording());
-        mNumSegmentsWritten++;
-    }
-
-    /**
-     * A thumbnail was written in the recording directory.
-     * <p/>
-     * Called on a background thread
-     */
-    @Subscribe
-    public void onThumbnailWritten(ThumbnailWrittenEvent e) {
-        queueOrSubmitUpload(keyForFilename("thumb.jpg"), e.getThumbnailLocation());
-    }
 
     @Subscribe
     public void onMuxerFinished(MuxerFinishedEvent e) {
@@ -445,28 +427,28 @@ public class Broadcaster extends AVRecorder {
      * Handle an upload, either submitting to the S3 client
      * or queueing for submission once credentials are ready
      *
-     * @param key          destination key
-     * @param fileLocation local file
+     * @param key  destination key
+     * @param file local file
      */
-    private void queueOrSubmitUpload(String key, String fileLocation) {
+    private void queueOrSubmitUpload(String key, File file) {
         if (mReadyToBroadcast) {
-            S3Manager.queueUpload(new S3Upload(mS3Client, new File(fileLocation), key));
+            submitUpload(key, file);
         } else {
-            if (VERBOSE) Log.i(TAG, "queueing " + key);
-            queueUpload(key, fileLocation);
+            if (VERBOSE) Log.i(TAG, "queueing " + key + " until S3 Credentials available");
+            queueUpload(key, file);
         }
     }
 
     /**
      * Queue an upload for later submission to S3
      *
-     * @param key          destination key
-     * @param fileLocation local file
+     * @param key  destination key
+     * @param file local file
      */
-    private void queueUpload(String key, String fileLocation) {
+    private void queueUpload(String key, File file) {
         if (mUploadQueue == null)
             mUploadQueue = new ArrayDeque<>();
-        mUploadQueue.add(new Pair<>(key, new File(fileLocation)));
+        mUploadQueue.add(new Pair<>(key, file));
     }
 
     /**
@@ -475,8 +457,36 @@ public class Broadcaster extends AVRecorder {
     private void submitQueuedUploadsToS3() {
         if (mUploadQueue == null) return;
         for (Pair<String, File> pair : mUploadQueue) {
-            S3Manager.queueUpload(new S3Upload(mS3Client, pair.second, pair.first));
+            submitUpload(pair.first, pair.second);
         }
+    }
+
+    private void submitUpload(final String key, final File file) {
+        submitUpload(key, file, false);
+    }
+
+    private void submitUpload(final String key, final File file, boolean lastUpload) {
+        mS3Manager.queueUpload(mStream.getAwsS3Bucket(), key, file, lastUpload);
+    }
+
+    /**
+     * An S3 Upload completed.
+     * <p/>
+     * Called on a background thread
+     */
+    public void onS3UploadComplete(S3UploadEvent uploadEvent) {
+        if (VERBOSE) Log.i(TAG, "Upload completed for " + uploadEvent.getDestinationUrl());
+        if (uploadEvent.getDestinationUrl().contains(".m3u8")) {
+            onManifestUploaded(uploadEvent);
+        } else if (uploadEvent.getDestinationUrl().contains(".ts")) {
+            onSegmentUploaded(uploadEvent);
+        } else if (uploadEvent.getDestinationUrl().contains(".jpg")) {
+            onThumbnailUploaded(uploadEvent);
+        }
+    }
+
+    public SessionConfig getSessionConfig() {
+        return mConfig;
     }
 
     private void writeEventManifestHeader(int targetDuration) {
@@ -494,7 +504,7 @@ public class Broadcaster extends AVRecorder {
         String result = FileUtils.tail2(sourceManifest, lastEntry ? 3 : 2);
         FileUtils.writeStringToFile(result, mVodManifest, true);
         if (lastEntry) {
-            S3Manager.queueUpload(new S3Upload(mS3Client, mVodManifest, keyForFilename("vod.m3u8")));
+            submitUpload(keyForFilename("vod.m3u8"), mVodManifest, true);
             if (VERBOSE) Log.i(TAG, "Queued master manifest " + mVodManifest.getAbsolutePath());
         }
     }

@@ -5,7 +5,10 @@ package io.kickflip.sdk.event;
  */
 public interface UploadEvent {
 
-    public String getUrl();
+    /**
+     * Get the destination Url of this upload.
+     */
+    public String getDestinationUrl();
 
     /**
      * Returns the rate of the upload

@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, Runnable {
     private static final String TAG = "CameraEncoder";
     private static final boolean TRACE = false;         // Systrace
-    private static final boolean VERBOSE = true;       // Lots of logging
+    private static final boolean VERBOSE = false;       // Lots of logging
 
     // EncoderHandler Message types (Message#what)
     private static final int MSG_STOP_RECORDING = 1;

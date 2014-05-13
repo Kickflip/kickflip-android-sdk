@@ -1,18 +1,20 @@
 package io.kickflip.sdk.event;
 
+import java.io.File;
+
 /**
  * Created by davidbrodsky on 1/28/14.
  */
 public class HlsSegmentWrittenEvent extends BroadcastEvent {
 
-    private String mSegmentLocation;
+    private File mSegment;
 
     public HlsSegmentWrittenEvent(String segmentLocation) {
-        this.mSegmentLocation = segmentLocation;
+        mSegment = new File(segmentLocation);
     }
 
-    public String getSegmentLocation() {
-        return mSegmentLocation;
+    public File getSegment() {
+        return mSegment;
     }
 
 }

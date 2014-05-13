@@ -17,7 +17,7 @@ public class S3UploadEvent extends BroadcastEvent implements UploadEvent {
     }
 
     @Override
-    public String getUrl() {
+    public String getDestinationUrl() {
         return mUrl;
     }
 

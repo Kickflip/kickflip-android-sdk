@@ -225,4 +225,15 @@ public class FileUtils {
         }
     }
 
+    /**
+     * Delete a directory and all its contents
+     */
+    public static void deleteDirectory(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory())
+            for (File child : fileOrDirectory.listFiles())
+                deleteDirectory(child);
+
+        fileOrDirectory.delete();
+    }
+
 }
