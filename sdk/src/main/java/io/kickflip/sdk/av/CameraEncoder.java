@@ -414,8 +414,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 Log.w(TAG, "SurfaceTexture from OnFrameAvailable does not match saved SurfaceTexture!");
             if (mRecording)
                 mInputWindowSurface.makeCurrent();
-            mSurfaceTexture.updateTexImage();
-
+            
             if (mRecording) {
                 if (TRACE) Trace.beginSection("drainVEncoder");
                 mVideoEncoder.drainEncoder(false);

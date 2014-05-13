@@ -125,6 +125,7 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
 
         // Draw the video frame.
         if(mCameraEncoder.isSurfaceTextureReadyForDisplay()){
+            mCameraEncoder.getSurfaceTextureForDisplay().updateTexImage();
             mCameraEncoder.getSurfaceTextureForDisplay().getTransformMatrix(mSTMatrix);
             //Drawing texture overlay:
             //mFullScreenOverlay.drawFrame(mOverlayTextureId, mSTMatrix);
