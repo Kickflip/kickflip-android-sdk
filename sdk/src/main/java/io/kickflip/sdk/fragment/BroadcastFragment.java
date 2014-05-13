@@ -135,12 +135,6 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (VERBOSE) Log.i(TAG, "onDestroy");
-    }
-
-    @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -170,8 +164,8 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onDestroy() {
+        super.onDestroy();
         if (mBroadcaster != null && !mBroadcaster.isRecording())
             mBroadcaster.release();
     }

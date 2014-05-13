@@ -259,9 +259,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         synchronized (mSurfaceTextureFence) {
             if (mSurfaceTexture == null)
                 Log.w(TAG, "getSurfaceTextureForDisplay called before ST created");
-            else {
-                mEglSaver.makeSavedStateCurrent();
-            }
             return mSurfaceTexture;
         }
     }

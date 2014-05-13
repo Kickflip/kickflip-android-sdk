@@ -319,9 +319,10 @@ public class Kickflip {
     private static void setupDefaultSessionConfig() {
         checkNotNull(sContext);
         Kickflip.setSessionConfig(new SessionConfig.Builder(sContext.getFilesDir().getAbsolutePath())
+                .withVideoBitrate(100 * 1000)
                 .withPrivateVisibility(false)
                 .withLocation(true)
-                .withVideoResolution(1280, 720)
+                .withVideoResolution(720, 480)
                 .build());
     }
 

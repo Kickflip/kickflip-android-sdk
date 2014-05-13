@@ -58,7 +58,6 @@ public class S3BroadcastManager implements Runnable {
                         mBroadcaster.onS3UploadComplete(new S3UploadEvent(file, url, bytesPerSecond));
                     } else if (progressEvent.getEventCode() == ProgressEvent.FAILED_EVENT_CODE) {
                         Log.w(TAG, "Upload failed for " + url);
-                        //mBroadcaster.onS3UploadFailed(new S3UploadEvent(file, url, bytesPerSecond));
                     }
                 } catch (Exception excp) {
                     Log.e(TAG, "ProgressListener error");
@@ -77,20 +76,20 @@ public class S3BroadcastManager implements Runnable {
             while (!lastUploadComplete) {
                 Pair<PutObjectRequest, Boolean> requestPair = mQueue.poll(mBroadcaster.getSessionConfig().getHlsSegmentDuration() + 1, TimeUnit.SECONDS);
                 if(requestPair != null) {
-                    PutObjectRequest request = requestPair.first;
+                    final PutObjectRequest request = requestPair.first;
                     Upload upload = mTransferManager.upload(request);
                     upload.waitForCompletion();
                     lastUploadComplete = requestPair.second;
-                    if (!lastUploadComplete)
+                    if (!lastUploadComplete && VERBOSE)
                         Log.i(TAG, "Upload complete.");
-                    else
+                    else if (VERBOSE)
                         Log.i(TAG, "Last Upload complete.");
                 } else {
-                    Log.e(TAG, "Reached end of Queue before processing last segment!");
+                    if (VERBOSE) Log.e(TAG, "Reached end of Queue before processing last segment!");
                     lastUploadComplete = true;
                 }
             }
-            Log.i(TAG, "Shutting down");
+            if (VERBOSE) Log.i(TAG, "Shutting down");
         } catch (InterruptedException e) {
             Log.w(TAG, "upload interrupted");
             e.printStackTrace();
