@@ -341,7 +341,7 @@ public class KickflipApiClient extends OAuthClient {
             data.put("description", stream.getDescription());
         }
         if (stream.getExtraInfo() != null) {
-            data.put("extra_info", stream.getExtraInfo());
+            data.put("extra_info", Jackson.toJsonString(stream.getExtraInfo()));
         }
         post(START_STREAM, new UrlEncodedContent(data), HlsStream.class, cb);
     }

@@ -131,7 +131,9 @@ public class Stream extends Response implements Comparable<Stream>, Serializable
     }
 
     public Map getExtraInfo() {
-        return Jackson.fromJsonString(mExtraInfo, Map.class);
+        if (mExtraInfo != null)
+            return Jackson.fromJsonString(mExtraInfo, Map.class);
+        return null;
     }
 
     public void setExtraInfo(Map mExtraInfo) {
