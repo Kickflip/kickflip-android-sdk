@@ -42,7 +42,7 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
     **Dependencies:**
 	```groovy
 	dependencies {
-   		compile 'io.kickflip:sdk:0.9.11'
+   		compile 'io.kickflip:sdk:1.0'
 	}
 	```
 
@@ -64,7 +64,6 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
 	```xml
     <activity
          android:name="io.kickflip.sdk.activity.BroadcastActivity"
-         android:keepScreenOn="true"
          android:screenOrientation="landscape">
     </activity>
 	```
