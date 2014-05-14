@@ -6,7 +6,7 @@
 
 The Kickflip Android SDK requires Android 4.3+ (API 18+).
 
-Check out our [Android example application](https://github.com/Kickflip/kickflip-android-example) to see how to easily put this SDK to work. Also see the [Javadoc](http://kickflip.github.io/kickflip-android-sdk/reference/packages.html).
+Check out our [Android example application](https://github.com/Kickflip/kickflip-android-example) to see how to easily put this SDK to work.
 
 Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk) and [iOS Example application](https://github.com/Kickflip/kickflip-ios-example)
 
@@ -120,6 +120,10 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
 The Kickflip SDK .aar will be in `./sdk/build/libs`.
 
 You may also import this project into Android Studio for easy development.
+
+## Documentation
+
+For a closer look at what you do with Kickflip, check out our [Android Documentation](https://github.com/Kickflip/kickflip-docs/tree/master/android) and [Android API Reference](http://kickflip.github.io/kickflip-android-sdk/reference/packages.html). We also have some tutorials to help you get started.
 
 ## License
 
