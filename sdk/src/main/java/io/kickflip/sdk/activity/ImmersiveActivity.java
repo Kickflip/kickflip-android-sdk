@@ -10,6 +10,9 @@ import android.view.WindowManager;
 
 import static io.kickflip.sdk.Kickflip.isKitKat;
 
+/**
+ * @hide
+ */
 public abstract class ImmersiveActivity extends Activity {
     public static final String TAG = "ImmersiveActivity";
     private boolean mUseImmersiveMode = true;

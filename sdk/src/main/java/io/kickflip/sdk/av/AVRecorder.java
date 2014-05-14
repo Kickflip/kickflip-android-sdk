@@ -64,10 +64,9 @@ public class AVRecorder {
      * This method only has effect if {@link io.kickflip.sdk.av.SessionConfig#setConvertVerticalVideo(boolean)}
      * has been set true for the current recording session.
      *
-     * @param isVertical
      */
-    public void signalVerticalVideo(boolean isVertical) {
-        mCamEncoder.signalVerticalVideo(isVertical);
+    public void signalVerticalVideo(FullFrameRect.SCREEN_ROTATION orientation) {
+        mCamEncoder.signalVerticalVideo(orientation);
     }
 
     public void startRecording(){

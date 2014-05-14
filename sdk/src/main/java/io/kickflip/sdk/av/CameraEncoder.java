@@ -232,9 +232,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mVideoEncoder.adjustBitrate(targetBitrate);
     }
 
-    public void signalVerticalVideo(boolean isVertical) {
-        if (mFullScreen != null) mFullScreen.adjustForVerticalVideo(isVertical);
-        mDisplayRenderer.signalVertialVideo(isVertical);
+    public void signalVerticalVideo(FullFrameRect.SCREEN_ROTATION orientation) {
+        if (mFullScreen != null) mFullScreen.adjustForVerticalVideo(orientation);
+        mDisplayRenderer.signalVertialVideo(orientation);
     }
 
     public void logSavedEglState() {
@@ -243,7 +243,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
     public void setPreviewDisplay(GLCameraView display) {
         checkNotNull(display);
-        mDisplayRenderer = new CameraSurfaceRenderer(display, this);
+        mDisplayRenderer = new CameraSurfaceRenderer(this);
         // Prep GLSurfaceView and attach Renderer
         display.setEGLContextClientVersion(2);
         display.setRenderer(mDisplayRenderer);

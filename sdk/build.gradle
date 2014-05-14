@@ -1,11 +1,11 @@
 apply plugin: 'android-library'
 
-versionInt=4
-versionName="0.9.11"
+versionInt=5
+versionName="1.0"
 
 android {
     compileSdkVersion 19
-    buildToolsVersion "19.0.3"
+    buildToolsVersion "19.1"
 
     defaultConfig {
         minSdkVersion 18
@@ -66,7 +66,7 @@ dependencies {
 // Maven publish task
 // Uncomment this line to enable publishing to Maven Central. Requires maven
 // credentials in gradle.properties
-//apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
+apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
 
 // Generate JavaDoc
 android.libraryVariants.all { variant ->

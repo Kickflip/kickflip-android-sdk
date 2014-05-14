@@ -24,16 +24,19 @@ import java.nio.FloatBuffer;
 /**
  * This class essentially represents a viewport-sized sprite that will be rendered with
  * a texture, usually from an external source like the camera or video decoder.
+ *
  * @hide
  */
 public class FullFrameRect {
+    public static enum SCREEN_ROTATION {LANDSCAPE, VERTICAL, UPSIDEDOWN_LANDSCAPE, UPSIDEDOWN_VERTICAL}
+
     private final Drawable2d mRectDrawable = new Drawable2d(Drawable2d.Prefab.FULL_RECTANGLE);
     private Texture2dProgram mProgram;
-    private Object mDrawLock = new Object();
+    private final Object mDrawLock = new Object();
 
     private static final int SIZEOF_FLOAT = 4;
 
-    private static final float[] IDENTITY_MATRIX = new float[16];
+    private float[] IDENTITY_MATRIX = new float[16];
 
     private static final float TEX_COORDS[] = {
             0.0f, 0.0f,     // 0 bottom left
@@ -49,31 +52,32 @@ public class FullFrameRect {
      * Prepares the object.
      *
      * @param program The program to use.  FullFrameRect takes ownership, and will release
-     *     the program when no longer needed.
+     *                the program when no longer needed.
      */
     public FullFrameRect(Texture2dProgram program) {
         mProgram = program;
-
         Matrix.setIdentityM(IDENTITY_MATRIX, 0);
     }
 
     /**
      * Adjust the MVP Matrix to rotate and crop the texture
      * to make vertical video appear upright
-     *
      */
-    public void adjustForVerticalVideo(boolean adjust) {
+    public void adjustForVerticalVideo(SCREEN_ROTATION orientation) {
         synchronized (mDrawLock) {
             Matrix.setIdentityM(IDENTITY_MATRIX, 0);
-            if (adjust) {
-                Matrix.rotateM(IDENTITY_MATRIX, 0, -90, 0f, 0f, 1f);
-                //Matrix.rotateM(IDENTITY_MATRIX, 0, 180, 0f, 1f, 0f);
-                // Fit the vertical video in viewport with vertical black bars
-                // Note you'll have to provide the "black" background texture,
-                // else you'll see repeated texture bits! It's kind of cool!
-                //Matrix.scaleM(IDENTITY_MATRIX, 0, 1.77777f, 0.5625f, 1f);
-                // Scale the vertical video to fill screen at loss of resolution
-                Matrix.scaleM(IDENTITY_MATRIX, 0, 3.16049230617f, 1.0f, 1f);
+            switch (orientation) {
+                case VERTICAL:
+                    Matrix.rotateM(IDENTITY_MATRIX, 0, -90, 0f, 0f, 1f);
+                    Matrix.scaleM(IDENTITY_MATRIX, 0, 3.16f, 1.0f, 1f);
+                    break;
+                case UPSIDEDOWN_LANDSCAPE:
+                    Matrix.rotateM(IDENTITY_MATRIX, 0, -180, 0f, 0f, 1f);
+                    break;
+                case UPSIDEDOWN_VERTICAL:
+                    Matrix.rotateM(IDENTITY_MATRIX, 0, 90, 0f, 0f, 1f);
+                    Matrix.scaleM(IDENTITY_MATRIX, 0, 3.16f, 1.0f, 1f);
+                    break;
             }
         }
     }
@@ -126,9 +130,10 @@ public class FullFrameRect {
     /**
      * Pass touch event down to the
      * texture's shader program
+     *
      * @param ev
      */
-    public void handleTouchEvent(MotionEvent ev){
+    public void handleTouchEvent(MotionEvent ev) {
         mProgram.handleTouchEvent(ev);
     }
 }

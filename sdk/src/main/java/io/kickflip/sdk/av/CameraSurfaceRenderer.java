@@ -7,8 +7,6 @@ import android.view.MotionEvent;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import io.kickflip.sdk.view.GLCameraView;
-
 /**
  * @hide
  */
@@ -21,12 +19,8 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
     private FullFrameRect mFullScreenCamera;
     //private SizeableFrameRect mFullScreenOverlay;     // For texture overlay
 
-
-    // Experimenting: May be most sensical way to get handle on Context for loading texture bitmaps
-    private GLCameraView mCameraView;
-
     private final float[] mSTMatrix = new float[16];
-    private int mOverlayTextureId;
+    //private int mOverlayTextureId;
     private int mCameraTextureId;
 
     private boolean mRecordingEnabled;
@@ -48,8 +42,7 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
      * <p>
      * @param recorder video encoder object
      */
-    public CameraSurfaceRenderer(GLCameraView view, CameraEncoder recorder) {
-        mCameraView = view;
+    public CameraSurfaceRenderer(CameraEncoder recorder) {
         mCameraEncoder = recorder;
 
         mCameraTextureId = -1;
@@ -90,7 +83,6 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         //mOverlayTextureId = GlUtil.createTextureWithTextContent("hello!");
         //mOverlayTextureId = GlUtil.createTextureFromImage(mCameraView.getContext(), R.drawable.red_dot);
         mCameraTextureId = mFullScreenCamera.createTextureObject();
-
 
         mCameraEncoder.onSurfaceCreated(mCameraTextureId);
         mFrameCount = 0;
@@ -134,7 +126,7 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         mFrameCount++;
     }
 
-    public void signalVertialVideo(boolean isVertical) {
+    public void signalVertialVideo(FullFrameRect.SCREEN_ROTATION isVertical) {
         if (mFullScreenCamera != null) mFullScreenCamera.adjustForVerticalVideo(isVertical);
     }
 

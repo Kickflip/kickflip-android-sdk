@@ -55,7 +55,7 @@ import static io.kickflip.sdk.Kickflip.isKitKat;
 // TODO: Make HLS / RTMP Agnostic
 public class Broadcaster extends AVRecorder {
     private static final String TAG = "Broadcaster";
-    private static final boolean VERBOSE = true;
+    private static final boolean VERBOSE = false;
     private static final int MIN_BITRATE = 3 * 100 * 1000;              // 300 kbps
     private final String VOD_FILENAME = "vod.m3u8";
     private Context mContext;
@@ -376,7 +376,12 @@ public class Broadcaster extends AVRecorder {
      */
     @Subscribe
     public void onThumbnailWritten(ThumbnailWrittenEvent e) {
-        queueOrSubmitUpload(keyForFilename("thumb.jpg"), e.getThumbnailFile());
+        try {
+            queueOrSubmitUpload(keyForFilename("thumb.jpg"), e.getThumbnailFile());
+        } catch (Exception ex) {
+            Log.i(TAG, "Error writing thumbanil");
+            ex.printStackTrace();
+        }
     }
 
     /**

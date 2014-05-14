@@ -31,6 +31,7 @@ import io.kickflip.sdk.R;
 import io.kickflip.sdk.Share;
 import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.Broadcaster;
+import io.kickflip.sdk.av.FullFrameRect;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.event.BroadcastIsLiveEvent;
 import io.kickflip.sdk.view.GLCameraEncoderView;
@@ -83,13 +84,18 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         @Override
         public void onSensorChanged(SensorEvent event) {
             if (getActivity() != null && getActivity().findViewById(R.id.rotateDeviceHint) != null) {
+                //Log.i(TAG, "Sensor " + event.values[1]);
                 if (event.values[1] > 10 || event.values[1] < -10) {
                     // Sensor noise. Ignore.
                 } else if (event.values[1] < 5.5 && event.values[1] > -5.5) {
                     // Landscape
                     if (orientation != 1 && readingConfirmed(1)) {
                         if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
-                            mBroadcaster.signalVerticalVideo(false);
+                            if (event.values[0] > 0) {
+                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.LANDSCAPE);
+                            } else {
+                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.UPSIDEDOWN_LANDSCAPE);
+                            }
                         } else {
                             getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.GONE);
                         }
@@ -99,7 +105,11 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
                     // Portrait
                     if (orientation != 0 && readingConfirmed(0)) {
                         if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
-                            mBroadcaster.signalVerticalVideo(true);
+                            if (event.values[1] > 0) {
+                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.VERTICAL);
+                            } else {
+                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.UPSIDEDOWN_VERTICAL);
+                            }
                         } else {
                             getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.VISIBLE);
                         }
@@ -115,7 +125,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
          */
         private boolean readingConfirmed(int orientation) {
             confirmations[orientation]++;
-            confirmations[ orientation == 0 ? 1 : 0] = 0;
+            confirmations[orientation == 0 ? 1 : 0] = 0;
             return confirmations[orientation] > SENSOR_CONFIRMATION_THRESHOLD;
         }
 
@@ -137,11 +147,14 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
             // We have a leftover BroadcastFragment but it is not recording
             // Treat it as finished, and recreate
             mFragment = recreateBroadcastFragment();
+        } else {
+            Log.i(TAG, "Recycling BroadcastFragment");
         }
         return mFragment;
     }
 
     private static BroadcastFragment recreateBroadcastFragment() {
+        Log.i(TAG, "Recreating BroadcastFragment");
         mBroadcaster = null;
         return new BroadcastFragment();
     }
@@ -352,7 +365,10 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
      * when a user leaves the Activity hosting this fragment
      */
     public void stopBroadcasting() {
-        mBroadcaster.stopRecording();
+        if (mBroadcaster.isRecording()) {
+            mBroadcaster.stopRecording();
+            mBroadcaster.release();
+        }
     }
 
 

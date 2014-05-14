@@ -403,7 +403,7 @@ public class KickflipApiClient extends OAuthClient {
             data.put("description", stream.getDescription());
         }
         if (stream.getExtraInfo() != null) {
-            data.put("extra_info", stream.getExtraInfo());
+            data.put("extra_info", Jackson.toJsonString(stream.getExtraInfo()));
         }
         if (stream.getLatitude() != 0) {
             data.put("lat", stream.getLatitude());

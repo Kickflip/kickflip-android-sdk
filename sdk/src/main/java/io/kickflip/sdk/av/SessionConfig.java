@@ -3,6 +3,7 @@ package io.kickflip.sdk.av;
 import android.os.Environment;
 
 import java.io.File;
+import java.util.Map;
 import java.util.UUID;
 
 import io.kickflip.sdk.api.json.Stream;
@@ -104,11 +105,11 @@ public class SessionConfig {
         return mAudioConfig.getSampleRate();
     }
 
-    public String getExtraInfo() {
+    public Map getExtraInfo() {
         return mStream.getExtraInfo();
     }
 
-    public void setExtraInfo(String extraInfo) {
+    public void setExtraInfo(Map extraInfo) {
         mStream.setExtraInfo(extraInfo);
     }
 
@@ -187,7 +188,7 @@ public class SessionConfig {
         private boolean mAttachLocation;
         private boolean mConvertVerticalVideo;
         private boolean mAdaptiveStreaming;
-        private String mExtraInfo;
+        private Map mExtraInfo;
 
         private int mHlsSegmentDuration;
 
@@ -317,10 +318,11 @@ public class SessionConfig {
             return this;
         }
 
-        public Builder withExtraInfo(String extraInfo) {
+        public Builder withExtraInfo(Map extraInfo) {
             mExtraInfo = extraInfo;
             return this;
         }
+
 
         public Builder withVideoResolution(int width, int height) {
             mWidth = width;
