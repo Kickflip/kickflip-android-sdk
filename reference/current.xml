@@ -1,0 +1,2971 @@
+<api>
+<package name="io.kickflip.sdk"
+>
+<class name="Kickflip"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="Kickflip"
+ type="io.kickflip.sdk.Kickflip"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<method name="addLocationToStream"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="context" type="android.content.Context">
+</parameter>
+<parameter name="stream" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+<parameter name="eventBus" type="EventBus">
+</parameter>
+</method>
+<method name="getApiClient"
+ return="io.kickflip.sdk.api.KickflipApiClient"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="context" type="android.content.Context">
+</parameter>
+</method>
+<method name="getApiClient"
+ return="io.kickflip.sdk.api.KickflipApiClient"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="context" type="android.content.Context">
+</parameter>
+<parameter name="callback" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="getApiKey"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getApiSecret"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getBroadcastListener"
+ return="io.kickflip.sdk.av.BroadcastListener"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getStreamIdFromKickflipUrl"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="uri" type="android.net.Uri">
+</parameter>
+</method>
+<method name="isKickflipUrl"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="uri" type="android.net.Uri">
+</parameter>
+</method>
+<method name="isKitKat"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="readyToBroadcast"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="setBroadcastListener"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="listener" type="io.kickflip.sdk.av.BroadcastListener">
+</parameter>
+</method>
+<method name="setSessionConfig"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="config" type="io.kickflip.sdk.av.SessionConfig">
+</parameter>
+</method>
+<method name="setup"
+ return="io.kickflip.sdk.api.KickflipApiClient"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="context" type="android.content.Context">
+</parameter>
+<parameter name="key" type="java.lang.String">
+</parameter>
+<parameter name="secret" type="java.lang.String">
+</parameter>
+</method>
+<method name="setup"
+ return="io.kickflip.sdk.api.KickflipApiClient"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="context" type="android.content.Context">
+</parameter>
+<parameter name="key" type="java.lang.String">
+</parameter>
+<parameter name="secret" type="java.lang.String">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="startBroadcastActivity"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="host" type="android.app.Activity">
+</parameter>
+<parameter name="listener" type="io.kickflip.sdk.av.BroadcastListener">
+</parameter>
+</method>
+<method name="startMediaPlayerActivity"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="host" type="android.app.Activity">
+</parameter>
+<parameter name="streamUrl" type="java.lang.String">
+</parameter>
+<parameter name="newTask" type="boolean">
+</parameter>
+</method>
+</class>
+</package>
+<package name="io.kickflip.sdk.activity"
+>
+<class name="BroadcastActivity"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<implements name="io.kickflip.sdk.av.BroadcastListener">
+</implements>
+<constructor name="BroadcastActivity"
+ type="io.kickflip.sdk.activity.BroadcastActivity"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<method name="onBroadcastError"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="error" type="io.kickflip.sdk.exception.KickflipException">
+</parameter>
+</method>
+<method name="onBroadcastLive"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="stream" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+</method>
+<method name="onBroadcastStart"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="onBroadcastStop"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="onStop"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+</package>
+<package name="io.kickflip.sdk.api"
+>
+<class name="KickflipApiClient"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="KickflipApiClient"
+ type="io.kickflip.sdk.api.KickflipApiClient"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="appContext" type="android.content.Context">
+</parameter>
+<parameter name="key" type="java.lang.String">
+</parameter>
+<parameter name="secret" type="java.lang.String">
+</parameter>
+</constructor>
+<constructor name="KickflipApiClient"
+ type="io.kickflip.sdk.api.KickflipApiClient"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="appContext" type="android.content.Context">
+</parameter>
+<parameter name="key" type="java.lang.String">
+</parameter>
+<parameter name="secret" type="java.lang.String">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</constructor>
+<method name="activeUserOwnsStream"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="stream" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+</method>
+<method name="createNewUser"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="username" type="java.lang.String">
+</parameter>
+<parameter name="password" type="java.lang.String">
+</parameter>
+<parameter name="email" type="java.lang.String">
+</parameter>
+<parameter name="displayName" type="java.lang.String">
+</parameter>
+<parameter name="extraInfo" type="java.util.Map">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="createNewUser"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="flagStream"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="stream" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="getActiveUser"
+ return="io.kickflip.sdk.api.json.User"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getStreamInfo"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="stream" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="getStreamInfo"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="streamId" type="java.lang.String">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="getStreamsByKeyword"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="keyword" type="java.lang.String">
+</parameter>
+<parameter name="pageNumber" type="int">
+</parameter>
+<parameter name="itemsPerPage" type="int">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="getStreamsByLocation"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="location" type="android.location.Location">
+</parameter>
+<parameter name="radius" type="int">
+</parameter>
+<parameter name="pageNumber" type="int">
+</parameter>
+<parameter name="itemsPerPage" type="int">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="getStreamsByUsername"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="username" type="java.lang.String">
+</parameter>
+<parameter name="pageNumber" type="int">
+</parameter>
+<parameter name="itemsPerPage" type="int">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="getUserInfo"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="username" type="java.lang.String">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="loginUser"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="username" type="java.lang.String">
+</parameter>
+<parameter name="password" type="java.lang.String">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="setStreamInfo"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="stream" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="setUserInfo"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="newPassword" type="java.lang.String">
+</parameter>
+<parameter name="email" type="java.lang.String">
+</parameter>
+<parameter name="displayName" type="java.lang.String">
+</parameter>
+<parameter name="extraInfo" type="java.util.Map">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="startStream"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="stream" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+<method name="stopStream"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="stream" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+<parameter name="cb" type="io.kickflip.sdk.api.KickflipCallback">
+</parameter>
+</method>
+</class>
+<interface name="KickflipCallback"
+ abstract="true"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<method name="onError"
+ return="void"
+ abstract="true"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="error" type="io.kickflip.sdk.exception.KickflipException">
+</parameter>
+</method>
+<method name="onSuccess"
+ return="void"
+ abstract="true"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="response" type="io.kickflip.sdk.api.json.Response">
+</parameter>
+</method>
+</interface>
+</package>
+<package name="io.kickflip.sdk.api.json"
+>
+<class name="HlsStream"
+ extends="io.kickflip.sdk.api.json.Stream"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="HlsStream"
+ type="io.kickflip.sdk.api.json.HlsStream"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<method name="getAwsKey"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getAwsS3Bucket"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getAwsSecret"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+<class name="Response"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="Response"
+ type="io.kickflip.sdk.api.json.Response"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<method name="getReason"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="isSuccessful"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+<class name="Stream"
+ extends="io.kickflip.sdk.api.json.Response"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<implements name="java.io.Serializable">
+</implements>
+<constructor name="Stream"
+ type="io.kickflip.sdk.api.json.Stream"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<method name="compareTo"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="another" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+</method>
+<method name="getChatUrl"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getCity"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getCountry"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getDescription"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getExtraInfo"
+ return="java.util.Map"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getKickflipUrl"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getLatitude"
+ return="double"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getLengthInSeconds"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getLongitude"
+ return="double"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getOwnerAvatar"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getOwnerName"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getState"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getStreamId"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getStreamType"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getStreamUrl"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getThumbnailUrl"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getTimeStarted"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getTitle"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getUploadUrl"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="isDeleted"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="isPrivate"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="setCity"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mCity" type="java.lang.String">
+</parameter>
+</method>
+<method name="setCountry"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mCountry" type="java.lang.String">
+</parameter>
+</method>
+<method name="setDeleted"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="deleted" type="boolean">
+</parameter>
+</method>
+<method name="setDescription"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mDescription" type="java.lang.String">
+</parameter>
+</method>
+<method name="setExtraInfo"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mExtraInfo" type="java.util.Map">
+</parameter>
+</method>
+<method name="setIsPrivate"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mPrivate" type="boolean">
+</parameter>
+</method>
+<method name="setLatitude"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mLatitude" type="double">
+</parameter>
+</method>
+<method name="setLongitude"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mLongitude" type="double">
+</parameter>
+</method>
+<method name="setState"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mState" type="java.lang.String">
+</parameter>
+</method>
+<method name="setThumbnailUrl"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="url" type="java.lang.String">
+</parameter>
+</method>
+<method name="setTitle"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mTitle" type="java.lang.String">
+</parameter>
+</method>
+</class>
+<class name="StreamList"
+ extends="io.kickflip.sdk.api.json.Response"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="StreamList"
+ type="io.kickflip.sdk.api.json.StreamList"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<method name="getPageNumber"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getResultsPerPage"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getStreams"
+ return="java.util.List&lt;io.kickflip.sdk.api.json.Stream&gt;"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getTotalItems"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="isNextPageAvailable"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+<class name="User"
+ extends="io.kickflip.sdk.api.json.Response"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="User"
+ type="io.kickflip.sdk.api.json.User"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="app" type="java.lang.String">
+</parameter>
+<parameter name="name" type="java.lang.String">
+</parameter>
+<parameter name="uuid" type="java.lang.String">
+</parameter>
+<parameter name="extraInfo" type="java.util.Map">
+</parameter>
+</constructor>
+<constructor name="User"
+ type="io.kickflip.sdk.api.json.User"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<method name="getApp"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getAvatarUrl"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getDisplayName"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getExtraInfo"
+ return="java.util.Map"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getName"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getUUID"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+</package>
+<package name="io.kickflip.sdk.av"
+>
+<class name="AudioEncoderConfig"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="AudioEncoderConfig"
+ type="io.kickflip.sdk.av.AudioEncoderConfig"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="channels" type="int">
+</parameter>
+<parameter name="sampleRate" type="int">
+</parameter>
+<parameter name="bitRate" type="int">
+</parameter>
+</constructor>
+<method name="getBitrate"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getNumChannels"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getSampleRate"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<field name="mBitrate"
+ type="int"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="true"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+<field name="mNumChannels"
+ type="int"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="true"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+<field name="mSampleRate"
+ type="int"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="true"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+</class>
+<interface name="BroadcastListener"
+ abstract="true"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<method name="onBroadcastError"
+ return="void"
+ abstract="true"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="error" type="io.kickflip.sdk.exception.KickflipException">
+</parameter>
+</method>
+<method name="onBroadcastLive"
+ return="void"
+ abstract="true"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="stream" type="io.kickflip.sdk.api.json.Stream">
+</parameter>
+</method>
+<method name="onBroadcastStart"
+ return="void"
+ abstract="true"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="onBroadcastStop"
+ return="void"
+ abstract="true"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</interface>
+<class name="Drawable2d"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="Drawable2d"
+ type="io.kickflip.sdk.av.Drawable2d"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="shape" type="io.kickflip.sdk.av.Drawable2d.Prefab">
+</parameter>
+</constructor>
+<method name="getCoordsPerVertex"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getVertexArray"
+ return="java.nio.FloatBuffer"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getVertexCount"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getVertexStride"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+<class name="Drawable2d.Prefab"
+ extends="java.lang.Enum"
+ abstract="false"
+ static="true"
+ final="true"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<method name="valueOf"
+ return="io.kickflip.sdk.av.Drawable2d.Prefab"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="name" type="java.lang.String">
+</parameter>
+</method>
+<method name="values"
+ return="io.kickflip.sdk.av.Drawable2d.Prefab[]"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="true"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+<class name="Muxer"
+ extends="java.lang.Object"
+ abstract="true"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="Muxer"
+ type="io.kickflip.sdk.av.Muxer"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+<parameter name="outputPath" type="java.lang.String">
+</parameter>
+<parameter name="format" type="io.kickflip.sdk.av.Muxer.FORMAT">
+</parameter>
+</constructor>
+<method name="addTrack"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="trackFormat" type="android.media.MediaFormat">
+</parameter>
+</method>
+<method name="allTracksAdded"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</method>
+<method name="allTracksFinished"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</method>
+<method name="formatRequiresADTS"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</method>
+<method name="formatRequiresBuffering"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</method>
+<method name="getOutputPath"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getSafePts"
+ return="long"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+<parameter name="pts" type="long">
+</parameter>
+</method>
+<method name="isStarted"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="onEncoderReleased"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="trackIndex" type="int">
+</parameter>
+</method>
+<method name="release"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="setEventBus"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="eventBus" type="EventBus">
+</parameter>
+</method>
+<method name="signalEndOfTrack"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="writeSampleData"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="encoder" type="android.media.MediaCodec">
+</parameter>
+<parameter name="trackIndex" type="int">
+</parameter>
+<parameter name="bufferIndex" type="int">
+</parameter>
+<parameter name="encodedData" type="java.nio.ByteBuffer">
+</parameter>
+<parameter name="bufferInfo" type="android.media.MediaCodec.BufferInfo">
+</parameter>
+</method>
+<field name="mFormat"
+ type="io.kickflip.sdk.av.Muxer.FORMAT"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+<field name="mLastPts"
+ type="long"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+<field name="mNumTracks"
+ type="int"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+<field name="mNumTracksFinished"
+ type="int"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+<field name="mOutputPath"
+ type="java.lang.String"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+</class>
+<class name="Muxer.FORMAT"
+ extends="java.lang.Enum"
+ abstract="false"
+ static="true"
+ final="true"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<method name="valueOf"
+ return="io.kickflip.sdk.av.Muxer.FORMAT"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="name" type="java.lang.String">
+</parameter>
+</method>
+<method name="values"
+ return="io.kickflip.sdk.av.Muxer.FORMAT[]"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="true"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+<class name="SessionConfig"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="SessionConfig"
+ type="io.kickflip.sdk.av.SessionConfig"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<constructor name="SessionConfig"
+ type="io.kickflip.sdk.av.SessionConfig"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="uuid" type="java.util.UUID">
+</parameter>
+<parameter name="muxer" type="io.kickflip.sdk.av.Muxer">
+</parameter>
+<parameter name="videoConfig" type="io.kickflip.sdk.av.VideoEncoderConfig">
+</parameter>
+<parameter name="audioConfig" type="io.kickflip.sdk.av.AudioEncoderConfig">
+</parameter>
+</constructor>
+<method name="getAudioBitrate"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getAudioSamplerate"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getDescription"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getExtraInfo"
+ return="java.util.Map"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getHlsSegmentDuration"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getMuxer"
+ return="io.kickflip.sdk.av.Muxer"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getNumAudioChannels"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getOutputDirectory"
+ return="java.io.File"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getOutputPath"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getStream"
+ return="io.kickflip.sdk.api.json.Stream"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getTitle"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getTotalBitrate"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getUUID"
+ return="java.util.UUID"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getVideoBitrate"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getVideoHeight"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getVideoWidth"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="isAdaptiveBitrate"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="isConvertingVerticalVideo"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="isPrivate"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="setAttachLocation"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mAttachLocation" type="boolean">
+</parameter>
+</method>
+<method name="setConvertVerticalVideo"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="convertVerticalVideo" type="boolean">
+</parameter>
+</method>
+<method name="setDescription"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="description" type="java.lang.String">
+</parameter>
+</method>
+<method name="setExtraInfo"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="extraInfo" type="java.util.Map">
+</parameter>
+</method>
+<method name="setHlsSegmentDuration"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="hlsSegmentDuration" type="int">
+</parameter>
+</method>
+<method name="setOutputDirectory"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="outputDirectory" type="java.io.File">
+</parameter>
+</method>
+<method name="setPrivate"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mPrivate" type="boolean">
+</parameter>
+</method>
+<method name="setTitle"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="title" type="java.lang.String">
+</parameter>
+</method>
+<method name="setUseAdaptiveBitrate"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="useAdaptiveBit" type="boolean">
+</parameter>
+</method>
+<method name="shouldAttachLocation"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+<class name="SessionConfig.Builder"
+ extends="java.lang.Object"
+ abstract="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="SessionConfig.Builder"
+ type="io.kickflip.sdk.av.SessionConfig.Builder"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="outputLocation" type="java.lang.String">
+</parameter>
+</constructor>
+<constructor name="SessionConfig.Builder"
+ type="io.kickflip.sdk.av.SessionConfig.Builder"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="muxer" type="io.kickflip.sdk.av.Muxer">
+</parameter>
+</constructor>
+<method name="build"
+ return="io.kickflip.sdk.av.SessionConfig"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="withAdaptiveStreaming"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="adaptiveStreaming" type="boolean">
+</parameter>
+</method>
+<method name="withAudioBitrate"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="bitrate" type="int">
+</parameter>
+</method>
+<method name="withAudioChannels"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="numChannels" type="int">
+</parameter>
+</method>
+<method name="withAudioSamplerate"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="samplerate" type="int">
+</parameter>
+</method>
+<method name="withDescription"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="description" type="java.lang.String">
+</parameter>
+</method>
+<method name="withExtraInfo"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="extraInfo" type="java.util.Map">
+</parameter>
+</method>
+<method name="withHlsSegmentDuration"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="segmentDuration" type="int">
+</parameter>
+</method>
+<method name="withLocation"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="attachLocation" type="boolean">
+</parameter>
+</method>
+<method name="withMuxer"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="muxer" type="io.kickflip.sdk.av.Muxer">
+</parameter>
+</method>
+<method name="withPrivateVisibility"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="isPrivate" type="boolean">
+</parameter>
+</method>
+<method name="withTitle"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="title" type="java.lang.String">
+</parameter>
+</method>
+<method name="withVerticalVideoCorrection"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="convertVerticalVideo" type="boolean">
+</parameter>
+</method>
+<method name="withVideoBitrate"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="bitrate" type="int">
+</parameter>
+</method>
+<method name="withVideoResolution"
+ return="io.kickflip.sdk.av.SessionConfig.Builder"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="width" type="int">
+</parameter>
+<parameter name="height" type="int">
+</parameter>
+</method>
+</class>
+<class name="VideoEncoderConfig"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="VideoEncoderConfig"
+ type="io.kickflip.sdk.av.VideoEncoderConfig"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="width" type="int">
+</parameter>
+<parameter name="height" type="int">
+</parameter>
+<parameter name="bitRate" type="int">
+</parameter>
+</constructor>
+<method name="getBitRate"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getHeight"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getWidth"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<field name="mBitRate"
+ type="int"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="true"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+<field name="mHeight"
+ type="int"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="true"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+<field name="mWidth"
+ type="int"
+ transient="false"
+ volatile="false"
+ static="false"
+ final="true"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</field>
+</class>
+<class name="VideoEncoderCore"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="VideoEncoderCore"
+ type="io.kickflip.sdk.av.VideoEncoderCore"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="width" type="int">
+</parameter>
+<parameter name="height" type="int">
+</parameter>
+<parameter name="bitRate" type="int">
+</parameter>
+<parameter name="muxer" type="io.kickflip.sdk.av.Muxer">
+</parameter>
+</constructor>
+<method name="getInputSurface"
+ return="android.view.Surface"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="isSurfaceInputEncoder"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="protected"
+>
+</method>
+</class>
+</package>
+<package name="io.kickflip.sdk.event"
+>
+<class name="BroadcastIsBufferingEvent"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="BroadcastIsBufferingEvent"
+ type="io.kickflip.sdk.event.BroadcastIsBufferingEvent"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+</class>
+<class name="BroadcastIsLiveEvent"
+ extends="java.lang.Object"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="BroadcastIsLiveEvent"
+ type="io.kickflip.sdk.event.BroadcastIsLiveEvent"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="watchurl" type="java.lang.String">
+</parameter>
+</constructor>
+<method name="getWatchUrl"
+ return="java.lang.String"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+</package>
+<package name="io.kickflip.sdk.exception"
+>
+<class name="KickflipException"
+ extends="java.io.IOException"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="KickflipException"
+ type="io.kickflip.sdk.exception.KickflipException"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<constructor name="KickflipException"
+ type="io.kickflip.sdk.exception.KickflipException"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="message" type="java.lang.String">
+</parameter>
+<parameter name="code" type="int">
+</parameter>
+</constructor>
+<method name="getCode"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+</package>
+<package name="io.kickflip.sdk.fragment"
+>
+<class name="BroadcastFragment"
+ extends="android.app.Fragment"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<implements name="android.widget.AdapterView.OnItemSelectedListener">
+</implements>
+<constructor name="BroadcastFragment"
+ type="io.kickflip.sdk.fragment.BroadcastFragment"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<method name="getInstance"
+ return="io.kickflip.sdk.fragment.BroadcastFragment"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="onBroadcastIsBuffering"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="event" type="io.kickflip.sdk.event.BroadcastIsBufferingEvent">
+</parameter>
+</method>
+<method name="onBroadcastIsLive"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="liveEvent" type="io.kickflip.sdk.event.BroadcastIsLiveEvent">
+</parameter>
+</method>
+<method name="onItemSelected"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="parent" type="android.widget.AdapterView&lt;?&gt;">
+</parameter>
+<parameter name="view" type="android.view.View">
+</parameter>
+<parameter name="position" type="int">
+</parameter>
+<parameter name="id" type="long">
+</parameter>
+</method>
+<method name="onNothingSelected"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="parent" type="android.widget.AdapterView&lt;?&gt;">
+</parameter>
+</method>
+<method name="stopBroadcasting"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+<class name="MediaPlayerFragment"
+ extends="android.app.Fragment"
+ abstract="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<constructor name="MediaPlayerFragment"
+ type="io.kickflip.sdk.fragment.MediaPlayerFragment"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</constructor>
+<method name="canPause"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="canSeekBackward"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="canSeekForward"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getAudioSessionId"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getBufferPercentage"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getCurrentPosition"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="getDuration"
+ return="int"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="isPlaying"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="newInstance"
+ return="io.kickflip.sdk.fragment.MediaPlayerFragment"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="true"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="mediaUrl" type="java.lang.String">
+</parameter>
+</method>
+<method name="onSurfaceTextureAvailable"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="surfaceTexture" type="android.graphics.SurfaceTexture">
+</parameter>
+<parameter name="width" type="int">
+</parameter>
+<parameter name="height" type="int">
+</parameter>
+</method>
+<method name="onSurfaceTextureDestroyed"
+ return="boolean"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="surface" type="android.graphics.SurfaceTexture">
+</parameter>
+</method>
+<method name="onSurfaceTextureSizeChanged"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="surface" type="android.graphics.SurfaceTexture">
+</parameter>
+<parameter name="width" type="int">
+</parameter>
+<parameter name="height" type="int">
+</parameter>
+</method>
+<method name="onSurfaceTextureUpdated"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="surface" type="android.graphics.SurfaceTexture">
+</parameter>
+</method>
+<method name="pause"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+<method name="seekTo"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+<parameter name="pos" type="int">
+</parameter>
+</method>
+<method name="start"
+ return="void"
+ abstract="false"
+ native="false"
+ synchronized="false"
+ static="false"
+ final="false"
+ deprecated="not deprecated"
+ visibility="public"
+>
+</method>
+</class>
+</package>
+</api>

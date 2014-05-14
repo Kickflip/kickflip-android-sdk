@@ -1,7 +1,0 @@
-<resources>
-    <!-- These margins account for the difference between TranslucentDecor style
-         in API 19 and the pre API 19 behavior re: Nav and Status bars-->
-    <dimen name="nav_bar_margin">50dp</dimen>
-    <dimen name="status_bar_margin">25dp</dimen>
-
-</resources>
