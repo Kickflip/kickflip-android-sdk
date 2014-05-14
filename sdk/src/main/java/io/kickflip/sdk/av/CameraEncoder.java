@@ -362,11 +362,23 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     /**
      * Release resources, including the Camera.
      * After this call this instance of CameraEncoder is no longer usable.
+     * This call blocks until release is complete.
      * <p/>
      * Called from UI thread
      */
     public void release() {
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_RELEASE));
+        synchronized (mReadyFence) {
+            if (mHandler != null) {
+                mHandler.sendMessage(mHandler.obtainMessage(MSG_RELEASE));
+                while (mRunning) {
+                    try {
+                        mReadyFence.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
     private void handleRelease() {
@@ -601,6 +613,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         synchronized (mReadyFence) {
             mReady = mRunning = false;
             mHandler = null;
+            mReadyFence.notify();
         }
     }
 

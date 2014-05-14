@@ -26,20 +26,19 @@ import android.widget.TextView;
 
 import com.google.common.eventbus.Subscribe;
 
-import io.kickflip.sdk.av.BroadcastListener;
-import io.kickflip.sdk.view.GLCameraEncoderView;
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
 import io.kickflip.sdk.Share;
+import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.event.BroadcastIsLiveEvent;
+import io.kickflip.sdk.view.GLCameraEncoderView;
 
 /**
  * This is a drop-in broadcasting fragment.
  * Currently, only one BroadcastFragment may be instantiated at a time by
  * design of {@link io.kickflip.sdk.av.Broadcaster}.
- *
  */
 public class BroadcastFragment extends Fragment implements AdapterView.OnItemSelectedListener {
     private static final String TAG = "BroadcastFragment";
@@ -77,31 +76,47 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
     };
 
     private SensorEventListener mOrientationListener = new SensorEventListener() {
+        final int SENSOR_CONFIRMATION_THRESHOLD = 5;
+        int[] confirmations = new int[2];
         int orientation = -1;
 
         @Override
         public void onSensorChanged(SensorEvent event) {
             if (getActivity() != null && getActivity().findViewById(R.id.rotateDeviceHint) != null) {
-                if (event.values[1] < 6.5 && event.values[1] > -6.5) {
-                    if (orientation != 1) {
+                if (event.values[1] > 10 || event.values[1] < -10) {
+                    // Sensor noise. Ignore.
+                } else if (event.values[1] < 5.5 && event.values[1] > -5.5) {
+                    // Landscape
+                    if (orientation != 1 && readingConfirmed(1)) {
                         if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
                             mBroadcaster.signalVerticalVideo(false);
                         } else {
                             getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.GONE);
                         }
+                        orientation = 1;
                     }
-                    orientation = 1;
-                } else {
-                    if (orientation != 0) {
+                } else if (event.values[1] > 7.5 || event.values[1] < -7.5) {
+                    // Portrait
+                    if (orientation != 0 && readingConfirmed(0)) {
                         if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
                             mBroadcaster.signalVerticalVideo(true);
                         } else {
                             getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.VISIBLE);
                         }
+                        orientation = 0;
                     }
-                    orientation = 0;
                 }
             }
+        }
+
+        /**
+         * Determine if a sensor reading is trustworthy
+         * based on a series of consistent readings
+         */
+        private boolean readingConfirmed(int orientation) {
+            confirmations[orientation]++;
+            confirmations[ orientation == 0 ? 1 : 0] = 0;
+            return confirmations[orientation] > SENSOR_CONFIRMATION_THRESHOLD;
         }
 
         @Override
@@ -187,6 +202,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (mBroadcaster != null && getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             root = inflater.inflate(R.layout.fragment_broadcast, container, false);
             mCameraView = (GLCameraEncoderView) root.findViewById(R.id.cameraPreview);
+            mCameraView.setKeepScreenOn(true);
             mLiveBanner = (TextView) root.findViewById(R.id.liveLabel);
             mBroadcaster.setPreviewDisplay(mCameraView);
             Button recordButton = (Button) root.findViewById(R.id.recordButton);
