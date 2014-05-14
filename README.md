@@ -123,7 +123,7 @@ You may also import this project into Android Studio for easy development.
 
 ## Documentation
 
-For a closer look at what you do with Kickflip, check out our [Android Documentation](https://github.com/Kickflip/kickflip-docs/tree/master/android) and [Android API Reference](http://kickflip.github.io/kickflip-android-sdk/reference/packages.html). We also have some tutorials to help you get started.
+For a closer look at what you do with Kickflip, check out our [Android Documentation](https://github.com/Kickflip/kickflip-docs/tree/master/android) and [Android API Reference](http://kickflip.github.io/kickflip-android-sdk/reference/packages.html). We also have some [tutorials](https://github.com/Kickflip/kickflip-docs/tree/master/tutorials) to help you get started.
 
 ## License
 
