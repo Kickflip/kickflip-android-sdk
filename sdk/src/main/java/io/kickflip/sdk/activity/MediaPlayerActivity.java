@@ -9,7 +9,9 @@ import io.kickflip.sdk.fragment.MediaPlayerFragment;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-
+/**
+ * @hide
+ */
 public class MediaPlayerActivity extends ImmersiveActivity {
     private static final String TAG = "MediaPlayerActivity";
 
@@ -25,7 +27,7 @@ public class MediaPlayerActivity extends ImmersiveActivity {
         checkNotNull(mediaUrl, new IllegalStateException("MediaPlayerActivity started without a mediaUrl"));
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
-                    .add(R.id.container, MediaPlayerFragment.newInstance(mediaUrl))
+                    .replace(R.id.container, MediaPlayerFragment.newInstance(mediaUrl))
                     .commit();
         }
     }

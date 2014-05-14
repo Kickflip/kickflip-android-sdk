@@ -24,7 +24,7 @@ import io.kickflip.sdk.event.S3UploadEvent;
  */
 public class S3BroadcastManager implements Runnable {
     private static final String TAG = "S3Manager";
-    private static final boolean VERBOSE = true;
+    private static final boolean VERBOSE = false;
 
     private LinkedBlockingQueue<Pair<PutObjectRequest, Boolean>> mQueue;
     private TransferManager mTransferManager;

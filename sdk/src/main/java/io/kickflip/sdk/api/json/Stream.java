@@ -4,6 +4,7 @@ import com.amazonaws.util.json.Jackson;
 import com.google.api.client.util.Key;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Kickflip base Stream response
@@ -129,12 +130,12 @@ public class Stream extends Response implements Comparable<Stream>, Serializable
         return mLength;
     }
 
-    public String getExtraInfo() {
-        return mExtraInfo;
+    public Map getExtraInfo() {
+        return Jackson.fromJsonString(mExtraInfo, Map.class);
     }
 
-    public void setExtraInfo(String mExtraInfo) {
-        this.mExtraInfo = mExtraInfo;
+    public void setExtraInfo(Map mExtraInfo) {
+        this.mExtraInfo = Jackson.toJsonString(mExtraInfo);
     }
 
     public double getLatitude() {

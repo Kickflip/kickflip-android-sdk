@@ -31,9 +31,13 @@ import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.M3u8Parser;
 import io.kickflip.sdk.exception.KickflipException;
 
+/**
+ * MediaPlayerFragment demonstrates playing an HLS Stream, and fetching
+ * stream metadata via the .m3u8 manifest to decorate the display for Live streams.
+ */
 public class MediaPlayerFragment extends Fragment implements TextureView.SurfaceTextureListener, MediaController.MediaPlayerControl {
-    public static final String TAG = "MediaPlayerFragment";
-    public static final boolean VERBOSE = true;
+    private static final String TAG = "MediaPlayerFragment";
+    private static final boolean VERBOSE = false;
     private static final String ARG_URL = "url";
     private KickflipApiClient mKickflip;
 
@@ -81,6 +85,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         fragment.setArguments(args);
         return fragment;
     }
+
     public MediaPlayerFragment() {
         // Required empty public constructor
     }
@@ -109,7 +114,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
                         Log.i(TAG, "get kickflip stream meta failed");
                     }
                 });
-            } else if (mMediaUrl.substring(mMediaUrl.lastIndexOf(".")+1).equals("m3u8")){
+            } else if (mMediaUrl.substring(mMediaUrl.lastIndexOf(".") + 1).equals("m3u8")) {
                 parseM3u8FromMediaUrl();
             } else {
                 throw new IllegalArgumentException("Unknown HLS media url format: " + mMediaUrl);
@@ -167,7 +172,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
     }
 
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         mProgress.setVisibility(View.VISIBLE);
     }

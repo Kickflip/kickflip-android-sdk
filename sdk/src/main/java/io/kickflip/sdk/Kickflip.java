@@ -26,7 +26,8 @@ import io.kickflip.sdk.location.DeviceLocation;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Entry point for interacting with Kickflip.
+ * This is a top-level manager class for all the fundamental SDK actions. Herer you can register
+ * your Kickflip account credentials, start a live broadcast or play one back.
  * <p/>
  * <h2>Setup</h2>
  * Before use Kickflip must be setup with your Kickflip Client ID and Client Secret with
@@ -44,6 +45,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * for starting and stopping the broadcast. When the broadcast is stopped, BroadcastActivity will finish
  * after notifying {@link io.kickflip.sdk.av.BroadcastListener#onBroadcastStop()}.
  * <p/>
+ * <br/>
  * <b>Customizing broadcast parameters</b>
  * <p/>
  * As noted above, you can optionally call {@link #setSessionConfig(io.kickflip.sdk.av.SessionConfig)} before
@@ -52,16 +54,23 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p/>
  * <code>
  *   SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
- *     &nbsp.withTitle(Util.getHumanDateString())
- *     &nbsp.withDescription("Example Description")
- *     &nbsp.withExtraInfo("{'foo': 'bar'}")
- *     .withPrivateVisibility(false)
- *     .withLocation(true)
- *     .withVideoResolution(1280, 720)
- *     .build();
- *   Kickflip.setSessionConfig(config);
+ *     <br/>&nbsp.withTitle(Util.getHumanDateString())
+ *     <br/>&nbsp.withDescription("Example Description")
+ *     <br/>&nbsp.withVideoResolution(1280, 720)
+ *     <br/>&nbsp.withVideoBitrate(2 * 1000 * 1000)
+ *     <br/>&nbsp.withAudioBitrate(192 * 1000)
+ *     <br/>&nbsp.withAdaptiveStreaming(true)
+ *     <br/>&nbsp.withVerticalVideoCorrection(true)
+ *     <br/>&nbsp.withExtraInfo(extraDataMap)
+ *     <br/>&nbsp.withPrivateVisibility(false)
+ *     <br/>&nbsp.withLocation(true)
+ *
+ *     <br/>&nbsp.build();
+ *    <br/>Kickflip.setSessionConfig(config);
  *
  * </code>
+ * <br/>
+ * Note that SessionConfig is initialized with sane defaults for a 720p broadcast. Every parameter is optional.
  */
 public class Kickflip {
     private static Context sContext;
@@ -326,6 +335,11 @@ public class Kickflip {
                 .build());
     }
 
+    /**
+     * Returns whether the current device is running Android 4.4, KitKat, or newer
+     *
+     * KitKat is required for certain Kickflip features like Adaptive bitrate streaming
+     */
     public static boolean isKitKat() {
         return Build.VERSION.SDK_INT >= 19;
     }

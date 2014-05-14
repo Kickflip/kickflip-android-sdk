@@ -6,7 +6,7 @@
 
 The Kickflip Android SDK requires Android 4.3+ (API 18+).
 
-Check out our [Android example application](https://github.com/Kickflip/kickflip-android-example) to see how to easily put this SDK to work.
+Check out our [Android example application](https://github.com/Kickflip/kickflip-android-example) to see how to easily put this SDK to work. Also see the [Javadoc](http://kickflip.github.io/kickflip-android-sdk/reference/packages.html).
 
 Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk) and [iOS Example application](https://github.com/Kickflip/kickflip-ios-example)
 
@@ -108,55 +108,18 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
    	
 `BroadcastActivity` provides a pre-built UI including a camera preview and controls for starting, stopping, and sharing the broadcast.
 
-## Developing on the bleeding edge
-
-If you'd like to modify the sdk or just develop on the bleeding edge,
-add the kickflip-android-sdk to your project as a git submodule. See the [kickflip-android-example dev branch](https://github.com/Kickflip/kickflip-android-example/tree/dev)
-repo for an example application configured with the Kickflip SDK as a submodule.
-
-1. Clone the kickflip-android-sdk repo:
-
-        $ cd /path/to/yourapp
-		$ git submodule add https://github.com/Kickflip/kickflip-android-sdk ./submodules/kickflip-android-sdk/
-
-2. Add the sdk to your top-level `settings.gradle`:
-
-		// settings.gradle
-		include ':yourapp'
-		include ':submodules:kickflip-android-sdk:sdk'
-
-3. Add the sdk as a dependency to your app module's `build.gradle`:
-
-		// ./yourapp/build.gradle
-		...
-		dependencies {
-				...
-				compile project(':submodules:kickflip-android-sdk:sdk')
-		}
-
-## Building the Kickflip Android SDK
-
-### Set up Java, the Android SDK & Build-Tools
-
-1. [Download and install JDK 1.7](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
-2. [Download and install the Android SDK](http://developer.android.com/sdk/)
-3. Run `/android-sdk/tools/android` to install the following packages:
-
-![Installing packages from the Android SDK Manager](http://i.imgur.com/PuWsBEB.png)
-
-**ProTip**: You should have the Android SDK root, along with the `/tools` and `/platform-tools` sub-directories added to your PATH.
-
 ### Building
 
-1. Define the Android SDK location as $ANDROID_HOME in your environment, or create a file named `local.properties` in this directory with the following contents:
+1. Define the Android SDK root location as $ANDROID_HOME in your environment.
 
-	    sdk.dir=/path/to/android-sdk
 
 2. From this directory run:
 
 	    $ ./gradlew assembleDebug
 
 The Kickflip SDK .aar will be in `./sdk/build/libs`.
+
+You may also import this project into Android Studio for easy development.
 
 ## License
 
