@@ -75,31 +75,36 @@ public class AndroidMuxer extends Muxer {
     @Override
     public void writeSampleData(MediaCodec encoder, int trackIndex, int bufferIndex, ByteBuffer encodedData, MediaCodec.BufferInfo bufferInfo) {
         super.writeSampleData(encoder, trackIndex, bufferIndex, encodedData, bufferInfo);
-        if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-            // MediaMuxer gets the codec config info via the addTrack command
-            if (VERBOSE) Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
+
+        //Use 'do' so we can have break functionality and check if all tracks are finished after everything
+        do {
+            if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                // MediaMuxer gets the codec config info via the addTrack command
+                if (VERBOSE) Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
+                encoder.releaseOutputBuffer(bufferIndex, false);
+                break;
+            }
+
+            if (bufferInfo.size == 0) {
+                if (VERBOSE) Log.d(TAG, "ignoring zero size buffer");
+                encoder.releaseOutputBuffer(bufferIndex, false);
+                break;
+            }
+
+            if (!mStarted) {
+                Log.e(TAG, "writeSampleData called before muxer started. Ignoring packet. Track index: " + trackIndex + " tracks added: " + mNumTracks);
+                encoder.releaseOutputBuffer(bufferIndex, false);
+                break;
+            }
+
+            bufferInfo.presentationTimeUs = getSafePts(bufferInfo.presentationTimeUs);
+            mMuxer.writeSampleData(trackIndex, encodedData, bufferInfo);
+
             encoder.releaseOutputBuffer(bufferIndex, false);
-            return;
-        }
-
-        if(bufferInfo.size == 0){
-            if(VERBOSE) Log.d(TAG, "ignoring zero size buffer");
-            encoder.releaseOutputBuffer(bufferIndex, false);
-            return;
-        }
-
-        if (!mStarted) {
-            Log.e(TAG, "writeSampleData called before muxer started. Ignoring packet. Track index: " + trackIndex + " tracks added: " + mNumTracks);
-            encoder.releaseOutputBuffer(bufferIndex, false);
-            return;
-        }
-
-        bufferInfo.presentationTimeUs = getSafePts(bufferInfo.presentationTimeUs);
-        mMuxer.writeSampleData(trackIndex, encodedData, bufferInfo);
-
-        encoder.releaseOutputBuffer(bufferIndex, false);
+        } while(false);
 
         if(allTracksFinished()){
+            if (VERBOSE) Log.d(TAG, "All tracks finished, stopping");
             stop();
         }
     }
