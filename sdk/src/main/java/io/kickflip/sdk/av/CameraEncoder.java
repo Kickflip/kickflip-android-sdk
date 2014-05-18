@@ -233,7 +233,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     }
 
     public void signalVerticalVideo(FullFrameRect.SCREEN_ROTATION orientation) {
-        if (mFullScreen != null) mFullScreen.adjustForVerticalVideo(orientation);
+        if (mFullScreen != null) mFullScreen.adjustForVerticalVideo(orientation, true);
         mDisplayRenderer.signalVertialVideo(orientation);
     }
 

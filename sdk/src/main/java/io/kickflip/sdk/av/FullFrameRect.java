@@ -47,6 +47,10 @@ public class FullFrameRect {
     private static final FloatBuffer TEX_COORDS_BUF = GlUtil.createFloatBuffer(TEX_COORDS);
     private static final int TEX_COORDS_STRIDE = 2 * SIZEOF_FLOAT;
 
+    private boolean mCorrectVerticalVideo = false;
+    private boolean mScaleToFit;
+    private SCREEN_ROTATION requestedOrientation = SCREEN_ROTATION.LANDSCAPE;
+
 
     /**
      * Prepares the object.
@@ -63,20 +67,33 @@ public class FullFrameRect {
      * Adjust the MVP Matrix to rotate and crop the texture
      * to make vertical video appear upright
      */
-    public void adjustForVerticalVideo(SCREEN_ROTATION orientation) {
+    public void adjustForVerticalVideo(SCREEN_ROTATION orientation, boolean scaleToFit) {
         synchronized (mDrawLock) {
+            mCorrectVerticalVideo = true;
+            mScaleToFit = scaleToFit;
+            requestedOrientation = orientation;
             Matrix.setIdentityM(IDENTITY_MATRIX, 0);
             switch (orientation) {
                 case VERTICAL:
-                    Matrix.rotateM(IDENTITY_MATRIX, 0, -90, 0f, 0f, 1f);
-                    Matrix.scaleM(IDENTITY_MATRIX, 0, 3.16f, 1.0f, 1f);
+                    if (scaleToFit) {
+                        Matrix.rotateM(IDENTITY_MATRIX, 0, -90, 0f, 0f, 1f);
+                        Matrix.scaleM(IDENTITY_MATRIX, 0, 3.16f, 1.0f, 1f);
+                    } else {
+                        Matrix.scaleM(IDENTITY_MATRIX, 0, 0.316f, 1f, 1f);
+                    }
                     break;
                 case UPSIDEDOWN_LANDSCAPE:
-                    Matrix.rotateM(IDENTITY_MATRIX, 0, -180, 0f, 0f, 1f);
+                    if (scaleToFit) {
+                        Matrix.rotateM(IDENTITY_MATRIX, 0, -180, 0f, 0f, 1f);
+                    }
                     break;
                 case UPSIDEDOWN_VERTICAL:
-                    Matrix.rotateM(IDENTITY_MATRIX, 0, 90, 0f, 0f, 1f);
-                    Matrix.scaleM(IDENTITY_MATRIX, 0, 3.16f, 1.0f, 1f);
+                    if (scaleToFit) {
+                        Matrix.rotateM(IDENTITY_MATRIX, 0, 90, 0f, 0f, 1f);
+                        Matrix.scaleM(IDENTITY_MATRIX, 0, 3.16f, 1.0f, 1f);
+                    } else {
+                        Matrix.scaleM(IDENTITY_MATRIX, 0, 0.316f, 1f, 1f);
+                    }
                     break;
             }
         }
@@ -120,6 +137,9 @@ public class FullFrameRect {
     public void drawFrame(int textureId, float[] texMatrix) {
         // Use the identity matrix for MVP so our 2x2 FULL_RECTANGLE covers the viewport.
         synchronized (mDrawLock) {
+            if (mCorrectVerticalVideo && !mScaleToFit && (requestedOrientation == SCREEN_ROTATION.VERTICAL || requestedOrientation == SCREEN_ROTATION.UPSIDEDOWN_VERTICAL)) {
+                Matrix.scaleM(texMatrix, 0, 0.316f, 1.0f, 1f);
+            }
             mProgram.draw(IDENTITY_MATRIX, mRectDrawable.getVertexArray(), 0,
                     mRectDrawable.getVertexCount(), mRectDrawable.getCoordsPerVertex(),
                     mRectDrawable.getVertexStride(),

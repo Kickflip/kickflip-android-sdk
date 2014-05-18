@@ -17,10 +17,10 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
     private CameraEncoder mCameraEncoder;
 
     private FullFrameRect mFullScreenCamera;
-    //private SizeableFrameRect mFullScreenOverlay;     // For texture overlay
+    private FullFrameRect mFullScreenOverlay;     // For texture overlay
 
     private final float[] mSTMatrix = new float[16];
-    //private int mOverlayTextureId;
+    private int mOverlayTextureId;
     private int mCameraTextureId;
 
     private boolean mRecordingEnabled;
@@ -78,8 +78,8 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
         // For texture overlay:
         //GLES20.glEnable(GLES20.GL_BLEND);
         //GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-        //mFullScreenOverlay = new SizeableFrameRect(
-        //          new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D), mSizeableOverlayCoords);
+        mFullScreenOverlay = new FullFrameRect(
+                  new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D));
         //mOverlayTextureId = GlUtil.createTextureWithTextContent("hello!");
         //mOverlayTextureId = GlUtil.createTextureFromImage(mCameraView.getContext(), R.drawable.red_dot);
         mCameraTextureId = mFullScreenCamera.createTextureObject();
@@ -110,7 +110,7 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
 
         if (mIncomingSizeUpdated) {
             mFullScreenCamera.getProgram().setTexSize(mIncomingWidth, mIncomingHeight);
-            //mFullScreenOverlay.getProgram().setTexSize(mIncomingWidth, mIncomingHeight);
+            mFullScreenOverlay.getProgram().setTexSize(mIncomingWidth, mIncomingHeight);
             mIncomingSizeUpdated = false;
             Log.i(TAG, "setTexSize on display Texture");
         }
@@ -120,14 +120,14 @@ class CameraSurfaceRenderer implements GLSurfaceView.Renderer {
             mCameraEncoder.getSurfaceTextureForDisplay().updateTexImage();
             mCameraEncoder.getSurfaceTextureForDisplay().getTransformMatrix(mSTMatrix);
             //Drawing texture overlay:
-            //mFullScreenOverlay.drawFrame(mOverlayTextureId, mSTMatrix);
+            mFullScreenOverlay.drawFrame(mOverlayTextureId, mSTMatrix);
             mFullScreenCamera.drawFrame(mCameraTextureId, mSTMatrix);
         }
         mFrameCount++;
     }
 
     public void signalVertialVideo(FullFrameRect.SCREEN_ROTATION isVertical) {
-        if (mFullScreenCamera != null) mFullScreenCamera.adjustForVerticalVideo(isVertical);
+        if (mFullScreenCamera != null) mFullScreenCamera.adjustForVerticalVideo(isVertical, false);
     }
 
     /**

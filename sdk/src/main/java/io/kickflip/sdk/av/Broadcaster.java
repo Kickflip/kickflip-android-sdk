@@ -422,6 +422,10 @@ public class Broadcaster extends AVRecorder {
         }
     }
 
+    /**
+     * Construct an S3 Key for a given filename
+     *
+     */
     private String keyForFilename(String fileName) {
         return mUser.getName() + File.separator
                 + mStream.getStreamId() + File.separator
