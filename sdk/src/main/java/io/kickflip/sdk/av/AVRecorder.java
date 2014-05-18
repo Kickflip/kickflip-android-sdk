@@ -31,8 +31,14 @@ public class AVRecorder {
 
     private void init(SessionConfig config){
         mCamEncoder = new CameraEncoder(config);
-        mMicEncoder = new MicrophoneEncoder(config);
+
+        if(config.getRecordAudio())
+            mMicEncoder = new MicrophoneEncoder(config);
+        else
+            mMicEncoder = null;
+
         mConfig = config;
+        setupMuxer();
         mIsRecording = false;
     }
 
@@ -71,7 +77,8 @@ public class AVRecorder {
 
     public void startRecording(){
         mIsRecording = true;
-        mMicEncoder.startRecording();
+        if(mMicEncoder != null)
+            mMicEncoder.startRecording();
         mCamEncoder.startRecording();
     }
 
@@ -81,7 +88,8 @@ public class AVRecorder {
 
     public void stopRecording(){
         mIsRecording = false;
-        mMicEncoder.stopRecording();
+        if(mMicEncoder != null)
+            mMicEncoder.stopRecording();
         mCamEncoder.stopRecording();
     }
 
@@ -92,9 +100,29 @@ public class AVRecorder {
      */
     public void reset(SessionConfig config){
         mCamEncoder.reset(config);
-        mMicEncoder.reset(config);
+
+        if(config.getRecordAudio()) {
+            if(mMicEncoder == null)
+                mMicEncoder = new MicrophoneEncoder(config);
+            else
+                mMicEncoder.reset(config);
+        }
+        else {
+            mMicEncoder = null;
+        }
+
         mConfig = config;
+        setupMuxer();
         mIsRecording = false;
+    }
+
+    private void setupMuxer() {
+        if(mConfig.getRecordAudio()) {
+            mConfig.getMuxer().setExpectedNumTracks(2);
+        }
+        else {
+            mConfig.getMuxer().setExpectedNumTracks(1);
+        }
     }
 
     /**

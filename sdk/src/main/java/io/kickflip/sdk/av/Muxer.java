@@ -22,7 +22,7 @@ public abstract class Muxer {
 
     public static enum FORMAT { MPEG4, HLS, RTMP }
 
-    private final int mExpectedNumTracks = 2;           // TODO: Make this configurable?
+    private int mExpectedNumTracks;
 
     protected FORMAT mFormat;
     protected String mOutputPath;
@@ -39,6 +39,7 @@ public abstract class Muxer {
         mNumTracks = 0;
         mNumTracksFinished = 0;
         mLastPts = 0;
+        mExpectedNumTracks = 2;
     }
 
     public void setEventBus(EventBus eventBus){
@@ -116,6 +117,13 @@ public abstract class Muxer {
     public void signalEndOfTrack(){
         mNumTracksFinished++;
     }
+
+    /**
+     * Set the number of tracks. For example 2 for audio + video. Or just 1 for video only.
+     * Default is 2 on construction.
+     * @param numTracks
+     */
+    public void setExpectedNumTracks(int numTracks) { mExpectedNumTracks = numTracks; }
 
     /**
      * Does this Muxer's format require AAC ADTS headers?

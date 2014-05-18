@@ -125,6 +125,8 @@ public class SessionConfig {
         return mHlsSegmentDuration;
     }
 
+    public boolean getRecordAudio() { return mAudioConfig.mRecordAudio; }
+
     public void setUseAdaptiveBitrate(boolean useAdaptiveBit) {
         mIsAdaptiveBitrate = useAdaptiveBit;
     }
@@ -189,6 +191,7 @@ public class SessionConfig {
         private boolean mConvertVerticalVideo;
         private boolean mAdaptiveStreaming;
         private Map mExtraInfo;
+        private boolean mRecordAudio;
 
         private int mHlsSegmentDuration;
 
@@ -273,6 +276,8 @@ public class SessionConfig {
             mAudioSamplerate = 44100;
             mAudioBitrate = 96 * 1000;
             mNumAudioChannels = 1;
+
+            mRecordAudio = true;
         }
 
         private void setMetaDefaults() {
@@ -356,10 +361,15 @@ public class SessionConfig {
             return this;
         }
 
+        public Builder withRecordAudio(boolean recordAudio) {
+            mRecordAudio = recordAudio;
+            return this;
+        }
+
         public SessionConfig build() {
             SessionConfig session = new SessionConfig(mUUID, mMuxer,
                     new VideoEncoderConfig(mWidth, mHeight, mVideoBitrate),
-                    new AudioEncoderConfig(mNumAudioChannels, mAudioSamplerate, mAudioBitrate));
+                    new AudioEncoderConfig(mNumAudioChannels, mAudioSamplerate, mAudioBitrate, mRecordAudio));
 
             session.setTitle(mTitle);
             session.setDescription(mDescription);
