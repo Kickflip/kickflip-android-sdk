@@ -132,7 +132,7 @@ public class FFmpegMuxer extends Muxer implements Runnable {
     public void handleAddTrack(MediaFormat trackFormat) {
         super.addTrack(trackFormat);
         if (!mStarted) {
-            Log.i(TAG, "PrepareAVFormatContext");
+            Log.i(TAG, "PrepareAVFormatContext for path " + getOutputPath());
             mFFmpeg.prepareAVFormatContext(getOutputPath());
             mStarted = true;
         }

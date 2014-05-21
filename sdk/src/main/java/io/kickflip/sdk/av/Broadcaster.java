@@ -5,6 +5,8 @@ import android.util.Log;
 import android.util.Pair;
 
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -76,6 +78,7 @@ public class Broadcaster extends AVRecorder {
     private int mNumSegmentsWritten;
     private int mLastRealizedBandwidthBytesPerSec;                      // Bandwidth snapshot for adapting bitrate
     private boolean mDeleteAfterUploading;                              // Should recording files be deleted as they're uploaded?
+    private ObjectMetadata mS3ManifestMeta;
 
 
     /**
@@ -205,6 +208,7 @@ public class Broadcaster extends AVRecorder {
         mStream.setIsPrivate(mConfig.isPrivate());
         if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
         mS3Manager = new S3BroadcastManager(this, new BasicAWSCredentials(mStream.getAwsKey(), mStream.getAwsSecret()));
+        mS3Manager.addRequestInterceptor(mS3RequestInterceptor);
         mReadyToBroadcast = true;
         submitQueuedUploadsToS3();
         mEventBus.post(new BroadcastIsBufferingEvent());
@@ -427,9 +431,7 @@ public class Broadcaster extends AVRecorder {
      *
      */
     private String keyForFilename(String fileName) {
-        return mUser.getName() + File.separator
-                + mStream.getStreamId() + File.separator
-                + fileName;
+        return mStream.getAwsS3Prefix() + fileName;
     }
 
     /**
@@ -517,5 +519,18 @@ public class Broadcaster extends AVRecorder {
             if (VERBOSE) Log.i(TAG, "Queued master manifest " + mVodManifest.getAbsolutePath());
         }
     }
+
+    S3BroadcastManager.S3RequestInterceptor mS3RequestInterceptor = new S3BroadcastManager.S3RequestInterceptor() {
+        @Override
+        public void interceptRequest(PutObjectRequest request) {
+            if (request.getKey().contains(".m3u8")) {
+                if (mS3ManifestMeta == null) {
+                    mS3ManifestMeta = new ObjectMetadata();
+                    mS3ManifestMeta.setCacheControl("max-age=0");
+                }
+                request.setMetadata(mS3ManifestMeta);
+            }
+        }
+    };
 
 }

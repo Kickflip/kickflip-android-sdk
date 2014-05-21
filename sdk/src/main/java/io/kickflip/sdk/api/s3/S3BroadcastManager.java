@@ -12,6 +12,9 @@ import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -29,13 +32,31 @@ public class S3BroadcastManager implements Runnable {
     private LinkedBlockingQueue<Pair<PutObjectRequest, Boolean>> mQueue;
     private TransferManager mTransferManager;
     private Broadcaster mBroadcaster;
+    private Set<WeakReference<S3RequestInterceptor>> mInterceptors;
+
+    public interface S3RequestInterceptor{
+        public void interceptRequest(PutObjectRequest request);
+    }
 
     public S3BroadcastManager(Broadcaster broadcaster, AWSCredentials creds) {
         mTransferManager = new TransferManager(creds);
         mBroadcaster = broadcaster;
         mQueue = new LinkedBlockingQueue<>();
+        mInterceptors = new HashSet<>();
         new Thread(this).start();
     }
+
+    /**
+     * Add an interceptor to be called on requests before they're submitted.
+     * This is a good point to add request headers e.g: Cache-Control.
+     *
+     * WeakReferences are held on the S3RequestInterceptor so it
+     * will be active as long as an external reference is held.
+     */
+    public void addRequestInterceptor(S3RequestInterceptor interceptor) {
+        mInterceptors.add(new WeakReference<S3RequestInterceptor>(interceptor));
+    }
+
 
     public void queueUpload(final String bucket, final String key, final File file, boolean lastUpload) {
         if (VERBOSE) Log.i(TAG, "Queueing upload " + key);
@@ -66,6 +87,12 @@ public class S3BroadcastManager implements Runnable {
             }
         });
         por.setCannedAcl(CannedAccessControlList.PublicRead);
+        for (WeakReference<S3RequestInterceptor> ref : mInterceptors) {
+            S3RequestInterceptor interceptor = ref.get();
+            if (interceptor != null) {
+                interceptor.interceptRequest(por);
+            }
+        }
         mQueue.add(new Pair<>(por, lastUpload));
     }
 

@@ -10,6 +10,9 @@ public class HlsStream extends Stream {
     @Key("bucket_name")
     private String mBucket;
 
+    @Key("aws_prefix")
+    private String mPrefix;
+
     @Key("aws_access_key")
     private String mAwsKey;
 
@@ -18,6 +21,10 @@ public class HlsStream extends Stream {
 
     public String getAwsS3Bucket() {
         return mBucket;
+    }
+
+    public String getAwsS3Prefix() {
+        return mPrefix;
     }
 
     public String getAwsKey() {
