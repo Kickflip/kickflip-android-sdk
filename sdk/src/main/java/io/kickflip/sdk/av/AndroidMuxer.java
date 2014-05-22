@@ -17,6 +17,7 @@ public class AndroidMuxer extends Muxer {
 
     private MediaMuxer mMuxer;
     private boolean mStarted;
+    private long mStartTimeUs = 0;
 
     private AndroidMuxer(String outputFile, FORMAT format){
         super(outputFile, format);
@@ -52,6 +53,7 @@ public class AndroidMuxer extends Muxer {
     }
 
     protected void start() {
+        mStartTimeUs = 0;
         mMuxer.start();
         mStarted = true;
     }
@@ -94,7 +96,15 @@ public class AndroidMuxer extends Muxer {
             return;
         }
 
-        bufferInfo.presentationTimeUs = getSafePts(bufferInfo.presentationTimeUs);
+        if(mStartTimeUs == 0) {
+               mStartTimeUs = bufferInfo.presentationTimeUs;
+        }
+        bufferInfo.presentationTimeUs -= mStartTimeUs;
+        if(bufferInfo.presentationTimeUs < 0) {
+               bufferInfo.presentationTimeUs = 0;
+        }
+        bufferInfo.presentationTimeUs = getSafePts(bufferInfo.presentationTimeUs, trackIndex);
+
         mMuxer.writeSampleData(trackIndex, encodedData, bufferInfo);
 
         encoder.releaseOutputBuffer(bufferIndex, false);

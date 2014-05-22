@@ -406,7 +406,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     mThumbnailRequested = false;
                 }
 
-                mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp() - mStartTimeNs);
+                //mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp() - mStartTimeNs);
+                //NOTE: setting absolut timestamp. This might cause issues with muxers other than AndroidMuxer 
+                //if they are expecting a relative timestamp
+                mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp());
                 mInputWindowSurface.swapBuffers();
 
                 if (mEosRequested) {

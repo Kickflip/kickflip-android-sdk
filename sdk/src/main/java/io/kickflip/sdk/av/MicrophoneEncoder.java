@@ -95,6 +95,7 @@ public class MicrophoneEncoder implements Runnable{
     public void run() {
         mAudioRecord.startRecording();
         mStartTimeNs = System.nanoTime();
+        previousPTS = 0;
         synchronized (mReadyFence){
             mReady = true;
             mReadyFence.notify();
@@ -140,9 +141,13 @@ public class MicrophoneEncoder implements Runnable{
             if (audioInputBufferIndex >= 0) {
                 ByteBuffer inputBuffer = inputBuffers[audioInputBufferIndex];
                 inputBuffer.clear();
-                audioInputLength =  mAudioRecord.read(inputBuffer, SAMPLES_PER_FRAME * 2);
-                audioRelativePresentationTimeUs = (System.nanoTime() - mStartTimeNs) / 1000;
-                audioRelativePresentationTimeUs -= (audioInputLength / mEncoderCore.mSampleRate ) / 1000000;
+                audioInputLength = mAudioRecord.read(inputBuffer, SAMPLES_PER_FRAME * 2);
+                //audioRelativePresentationTimeUs = (System.nanoTime() - mStartTimeNs) / 1000;
+                //Note: setting absolute timestamp. This might cause problems to muxers other than·
+                //AndroidMuxer if they are expecting a relative timestamp.
+                audioRelativePresentationTimeUs = (System.nanoTime()) / 1000;
+                audioRelativePresentationTimeUs = getJitterFreePTS(audioRelativePresentationTimeUs, audioInputLength/2);
+
                 if(audioInputLength == AudioRecord.ERROR_INVALID_OPERATION)
                     Log.e(TAG, "Audio read error: invalid operation");
                 if(audioInputLength == AudioRecord.ERROR_BAD_VALUE)
@@ -160,5 +165,28 @@ public class MicrophoneEncoder implements Runnable{
             t.printStackTrace();
         }
     }
+
+    long previousPTS = 0;
+
+    /**
+     * Ensures that each audio pts differs by a constant amount from the previous one.
+     * @param pts presentation timestamp in us
+     * @param inputLength the number of samples of the buffer's frame
+     * @return
+     */
+    private long getJitterFreePTS(long pts, long inputLength) {
+       long returnPts;
+       long interval = (1000000 * inputLength) / (mEncoderCore.mSampleRate);
+       pts = pts - interval; // accounts for the delay of acquiring the audio buffer
+       if(previousPTS==0 || (pts - previousPTS) >= 3*interval){
+           // reset
+           returnPts = pts;
+       } else {
+           returnPts = previousPTS + interval;
+       }
+       previousPTS = returnPts;
+       return returnPts;
+    }
+
 
 }
