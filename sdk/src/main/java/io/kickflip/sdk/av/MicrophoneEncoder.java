@@ -64,6 +64,7 @@ public class MicrophoneEncoder implements Runnable{
 
     public void startRecording(){
         mRecordingRequested = true;
+        totalSamplesNum = 0;
         startAudioRecord();
     }
 
@@ -95,7 +96,7 @@ public class MicrophoneEncoder implements Runnable{
     public void run() {
         mAudioRecord.startRecording();
         mStartTimeNs = System.nanoTime();
-        previousPTS = 0;
+        startPTS = 0;
         synchronized (mReadyFence){
             mReady = true;
             mReadyFence.notify();
@@ -166,27 +167,32 @@ public class MicrophoneEncoder implements Runnable{
         }
     }
 
-    long previousPTS = 0;
+    long startPTS = 0;
+    long totalSamplesNum = 0;
 
     /**
      * Ensures that each audio pts differs by a constant amount from the previous one.
-     * @param pts presentation timestamp in us
-     * @param inputLength the number of samples of the buffer's frame
+     * @param bufferPts presentation timestamp in us
+     * @param bufferSamplesNum the number of samples of the buffer's frame
      * @return
      */
-    private long getJitterFreePTS(long pts, long inputLength) {
-       long returnPts;
-       long interval = (1000000 * inputLength) / (mEncoderCore.mSampleRate);
-       pts = pts - interval; // accounts for the delay of acquiring the audio buffer
-       if(previousPTS==0 || (pts - previousPTS) >= 3*interval){
+    private long getJitterFreePTS(long bufferPts, long bufferSamplesNum) {
+       long correctedPts = 0;
+       long bufferDuration = (1000000 * bufferSamplesNum) / (mEncoderCore.mSampleRate);
+       bufferPts -= bufferDuration; // accounts for the delay of acquiring the audio buffer
+       if (totalSamplesNum == 0) {
            // reset
-           returnPts = pts;
-       } else {
-           returnPts = previousPTS + interval;
+           startPTS = bufferPts;
+           totalSamplesNum = 0;
        }
-       previousPTS = returnPts;
-       return returnPts;
+       correctedPts = startPTS +  (1000000 * totalSamplesNum) / (mEncoderCore.mSampleRate);
+       if(bufferPts - correctedPts >= 2*bufferDuration) {
+           // reset
+           startPTS = bufferPts;
+           totalSamplesNum = 0;
+           correctedPts = startPTS;
+       }
+       totalSamplesNum += bufferSamplesNum;
+       return correctedPts;
     }
-
-
 }
