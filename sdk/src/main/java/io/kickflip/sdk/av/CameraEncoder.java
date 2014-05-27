@@ -2,6 +2,7 @@ package io.kickflip.sdk.av;
 
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.hardware.Camera.Parameters;
 import android.opengl.EGLContext;
 import android.opengl.GLSurfaceView;
 import android.os.Handler;
@@ -16,10 +17,12 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import io.kickflip.sdk.event.CameraOpenedEvent;
 import io.kickflip.sdk.view.GLCameraEncoderView;
 import io.kickflip.sdk.view.GLCameraView;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.eventbus.EventBus;
 
 /**
  * @hide
@@ -66,14 +69,18 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private boolean mReady;                                     // mHandler created on Encoder thread
     private boolean mRunning;                                   // Encoder thread running
 
+    private EventBus mEventBus;
+
     private boolean mEncodedFirstFrame;
-    private long mStartTimeNs;
 
     private GLSurfaceView mDisplayView;
     private CameraSurfaceRenderer mDisplayRenderer;
 
     private int mCurrentCamera;
     private int mDesiredCamera;
+
+    private String mCurrentFlash;
+    private String mDesiredFlash;
 
     private boolean mThumbnailRequested;
     private int mThumbnailScaleFactor;
@@ -99,6 +106,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
         mCurrentCamera = -1;
         mDesiredCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
+
+        mCurrentFlash = Parameters.FLASH_MODE_OFF;
+        mDesiredFlash = null;
 
         mCurrentFilter = -1;
         mNewFilter = Filters.FILTER_NONE;
@@ -448,7 +458,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mFullScreen.drawFrame(mTextureId, mTransform);
                 if (TRACE) Trace.endSection();
                 if (!mEncodedFirstFrame) {
-                    mStartTimeNs = mSurfaceTexture.getTimestamp();
                     mEncodedFirstFrame = true;
                 }
 
@@ -460,7 +469,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     mThumbnailRequested = false;
                 }
 
-                mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp() - mStartTimeNs);
+                //mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp() - mStartTimeNs);
+                //NOTE: setting absolut timestamp. This might cause issues with muxers other than AndroidMuxer 
+                //if they are expecting a relative timestamp
+                mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp());
                 mInputWindowSurface.swapBuffers();
 
                 if (mEosRequested) {
@@ -727,6 +739,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
         Camera.Parameters parms = mCamera.getParameters();
 
+        postCameraOpenedEvent(parms);
+
         List<String> focusModes = parms.getSupportedFocusModes();
         if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
             parms.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
@@ -734,6 +748,12 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             parms.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         } else {
             if (VERBOSE) Log.i(TAG, "Camera does not support autofocus");
+        }
+
+        List<String> flashModes = parms.getSupportedFlashModes();
+        String flashMode = (mDesiredFlash != null)? mDesiredFlash : mCurrentFlash;
+        if (isValidFlashMode(flashModes, flashMode)) {
+            parms.setFlashMode(flashMode);
         }
 
         parms.setRecordingHint(true);
@@ -775,7 +795,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             mCamera = null;
         }
     }
-
 
     /**
      * Communicate camera-ready state to our display view.
@@ -852,4 +871,97 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         }
     }
 
+    public int getCurrentCamera() {
+        return mCurrentCamera;
+    }
+
+    public int getDesiredCamera() {
+        return mDesiredCamera;
+    }
+
+    /**
+     * Toggle the flash mode between TORCH and OFF.
+     * This will take effect immediately or as soon
+     * as the camera preview becomes active.
+     * <p/>
+     * Called from UI thread
+     */
+    public void toggleFlashMode() {
+        String otherFlashMode = "";
+        if (mCurrentFlash == Parameters.FLASH_MODE_TORCH) {
+            otherFlashMode = Parameters.FLASH_MODE_OFF;
+        } else {
+            otherFlashMode = Parameters.FLASH_MODE_TORCH;
+        }
+        requestFlash(otherFlashMode);
+    }
+
+    /**
+     * Sets the requested flash mode and restarts the
+     * camera preview. This will take effect immediately
+     * or as soon as the camera preview becomes active.
+     *
+     * <p/>
+     * Called from UI thread
+     *
+     * @param camera
+     */
+    public void requestFlash(String desiredFlash) {
+        mDesiredFlash = desiredFlash;
+        /* If mCamera for some reason is null now flash mode will be applied
+         * next time the camera opens through mDesiredFlash. */
+        if(mCamera == null) {
+            Log.w(TAG, "Ignoring requestFlash: Camera isn't available now.");
+            return;
+        }
+        Parameters params = mCamera.getParameters();
+        List<String> flashModes = params.getSupportedFlashModes();
+        /* If the device doesn't have a camera flash or
+         * doesn't support our desired flash modes return */
+        if (VERBOSE) {
+            Log.i(TAG, "Trying to set flash to: " + mDesiredFlash + " modes available: " + flashModes);
+        }
+
+        if (isValidFlashMode(flashModes, mDesiredFlash) && mDesiredFlash != mCurrentFlash) {
+            mCurrentFlash = mDesiredFlash;
+            mDesiredFlash = null;
+            try {
+                params.setFlashMode(mCurrentFlash);
+                mCamera.setParameters(params);
+                if (VERBOSE) {
+                    Log.i(TAG, "Changed flash successfully!");
+                }
+            } catch (RuntimeException e) {
+                Log.d(TAG, "Unable to set flash" + e);
+            }
+        }
+    }
+
+    /**
+     * @param flashModes
+     * @param flashMode
+     * @return returns true if flashModes aren't null AND they contain the flashMode,
+     * else returns false
+     */
+    private boolean isValidFlashMode(List<String> flashModes, String flashMode) {
+        if (flashModes != null && flashModes.contains(flashMode)) {
+            return true;
+        }
+        return false;
+    }
+
+    /** @return returns the flash mode set in the camera */
+    public String getFlashMode() {
+        return (mDesiredFlash != null) ? mDesiredFlash : mCurrentFlash;
+    }
+
+    private void postCameraOpenedEvent(Parameters params) {
+        if(mEventBus != null) {
+            mEventBus.post(new CameraOpenedEvent(params));
+        }
+    }
+
+    public void setEventBus(EventBus eventBus){
+        mEventBus = eventBus;
+    }
 }

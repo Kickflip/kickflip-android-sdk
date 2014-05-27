@@ -28,7 +28,8 @@ public abstract class Muxer {
     protected String mOutputPath;
     protected int mNumTracks;
     protected int mNumTracksFinished;
-    protected long mLastPts;
+    protected long mFirstPts;
+    protected long mLastPts[];
 
     private EventBus mEventBus;
 
@@ -38,7 +39,11 @@ public abstract class Muxer {
         mFormat = format;
         mNumTracks = 0;
         mNumTracksFinished = 0;
-        mLastPts = 0;
+        mFirstPts = 0;
+        mLastPts = new long[mExpectedNumTracks];
+        for(int i=0; i< mLastPts.length; i++) {
+            mLastPts[i] = -1;
+        }
     }
 
     public void setEventBus(EventBus eventBus){
@@ -146,14 +151,32 @@ public abstract class Muxer {
         }
     }
 
-    protected long getSafePts(long pts) {
-        if (mLastPts >= pts) {
+    /**
+     * Return a relative pts given an absolute pts and trackIndex.
+     *
+     * This method advances the state of the Muxer, and must only
+     * be called once per call to {@link #writeSampleData(android.media.MediaCodec, int, int, java.nio.ByteBuffer, android.media.MediaCodec.BufferInfo)}.
+    */
+    protected long getNextRelativePts(long absPts, int trackIndex) {
+        if (mFirstPts == 0) {
+            mFirstPts = absPts;
+            return 0;
+        }
+        return getSafePts(absPts - mFirstPts, trackIndex);
+    }
+    
+    /**
+     * Sometimes packets with non-increasing pts are dequeued from the MediaCodec output buffer.
+     * This method ensures that a crash won't occur due to non monotonically increasing packet timestamp.
+     */
+    private long getSafePts(long pts, int trackIndex) {
+        if (mLastPts[trackIndex] >= pts) {
             // Enforce a non-zero minimum spacing
             // between pts
-            mLastPts += 9643;
-            return mLastPts;
+            mLastPts[trackIndex] += 9643;
+            return mLastPts[trackIndex];
         }
-        mLastPts = pts;
+        mLastPts[trackIndex] = pts;
         return pts;
     }
 }

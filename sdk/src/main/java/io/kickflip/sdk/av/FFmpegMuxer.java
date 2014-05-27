@@ -221,15 +221,17 @@ public class FFmpegMuxer extends Muxer implements Runnable {
         encodedData.position(bufferInfo.offset);
         encodedData.limit(bufferInfo.offset + bufferInfo.size);
 
+        bufferInfo.presentationTimeUs = getNextRelativePts(bufferInfo.presentationTimeUs, trackIndex);
+
         if (VERBOSE)
-            Log.i(TAG, mPacketCount + " PTS " + getSafePts(bufferInfo.presentationTimeUs) + " size: " + bufferInfo.size + " " + (trackIndex == mVideoTrackIndex ? "video " : "audio ") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ? "keyframe" : "") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) ? " EOS" : ""));
+            Log.i(TAG, mPacketCount + " PTS " + bufferInfo.presentationTimeUs + " size: " + bufferInfo.size + " " + (trackIndex == mVideoTrackIndex ? "video " : "audio ") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0) ? "keyframe" : "") + (((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) ? " EOS" : ""));
         if (DEBUG_PKTS) writePacketToFile(encodedData, bufferInfo);
         if (!allTracksFinished()) {
             if (trackIndex == mVideoTrackIndex && ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0)) {
                 packageH264Keyframe(encodedData, bufferInfo);
-                mFFmpeg.writeAVPacketFromEncodedData(mH264Keyframe, 1, bufferInfo.offset, bufferInfo.size + mH264MetaSize, bufferInfo.flags, getSafePts(bufferInfo.presentationTimeUs));
+                mFFmpeg.writeAVPacketFromEncodedData(mH264Keyframe, 1, bufferInfo.offset, bufferInfo.size + mH264MetaSize, bufferInfo.flags, bufferInfo.presentationTimeUs);
             } else
-                mFFmpeg.writeAVPacketFromEncodedData(encodedData, (trackIndex == mVideoTrackIndex ? 1 : 0), bufferInfo.offset, bufferInfo.size, bufferInfo.flags, getSafePts(bufferInfo.presentationTimeUs));
+                mFFmpeg.writeAVPacketFromEncodedData(encodedData, (trackIndex == mVideoTrackIndex ? 1 : 0), bufferInfo.offset, bufferInfo.size, bufferInfo.flags, bufferInfo.presentationTimeUs);
 
         }
 

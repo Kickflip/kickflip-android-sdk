@@ -31,7 +31,6 @@ public class MicrophoneEncoder implements Runnable {
     private AudioRecord mAudioRecord;
     private AudioEncoderCore mEncoderCore;
 
-    private long mStartTimeNs;
     private boolean mRecordingRequested;
 
     public MicrophoneEncoder(SessionConfig config) {
@@ -115,8 +114,8 @@ public class MicrophoneEncoder implements Runnable {
     @Override
     public void run() {
         mAudioRecord.startRecording();
-        mStartTimeNs = System.nanoTime();
-        synchronized (mReadyFence) {
+        startPTS = 0;
+        synchronized (mReadyFence){
             mThreadReady = true;
             mReadyFence.notify();
         }
@@ -172,9 +171,13 @@ public class MicrophoneEncoder implements Runnable {
                 ByteBuffer inputBuffer = inputBuffers[audioInputBufferIndex];
                 inputBuffer.clear();
                 audioInputLength = mAudioRecord.read(inputBuffer, SAMPLES_PER_FRAME * 2);
-                audioRelativePresentationTimeUs = (System.nanoTime() - mStartTimeNs) / 1000;
-                audioRelativePresentationTimeUs -= (audioInputLength / mEncoderCore.mSampleRate) / 1000000;
-                if (audioInputLength == AudioRecord.ERROR_INVALID_OPERATION)
+                //audioRelativePresentationTimeUs = (System.nanoTime() - mStartTimeNs) / 1000;
+                //Note: setting absolute timestamp. This might cause problems to muxers other than·
+                //AndroidMuxer if they are expecting a relative timestamp.
+                audioRelativePresentationTimeUs = (System.nanoTime()) / 1000;
+                audioRelativePresentationTimeUs = getJitterFreePTS(audioRelativePresentationTimeUs, audioInputLength/2);
+
+                if(audioInputLength == AudioRecord.ERROR_INVALID_OPERATION)
                     Log.e(TAG, "Audio read error: invalid operation");
                 if (audioInputLength == AudioRecord.ERROR_BAD_VALUE)
                     Log.e(TAG, "Audio read error: bad value");
@@ -193,4 +196,32 @@ public class MicrophoneEncoder implements Runnable {
         }
     }
 
+    long startPTS = 0;
+    long totalSamplesNum = 0;
+
+    /**
+     * Ensures that each audio pts differs by a constant amount from the previous one.
+     * @param bufferPts presentation timestamp in us
+     * @param bufferSamplesNum the number of samples of the buffer's frame
+     * @return
+     */
+    private long getJitterFreePTS(long bufferPts, long bufferSamplesNum) {
+       long correctedPts = 0;
+       long bufferDuration = (1000000 * bufferSamplesNum) / (mEncoderCore.mSampleRate);
+       bufferPts -= bufferDuration; // accounts for the delay of acquiring the audio buffer
+       if (totalSamplesNum == 0) {
+           // reset
+           startPTS = bufferPts;
+           totalSamplesNum = 0;
+       }
+       correctedPts = startPTS +  (1000000 * totalSamplesNum) / (mEncoderCore.mSampleRate);
+       if(bufferPts - correctedPts >= 2*bufferDuration) {
+           // reset
+           startPTS = bufferPts;
+           totalSamplesNum = 0;
+           correctedPts = startPTS;
+       }
+       totalSamplesNum += bufferSamplesNum;
+       return correctedPts;
+    }
 }
