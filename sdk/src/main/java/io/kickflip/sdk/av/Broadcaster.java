@@ -208,6 +208,7 @@ public class Broadcaster extends AVRecorder {
         mStream.setIsPrivate(mConfig.isPrivate());
         if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
         mS3Manager = new S3BroadcastManager(this, new BasicAWSCredentials(mStream.getAwsKey(), mStream.getAwsSecret()));
+        mS3Manager.setRegion(mStream.getRegion());
         mS3Manager.addRequestInterceptor(mS3RequestInterceptor);
         mReadyToBroadcast = true;
         submitQueuedUploadsToS3();

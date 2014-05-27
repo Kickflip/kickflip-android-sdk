@@ -10,6 +10,9 @@ public class HlsStream extends Stream {
     @Key("bucket_name")
     private String mBucket;
 
+    @Key("aws_region")
+    private String mRegion;
+
     @Key("aws_prefix")
     private String mPrefix;
 
@@ -21,6 +24,10 @@ public class HlsStream extends Stream {
 
     public String getAwsS3Bucket() {
         return mBucket;
+    }
+
+    public String getRegion() {
+        return mRegion;
     }
 
     public String getAwsS3Prefix() {
