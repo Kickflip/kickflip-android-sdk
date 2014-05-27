@@ -48,29 +48,29 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 // TODO: Standardize Kickflip server error responses to have detail message
 public class KickflipApiClient extends OAuthClient {
-    private static final boolean VERBOSE = false;
-    private static final boolean DEV_ENDPOINT = false;
-    private static final String NEW_USER = "/user/new";
-    private static final String GET_USER_PUBLIC = "/user/info";
-    private static final String GET_USER_PRIVATE = "/user/uuid";
-    private static final String EDIT_USER = "/user/change";
-    private static final String START_STREAM = "/stream/start";
-    private static final String STOP_STREAM = "/stream/stop";
-    private static final String SET_META = "/stream/change";
-    private static final String GET_META = "/stream/info";
-    private static final String FLAG_STREAM = "/stream/flag";
-    private static final String SEARCH_KEYWORD = "/search";
-    private static final String SEARCH_USER = "/search/user";
-    private static final String SEARCH_GEO = "/search/location";
-    private static final String API_VERSION = "/1.1";
-    private static final int MAX_EOF_RETRIES = 1;
-    private static int UNKNOWN_ERROR_CODE = R.integer.generic_error;;    // Error code used when none provided from server
-    private static final String TAG = "KickflipApiClient";
+    private static final String TAG                 = "KickflipApiClient";
+    private static final boolean VERBOSE            = false;
+    private static final boolean DEV_ENDPOINT       = false;
+    private static final String NEW_USER            = "/user/new";
+    private static final String GET_USER_PUBLIC     = "/user/info";
+    private static final String GET_USER_PRIVATE    = "/user/uuid";
+    private static final String EDIT_USER           = "/user/change";
+    private static final String START_STREAM        = "/stream/start";
+    private static final String STOP_STREAM         = "/stream/stop";
+    private static final String SET_META            = "/stream/change";
+    private static final String GET_META            = "/stream/info";
+    private static final String FLAG_STREAM         = "/stream/flag";
+    private static final String SEARCH_KEYWORD      = "/search";
+    private static final String SEARCH_USER         = "/search/user";
+    private static final String SEARCH_GEO          = "/search/location";
+    private static final String API_VERSION         = "/1.1";
+    private static final int MAX_EOF_RETRIES        = 1;
+    private static int UNKNOWN_ERROR_CODE           = R.integer.generic_error;    // Error code used when none provided from server
     private static String BASE_URL;
-    private JsonObjectParser mJsonObjectParser;         // Re-used across requests
-    private JsonFactory mJsonFactory;                   // Re-used across requests
+    private JsonObjectParser mJsonObjectParser;             // Re-used across requests
+    private JsonFactory mJsonFactory;                       // Re-used across requests
 
-    private Handler mCallbackHandler;                   // Ensure callbacks are posted to consistent thread
+    private Handler mCallbackHandler;                       // Ensure callbacks are posted to consistent thread
 
     /**
      * Construct a KickflipApiClient. All callbacks from this client will occur
