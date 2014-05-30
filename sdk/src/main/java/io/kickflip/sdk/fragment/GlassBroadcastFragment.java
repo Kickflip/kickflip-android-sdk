@@ -8,10 +8,6 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -31,7 +27,6 @@ import io.kickflip.sdk.R;
 import io.kickflip.sdk.Share;
 import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.Broadcaster;
-import io.kickflip.sdk.av.FullFrameRect;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.event.BroadcastIsLiveEvent;
 import io.kickflip.sdk.view.GLCameraEncoderView;
@@ -41,10 +36,10 @@ import io.kickflip.sdk.view.GLCameraEncoderView;
  * Currently, only one BroadcastFragment may be instantiated at a time by
  * design of {@link io.kickflip.sdk.av.Broadcaster}.
  */
-public class BroadcastFragment extends Fragment implements AdapterView.OnItemSelectedListener {
-    private static final String TAG = "BroadcastFragment";
-    private static final boolean VERBOSE = false;
-    private static BroadcastFragment mFragment;
+public class GlassBroadcastFragment extends Fragment implements AdapterView.OnItemSelectedListener {
+    private static final String TAG = "GlassBroadcastFragment";
+    private static final boolean VERBOSE = true;
+    private static GlassBroadcastFragment mFragment;
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
     private GLCameraEncoderView mCameraView;
     private TextView mLiveBanner;
@@ -76,70 +71,12 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         }
     };
 
-    private SensorEventListener mOrientationListener = new SensorEventListener() {
-        final int SENSOR_CONFIRMATION_THRESHOLD = 5;
-        int[] confirmations = new int[2];
-        int orientation = -1;
-
-        @Override
-        public void onSensorChanged(SensorEvent event) {
-            if (getActivity() != null && getActivity().findViewById(R.id.rotateDeviceHint) != null) {
-                //Log.i(TAG, "Sensor " + event.values[1]);
-                if (event.values[1] > 10 || event.values[1] < -10) {
-                    // Sensor noise. Ignore.
-                } else if (event.values[1] < 5.5 && event.values[1] > -5.5) {
-                    // Landscape
-                    if (orientation != 1 && readingConfirmed(1)) {
-                        if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
-                            if (event.values[0] > 0) {
-                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.LANDSCAPE);
-                            } else {
-                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.UPSIDEDOWN_LANDSCAPE);
-                            }
-                        } else {
-                            getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.GONE);
-                        }
-                        orientation = 1;
-                    }
-                } else if (event.values[1] > 7.5 || event.values[1] < -7.5) {
-                    // Portrait
-                    if (orientation != 0 && readingConfirmed(0)) {
-                        if (mBroadcaster.getSessionConfig().isConvertingVerticalVideo()) {
-                            if (event.values[1] > 0) {
-                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.VERTICAL);
-                            } else {
-                                mBroadcaster.signalVerticalVideo(FullFrameRect.SCREEN_ROTATION.UPSIDEDOWN_VERTICAL);
-                            }
-                        } else {
-                            getActivity().findViewById(R.id.rotateDeviceHint).setVisibility(View.VISIBLE);
-                        }
-                        orientation = 0;
-                    }
-                }
-            }
-        }
-
-        /**
-         * Determine if a sensor reading is trustworthy
-         * based on a series of consistent readings
-         */
-        private boolean readingConfirmed(int orientation) {
-            confirmations[orientation]++;
-            confirmations[orientation == 0 ? 1 : 0] = 0;
-            return confirmations[orientation] > SENSOR_CONFIRMATION_THRESHOLD;
-        }
-
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        }
-    };
-
-    public BroadcastFragment() {
+    public GlassBroadcastFragment() {
         // Required empty public constructor
         if (VERBOSE) Log.i(TAG, "construct");
     }
 
-    public static BroadcastFragment getInstance() {
+    public static GlassBroadcastFragment getInstance() {
         if (mFragment == null) {
             // We haven't yet created a BroadcastFragment instance
             mFragment = recreateBroadcastFragment();
@@ -153,10 +90,10 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         return mFragment;
     }
 
-    private static BroadcastFragment recreateBroadcastFragment() {
+    private static GlassBroadcastFragment recreateBroadcastFragment() {
         Log.i(TAG, "Recreating BroadcastFragment");
         mBroadcaster = null;
-        return new BroadcastFragment();
+        return new GlassBroadcastFragment();
     }
 
     @Override
@@ -167,6 +104,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
             Log.e(TAG, "Kickflip not properly prepared by BroadcastFragment's onCreate. SessionConfig: " + Kickflip.getSessionConfig() + " key " + Kickflip.getApiKey() + " secret " + Kickflip.getApiSecret());
         } else {
             setupBroadcaster();
+            mBroadcaster.startRecording();
         }
     }
 
@@ -188,7 +126,6 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         super.onResume();
         if (mBroadcaster != null)
             mBroadcaster.onHostActivityResumed();
-        startMonitoringOrientation();
     }
 
     @Override
@@ -196,7 +133,6 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         super.onPause();
         if (mBroadcaster != null)
             mBroadcaster.onHostActivityPaused();
-        stopMonitoringOrientation();
     }
 
     @Override
@@ -220,6 +156,10 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
             mBroadcaster.setPreviewDisplay(mCameraView);
             Button recordButton = (Button) root.findViewById(R.id.recordButton);
 
+            // Hide views for glass
+            recordButton.setVisibility(View.GONE);
+            root.findViewById(R.id.filterSpinner).setVisibility(View.GONE);
+
             recordButton.setOnClickListener(mRecordButtonClickListener);
             mLiveBanner.setOnClickListener(mShareButtonClickListener);
 
@@ -240,6 +180,7 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
             root = new View(container.getContext());
         return root;
     }
+
 
     protected void setupBroadcaster() {
         // By making the recorder static we can allow
@@ -370,23 +311,6 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         if (mBroadcaster.isRecording()) {
             mBroadcaster.stopRecording();
             mBroadcaster.release();
-        }
-    }
-
-
-    protected void startMonitoringOrientation() {
-        if (getActivity() != null) {
-            SensorManager sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-            sensorManager.registerListener(mOrientationListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-        }
-    }
-
-    protected void stopMonitoringOrientation() {
-        if (getActivity() != null) {
-            View deviceHint = getActivity().findViewById(R.id.rotateDeviceHint);
-            if (deviceHint != null) deviceHint.setVisibility(View.GONE);
-            SensorManager sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-            sensorManager.unregisterListener(mOrientationListener);
         }
     }
 }

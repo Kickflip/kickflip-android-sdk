@@ -8,6 +8,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
 import com.google.common.eventbus.EventBus;
 
@@ -15,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 
 import io.kickflip.sdk.activity.BroadcastActivity;
+import io.kickflip.sdk.activity.GlassBroadcastActivity;
 import io.kickflip.sdk.activity.MediaPlayerActivity;
 import io.kickflip.sdk.api.KickflipApiClient;
 import io.kickflip.sdk.api.KickflipCallback;
@@ -74,6 +76,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Note that SessionConfig is initialized with sane defaults for a 720p broadcast. Every parameter is optional.
  */
 public class Kickflip {
+    public static final String TAG = "Kickflip";
     private static Context sContext;
     private static String sClientKey;
     private static String sClientSecret;
@@ -138,6 +141,20 @@ public class Kickflip {
         checkNotNull(sClientSecret);
         sBroadcastListener = listener;
         Intent broadcastIntent = new Intent(host, BroadcastActivity.class);
+        broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        host.startActivity(broadcastIntent);
+    }
+
+    public static void startGlassBroadcastActivity(Activity host, BroadcastListener listener) {
+        checkNotNull(listener, host.getString(R.string.error_no_broadcastlistener));
+        if (sSessionConfig == null) {
+            setupDefaultSessionConfig();
+        }
+        checkNotNull(sClientKey);
+        checkNotNull(sClientSecret);
+        sBroadcastListener = listener;
+        Log.i(TAG, "startGlassBA ready? " + readyToBroadcast());
+        Intent broadcastIntent = new Intent(host, GlassBroadcastActivity.class);
         broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         host.startActivity(broadcastIntent);
     }
@@ -248,6 +265,7 @@ public class Kickflip {
      * @hide
      */
     public static void clearSessionConfig() {
+        Log.i(TAG, "Clearing SessionConfig");
         sSessionConfig = null;
     }
 
@@ -327,6 +345,7 @@ public class Kickflip {
     }
 
     private static void setupDefaultSessionConfig() {
+        Log.i(TAG, "Setting default SessonConfig");
         checkNotNull(sContext);
         String outputLocation = new File(sContext.getFilesDir(), "index.m3u8").getAbsolutePath();
         Kickflip.setSessionConfig(new SessionConfig.Builder(outputLocation)
