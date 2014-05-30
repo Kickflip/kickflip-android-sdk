@@ -11,6 +11,7 @@ import android.os.Build;
 
 import com.google.common.eventbus.EventBus;
 
+import java.io.File;
 import java.io.IOException;
 
 import io.kickflip.sdk.activity.BroadcastActivity;
@@ -327,7 +328,8 @@ public class Kickflip {
 
     private static void setupDefaultSessionConfig() {
         checkNotNull(sContext);
-        Kickflip.setSessionConfig(new SessionConfig.Builder(sContext.getFilesDir().getAbsolutePath())
+        String outputLocation = new File(sContext.getFilesDir(), "index.m3u8").getAbsolutePath();
+        Kickflip.setSessionConfig(new SessionConfig.Builder(outputLocation)
                 .withVideoBitrate(100 * 1000)
                 .withPrivateVisibility(false)
                 .withLocation(true)
