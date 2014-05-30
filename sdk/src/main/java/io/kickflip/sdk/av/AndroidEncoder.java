@@ -99,7 +99,7 @@ public abstract class AndroidEncoder {
                         // It is the muxer's responsibility to release encodedData
                         mMuxer.writeSampleData(mEncoder, mTrackIndex, encoderStatus, encodedData, mBufferInfo);
                         if (VERBOSE) {
-                            Log.d(TAG, "sent " + mBufferInfo.size + " bytes to muxer, ts=" +
+                            Log.d(TAG, "sent " + mBufferInfo.size + " bytes to muxer, \t ts=" +
                                     mBufferInfo.presentationTimeUs + "track " + mTrackIndex);
                         }
                     }

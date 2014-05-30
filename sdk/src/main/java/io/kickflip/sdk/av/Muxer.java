@@ -42,7 +42,7 @@ public abstract class Muxer {
         mFirstPts = 0;
         mLastPts = new long[mExpectedNumTracks];
         for(int i=0; i< mLastPts.length; i++) {
-            mLastPts[i] = -1;
+            mLastPts[i] = 0;
         }
     }
 

@@ -12,6 +12,8 @@ import android.os.Trace;
 import android.util.Log;
 import android.view.MotionEvent;
 
+import com.google.common.eventbus.EventBus;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -22,7 +24,6 @@ import io.kickflip.sdk.view.GLCameraEncoderView;
 import io.kickflip.sdk.view.GLCameraView;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import com.google.common.eventbus.EventBus;
 
 /**
  * @hide
@@ -468,10 +469,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     saveFrameAsImage();
                     mThumbnailRequested = false;
                 }
-
-                //mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp() - mStartTimeNs);
-                //NOTE: setting absolut timestamp. This might cause issues with muxers other than AndroidMuxer 
-                //if they are expecting a relative timestamp
                 mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp());
                 mInputWindowSurface.swapBuffers();
 
@@ -904,7 +901,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * <p/>
      * Called from UI thread
      *
-     * @param camera
      */
     public void requestFlash(String desiredFlash) {
         mDesiredFlash = desiredFlash;
