@@ -208,6 +208,7 @@ public class Broadcaster extends AVRecorder {
         mStream.setIsPrivate(mConfig.isPrivate());
         if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
         mS3Manager = new S3BroadcastManager(this, new BasicAWSCredentials(mStream.getAwsKey(), mStream.getAwsSecret()));
+        mS3Manager.setRegion(mStream.getRegion());
         mS3Manager.addRequestInterceptor(mS3RequestInterceptor);
         mReadyToBroadcast = true;
         submitQueuedUploadsToS3();
@@ -523,7 +524,7 @@ public class Broadcaster extends AVRecorder {
     S3BroadcastManager.S3RequestInterceptor mS3RequestInterceptor = new S3BroadcastManager.S3RequestInterceptor() {
         @Override
         public void interceptRequest(PutObjectRequest request) {
-            if (request.getKey().contains(".m3u8")) {
+            if (request.getKey().contains("index.m3u8")) {
                 if (mS3ManifestMeta == null) {
                     mS3ManifestMeta = new ObjectMetadata();
                     mS3ManifestMeta.setCacheControl("max-age=0");

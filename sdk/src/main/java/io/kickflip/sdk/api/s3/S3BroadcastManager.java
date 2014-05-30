@@ -6,6 +6,8 @@ import android.util.Pair;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.event.ProgressEvent;
 import com.amazonaws.event.ProgressListener;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.transfer.TransferManager;
@@ -55,6 +57,12 @@ public class S3BroadcastManager implements Runnable {
      */
     public void addRequestInterceptor(S3RequestInterceptor interceptor) {
         mInterceptors.add(new WeakReference<S3RequestInterceptor>(interceptor));
+    }
+
+    public void setRegion(String regionStr) {
+        if (regionStr == null || regionStr.equals("")) return;
+        Region region = Region.getRegion(Regions.fromName(regionStr));
+        mTransferManager.getAmazonS3Client().setRegion(region);
     }
 
 
