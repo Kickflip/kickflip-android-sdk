@@ -1,6 +1,7 @@
 package io.kickflip.sdk.activity;
 
 import android.os.Bundle;
+import android.view.KeyEvent;
 
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
@@ -36,6 +37,16 @@ public class GlassBroadcastActivity extends ImmersiveActivity implements Broadca
             mFragment.stopBroadcasting();
         }
         super.onBackPressed();
+    }
+
+    @Override
+    public boolean onKeyDown(int keycode, KeyEvent event) {
+        if (keycode == KeyEvent.KEYCODE_DPAD_CENTER) {
+            mFragment.stopBroadcasting();
+            finish();
+            return true;
+        } else
+            return super.onKeyDown(keycode, event);
     }
 
     @Override

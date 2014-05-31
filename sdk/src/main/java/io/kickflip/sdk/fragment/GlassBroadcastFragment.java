@@ -310,6 +310,7 @@ public class GlassBroadcastFragment extends Fragment implements AdapterView.OnIt
     public void stopBroadcasting() {
         if (mBroadcaster.isRecording()) {
             mBroadcaster.stopRecording();
+            if (mListener != null) mListener.onBroadcastStop();
             mBroadcaster.release();
         }
     }
