@@ -388,7 +388,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         if (mState != STATE.RECORDING) throw new IllegalArgumentException("StopRecording called in invalid state");
         mState = STATE.STOPPING;
         Log.i(TAG, "stopRecording");
-        mEosRequested = true;
+        synchronized (mReadyForFrameFence) {
+            mEosRequested = true;
+        }
     }
 
 
@@ -404,9 +406,9 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             Log.i(TAG, "Release called while stopping. Trying to sync");
             synchronized (mStopFence) {
                 while (mState != STATE.UNINITIALIZED) {
-                    Log.i(TAG, "Release called while stopping. Waiting...");
+                    Log.i(TAG, "Release called while stopping. Waiting for uninit'd state. Current state: " + mState);
                     try {
-                        mStopFence.wait(250);
+                        mStopFence.wait();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -502,15 +504,13 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     saveFrameAsImage();
                     mThumbnailRequested = false;
                 }
-                if (mEosRequested) {
-                    mVideoEncoder.forceEos();
-                    if (VERBOSE) Log.i(TAG, "Calling forceEos");
-                }
+
                 mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp());
                 mInputWindowSurface.swapBuffers();
 
                 if (mEosRequested) {
-                    if (VERBOSE) Log.i(TAG, "Sent last video frame. Draining encoder");
+                    if (VERBOSE) Log.i(TAG, "Sending last video frame. Draining encoder");
+                    mVideoEncoder.signalEndOfStream();
                     mVideoEncoder.drainEncoder(true);
                     mRecording = false;
                     mEosRequested = false;

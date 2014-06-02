@@ -182,10 +182,11 @@ public class Broadcaster extends AVRecorder {
     @Override
     public void startRecording() {
         super.startRecording();
-        mCamEncoder.requestThumbnailOnFrameWithScaling(60, 2);
         mKickflip.startStream(mConfig.getStream(), new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
+                mCamEncoder.requestThumbnail(1);
+                Log.i(TAG, "got StartStreamResponse");
                 checkArgument(response instanceof HlsStream, "Got unexpected StartStream Response");
                 onGotStreamResponse((HlsStream) response);
             }
@@ -334,6 +335,12 @@ public class Broadcaster extends AVRecorder {
      */
     @Subscribe
     public void onManifestUpdated(HlsManifestWrittenEvent e) {
+        if (!isRecording()) {
+            if (Kickflip.getBroadcastListener() != null) {
+                if (VERBOSE) Log.i(TAG, "Sending onBroadcastStop");
+                Kickflip.getBroadcastListener().onBroadcastStop();
+            }
+        }
         if (VERBOSE) Log.i(TAG, "onManifestUpdated. Last segment? " + !isRecording());
         // Copy m3u8 at this moment and queue it to uploading
         // service

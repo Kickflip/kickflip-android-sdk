@@ -24,7 +24,12 @@ public abstract class AndroidEncoder {
     protected int mTrackIndex;
     protected volatile boolean mForceEos = false;
 
-    public void forceEos() {
+    /**
+     * This method should be called before the last input packet is queued
+     * Some devices don't honor MediaCodec#signalEndOfInputStream
+     * e.g: Google Glass
+     */
+    public void signalEndOfStream() {
         mForceEos = true;
     }
 
@@ -51,7 +56,7 @@ public abstract class AndroidEncoder {
     }
 
     public void drainEncoder(boolean endOfStream) {
-        if (endOfStream) {
+        if (endOfStream && VERBOSE) {
             if (isSurfaceInputEncoder()) {
                 Log.i(TAG, "final video drain");
             } else {
@@ -64,10 +69,12 @@ public abstract class AndroidEncoder {
 
             if (endOfStream) {
                 if (VERBOSE) Log.d(TAG, "sending EOS to encoder for track " + mTrackIndex);
-                if(isSurfaceInputEncoder()){
-                    if (VERBOSE) Log.i(TAG, "signalEndOfInputStream for track " + mTrackIndex);
-                    mEncoder.signalEndOfInputStream();
-                }
+//                When all target devices honor MediaCodec#signalEndOfInputStream, return to this method
+//                if(isSurfaceInputEncoder()){
+//                    if (VERBOSE) Log.i(TAG, "signalEndOfInputStream for track " + mTrackIndex);
+//                    mEncoder.signalEndOfInputStream();
+//                    // Note: This method isn't honored on certain devices including Google Glass
+//                }
             }
 
             ByteBuffer[] encoderOutputBuffers = mEncoder.getOutputBuffers();
@@ -78,7 +85,7 @@ public abstract class AndroidEncoder {
                     if (!endOfStream) {
                         break;      // out of while
                     } else {
-                        if (VERBOSE) Log.d(TAG, "no output available, spinning to await EOS");
+                        /*if (VERBOSE) */Log.d(TAG, "no output available, spinning to await EOS");
                     }
                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     // not expected for an encoder
@@ -127,6 +134,13 @@ public abstract class AndroidEncoder {
                         }
                         break;      // out of while
                     }
+                }
+            }
+            if (endOfStream && VERBOSE) {
+                if (isSurfaceInputEncoder()) {
+                    Log.i(TAG, "final video drain complete");
+                } else {
+                    Log.i(TAG, "final audio drain complete");
                 }
             }
         }

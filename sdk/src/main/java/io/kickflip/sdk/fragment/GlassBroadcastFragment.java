@@ -3,29 +3,22 @@ package io.kickflip.sdk.fragment;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
-import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.common.eventbus.Subscribe;
 
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
-import io.kickflip.sdk.Share;
-import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
 import io.kickflip.sdk.event.BroadcastIsLiveEvent;
@@ -36,40 +29,13 @@ import io.kickflip.sdk.view.GLCameraEncoderView;
  * Currently, only one BroadcastFragment may be instantiated at a time by
  * design of {@link io.kickflip.sdk.av.Broadcaster}.
  */
-public class GlassBroadcastFragment extends Fragment implements AdapterView.OnItemSelectedListener {
+public class GlassBroadcastFragment extends Fragment {
     private static final String TAG = "GlassBroadcastFragment";
     private static final boolean VERBOSE = false;
     private static GlassBroadcastFragment mFragment;
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
     private GLCameraEncoderView mCameraView;
     private TextView mLiveBanner;
-
-    View.OnClickListener mShareButtonClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (v.getTag() != null) {
-                Intent shareIntent = Share.createShareChooserIntentWithTitleAndUrl(getActivity(), getString(R.string.share_broadcast), (String) v.getTag());
-                startActivity(shareIntent);
-            }
-        }
-    };
-
-    private BroadcastListener mListener;
-    View.OnClickListener mRecordButtonClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (mBroadcaster.isRecording()) {
-                mBroadcaster.stopRecording();
-                hideLiveBanner();
-                if (mListener != null)
-                    mListener.onBroadcastStop();
-            } else {
-                mBroadcaster.startRecording();
-                //stopMonitoringOrientation();
-                v.setBackgroundResource(R.drawable.red_dot_stop);
-            }
-        }
-    };
 
     public GlassBroadcastFragment() {
         // Required empty public constructor
@@ -113,12 +79,6 @@ public class GlassBroadcastFragment extends Fragment implements AdapterView.OnIt
         super.onAttach(activity);
         getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         if (VERBOSE) Log.i(TAG, "onAttach");
-        try {
-            mListener = (BroadcastListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement BroadcastListener");
-        }
     }
 
     @Override
@@ -159,23 +119,22 @@ public class GlassBroadcastFragment extends Fragment implements AdapterView.OnIt
             // Hide views for glass
             recordButton.setVisibility(View.GONE);
             root.findViewById(R.id.filterSpinner).setVisibility(View.GONE);
-
-            recordButton.setOnClickListener(mRecordButtonClickListener);
-            mLiveBanner.setOnClickListener(mShareButtonClickListener);
+            root.findViewById(R.id.cameraFlipper).setVisibility(View.GONE);
+           // mLiveBanner.setOnClickListener(mShareButtonClickListener);
 
             if (mBroadcaster.isLive()) {
                 setBannerToLiveState();
                 mLiveBanner.setVisibility(View.VISIBLE);
             }
-            if (mBroadcaster.isRecording()) {
-                recordButton.setBackgroundResource(R.drawable.red_dot_stop);
-                if (!mBroadcaster.isLive()) {
-                    setBannerToBufferingState();
-                    mLiveBanner.setVisibility(View.VISIBLE);
-                }
-            }
-            setupFilterSpinner(root);
-            setupCameraFlipper(root);
+            // This fragment begins recording immediately
+            // Assume we won't be background recording on Glass
+//            if (mBroadcaster.isRecording()) {
+//                recordButton.setBackgroundResource(R.drawable.red_dot_stop);
+//                if (!mBroadcaster.isLive()) {
+//                    setBannerToBufferingState();
+//                    mLiveBanner.setVisibility(View.VISIBLE);
+//                }
+//            }
         } else
             root = new View(container.getContext());
         return root;
@@ -201,41 +160,6 @@ public class GlassBroadcastFragment extends Fragment implements AdapterView.OnIt
                 Kickflip.clearSessionConfig();
             }
         }
-    }
-
-    private void setupFilterSpinner(View root) {
-        Spinner spinner = (Spinner) root.findViewById(R.id.filterSpinner);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
-                R.array.camera_filter_names, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        // Apply the adapter to the spinner.
-        spinner.setAdapter(adapter);
-        spinner.setOnItemSelectedListener(this);
-    }
-
-    private void setupCameraFlipper(View root) {
-        View flipper = root.findViewById(R.id.cameraFlipper);
-        if (Camera.getNumberOfCameras() == 1) {
-            flipper.setVisibility(View.GONE);
-        } else {
-            flipper.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mBroadcaster.requestOtherCamera();
-                }
-            });
-        }
-    }
-
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        if (((String) parent.getTag()).compareTo("filter") == 0) {
-            mBroadcaster.applyFilter(position);
-        }
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
     }
 
     @Subscribe
@@ -310,8 +234,9 @@ public class GlassBroadcastFragment extends Fragment implements AdapterView.OnIt
     public void stopBroadcasting() {
         if (mBroadcaster.isRecording()) {
             mBroadcaster.stopRecording();
-            if (mListener != null) mListener.onBroadcastStop();
             mBroadcaster.release();
+        } else {
+            Log.e(TAG, "stopBroadcasting called but mBroadcaster not broadcasting");
         }
     }
 }
