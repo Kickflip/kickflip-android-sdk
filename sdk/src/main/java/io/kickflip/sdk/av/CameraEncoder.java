@@ -511,10 +511,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
                 if (mEosRequested) {
                     if (VERBOSE) Log.i(TAG, "Sent last video frame. Draining encoder");
-                    // When all target devices support MediaCodec#signalEndOfInputStream()
-                    // return to drainEncoder(true). Meanwhile use AndroidEncoder#signalEndOfStream()
-                    //mVideoEncoder.drainEncoder(true);
-                    mVideoEncoder.drainEncoder(false);
+                    mVideoEncoder.drainEncoder(true);
                     mRecording = false;
                     mEosRequested = false;
                     releaseEncoder();
