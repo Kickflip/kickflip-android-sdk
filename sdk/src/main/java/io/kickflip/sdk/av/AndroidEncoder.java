@@ -56,7 +56,7 @@ public abstract class AndroidEncoder {
     }
 
     public void drainEncoder(boolean endOfStream) {
-        if (endOfStream) {
+        if (endOfStream && VERBOSE) {
             if (isSurfaceInputEncoder()) {
                 Log.i(TAG, "final video drain");
             } else {
@@ -134,6 +134,13 @@ public abstract class AndroidEncoder {
                         }
                         break;      // out of while
                     }
+                }
+            }
+            if (endOfStream && VERBOSE) {
+                if (isSurfaceInputEncoder()) {
+                    Log.i(TAG, "final video drain complete");
+                } else {
+                    Log.i(TAG, "final audio drain complete");
                 }
             }
         }

@@ -13,15 +13,19 @@ import io.kickflip.sdk.fragment.GlassBroadcastFragment;
 /**
  * BroadcastActivity manages a single live broadcast. It's a thin wrapper around {@link io.kickflip.sdk.fragment.BroadcastFragment}
  */
-public class GlassBroadcastActivity extends ImmersiveActivity implements BroadcastListener {
+public class GlassBroadcastActivity extends ImmersiveActivity implements BroadcastListener{
     private static final String TAG = "GlassBroadcastActivity";
 
     private GlassBroadcastFragment mFragment;
+    private BroadcastListener mMainBroadcastListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_broadcast);
+
+        mMainBroadcastListener = Kickflip.getBroadcastListener();
+        Kickflip.setBroadcastListener(this);
 
         if (savedInstanceState == null) {
             mFragment = GlassBroadcastFragment.getInstance();
@@ -55,23 +59,23 @@ public class GlassBroadcastActivity extends ImmersiveActivity implements Broadca
 
     @Override
     public void onBroadcastStart() {
-        Kickflip.getBroadcastListener().onBroadcastStart();
+        mMainBroadcastListener.onBroadcastStart();
     }
 
     @Override
     public void onBroadcastLive(Stream stream) {
-        Kickflip.getBroadcastListener().onBroadcastLive(stream);
+        mMainBroadcastListener.onBroadcastLive(stream);
     }
 
     @Override
     public void onBroadcastStop() {
-        Kickflip.getBroadcastListener().onBroadcastStop();
-        this.finish();
+        finish();
+        mMainBroadcastListener.onBroadcastStop();
     }
 
     @Override
     public void onBroadcastError(KickflipException error) {
-        Kickflip.getBroadcastListener().onBroadcastError(error);
+        mMainBroadcastListener.onBroadcastError(error);
     }
 
 }

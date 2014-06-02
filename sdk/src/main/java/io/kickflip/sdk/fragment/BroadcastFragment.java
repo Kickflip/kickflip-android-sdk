@@ -29,7 +29,6 @@ import com.google.common.eventbus.Subscribe;
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
 import io.kickflip.sdk.Share;
-import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.av.FullFrameRect;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
@@ -59,15 +58,12 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         }
     };
 
-    private BroadcastListener mListener;
     View.OnClickListener mRecordButtonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             if (mBroadcaster.isRecording()) {
                 mBroadcaster.stopRecording();
                 hideLiveBanner();
-                if (mListener != null)
-                    mListener.onBroadcastStop();
             } else {
                 mBroadcaster.startRecording();
                 //stopMonitoringOrientation();
@@ -175,12 +171,6 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
         super.onAttach(activity);
         getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         if (VERBOSE) Log.i(TAG, "onAttach");
-        try {
-            mListener = (BroadcastListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement BroadcastListener");
-        }
     }
 
     @Override

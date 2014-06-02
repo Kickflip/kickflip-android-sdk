@@ -237,7 +237,7 @@ public class FFmpegMuxer extends Muxer implements Runnable {
         releaseOutputBufer(encoder, encodedData, bufferIndex, trackIndex);
 
         if (allTracksFinished()) {
-            if (VERBOSE) Log.i(TAG, "Shutting down");
+            /*if (VERBOSE) */ Log.i(TAG, "Shutting down");
             mFFmpeg.finalizeAVFormatContext();
             shutdown();
         }

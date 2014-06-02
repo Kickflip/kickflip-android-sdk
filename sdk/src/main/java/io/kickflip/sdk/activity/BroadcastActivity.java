@@ -16,11 +16,15 @@ public class BroadcastActivity extends ImmersiveActivity implements BroadcastLis
     private static final String TAG = "BroadcastActivity";
 
     private BroadcastFragment mFragment;
+    private BroadcastListener mMainBroadcastListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_broadcast);
+
+        mMainBroadcastListener = Kickflip.getBroadcastListener();
+        Kickflip.setBroadcastListener(this);
 
         if (savedInstanceState == null) {
             mFragment = BroadcastFragment.getInstance();
@@ -39,29 +43,24 @@ public class BroadcastActivity extends ImmersiveActivity implements BroadcastLis
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
     public void onBroadcastStart() {
-        Kickflip.getBroadcastListener().onBroadcastStart();
+        mMainBroadcastListener.onBroadcastStart();
     }
 
     @Override
     public void onBroadcastLive(Stream stream) {
-        Kickflip.getBroadcastListener().onBroadcastLive(stream);
+        mMainBroadcastListener.onBroadcastLive(stream);
     }
 
     @Override
     public void onBroadcastStop() {
-        Kickflip.getBroadcastListener().onBroadcastStop();
-        this.finish();
+        finish();
+        mMainBroadcastListener.onBroadcastStop();
     }
 
     @Override
     public void onBroadcastError(KickflipException error) {
-        Kickflip.getBroadcastListener().onBroadcastError(error);
+        mMainBroadcastListener.onBroadcastError(error);
     }
 
 }

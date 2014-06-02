@@ -58,7 +58,7 @@ public class MicrophoneEncoder implements Runnable {
                 mEncoderCore.mSampleRate,            // sample rate, hz
                 mEncoderCore.mChannelConfig,         // channels
                 AUDIO_FORMAT,                        // audio format
-                minBufferSize);                      // buffer size (bytes)
+                minBufferSize * 4);                  // buffer size (bytes)
 
     }
 
