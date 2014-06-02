@@ -503,15 +503,18 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     mThumbnailRequested = false;
                 }
                 if (mEosRequested) {
-                    mVideoEncoder.forceEos();
-                    if (VERBOSE) Log.i(TAG, "Calling forceEos");
+                    mVideoEncoder.signalEndOfStream();
+                    if (VERBOSE) Log.i(TAG, "Calling signalEndOfStream");
                 }
                 mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp());
                 mInputWindowSurface.swapBuffers();
 
                 if (mEosRequested) {
                     if (VERBOSE) Log.i(TAG, "Sent last video frame. Draining encoder");
-                    mVideoEncoder.drainEncoder(true);
+                    // When all target devices support MediaCodec#signalEndOfInputStream()
+                    // return to drainEncoder(true). Meanwhile use AndroidEncoder#signalEndOfStream()
+                    //mVideoEncoder.drainEncoder(true);
+                    mVideoEncoder.drainEncoder(false);
                     mRecording = false;
                     mEosRequested = false;
                     releaseEncoder();

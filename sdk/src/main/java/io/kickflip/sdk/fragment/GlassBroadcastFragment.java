@@ -167,13 +167,15 @@ public class GlassBroadcastFragment extends Fragment implements AdapterView.OnIt
                 setBannerToLiveState();
                 mLiveBanner.setVisibility(View.VISIBLE);
             }
-            if (mBroadcaster.isRecording()) {
-                recordButton.setBackgroundResource(R.drawable.red_dot_stop);
-                if (!mBroadcaster.isLive()) {
-                    setBannerToBufferingState();
-                    mLiveBanner.setVisibility(View.VISIBLE);
-                }
-            }
+            // This fragment begins recording immediately
+            // Assume we won't be background recording on Glass
+//            if (mBroadcaster.isRecording()) {
+//                recordButton.setBackgroundResource(R.drawable.red_dot_stop);
+//                if (!mBroadcaster.isLive()) {
+//                    setBannerToBufferingState();
+//                    mLiveBanner.setVisibility(View.VISIBLE);
+//                }
+//            }
             setupFilterSpinner(root);
             setupCameraFlipper(root);
         } else
