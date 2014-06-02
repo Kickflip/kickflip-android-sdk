@@ -243,6 +243,11 @@ public class FFmpegMuxer extends Muxer implements Runnable {
         }
     }
 
+    public void forceStop() {
+        mFFmpeg.finalizeAVFormatContext();
+        shutdown();
+    }
+
     private void releaseOutputBufer(MediaCodec encoder, ByteBuffer encodedData, int bufferIndex, int trackIndex) {
         synchronized (mEncoderReleasedSync) {
             if (!mEncoderReleased) {

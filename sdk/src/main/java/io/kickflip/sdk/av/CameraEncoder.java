@@ -49,6 +49,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         /* This instance can no longer be used */
         RELEASED
     }
+
     private volatile STATE mState = STATE.UNINITIALIZED;
 
     // EncoderHandler Message types (Message#what)
@@ -148,13 +149,15 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      *               overwriting a previous recording.
      */
     public void reset(SessionConfig config) {
-        if (mState != STATE.UNINITIALIZED) throw new IllegalArgumentException("reset called in invalid state");
+        if (mState != STATE.UNINITIALIZED)
+            throw new IllegalArgumentException("reset called in invalid state");
         mState = STATE.INITIALIZING;
         mHandler.sendMessage(mHandler.obtainMessage(MSG_RESET, config));
     }
 
     private void handleReset(SessionConfig config) {
-        if (mState != STATE.INITIALIZING) throw new IllegalArgumentException("handleRelease called in invalid state");
+        if (mState != STATE.INITIALIZING)
+            throw new IllegalArgumentException("handleRelease called in invalid state");
         Log.i(TAG, "handleReset");
         init(config);
         // Make display EGLContext current
@@ -218,6 +221,16 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mThumbnailRequested = true;
         mThumbnailScaleFactor = scaleFactor;
         mThumbnailRequestedOnFrame = -1;
+    }
+
+    /**
+     * Request a thumbnail be generated deltaFrame frames from now.
+     *
+     * @param scaleFactor a downscale factor. e.g scaleFactor 2 will
+     * produce a 640x360 thumbnail from a 1280x720 frame
+     */
+    public void requestThumbnailOnDeltaFrameWithScaling(int deltaFrame, int scaleFactor) {
+        requestThumbnailOnFrameWithScaling(mFrameNum + deltaFrame, scaleFactor);
     }
 
     /**
@@ -385,7 +398,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * Called from UI thread
      */
     public void stopRecording() {
-        if (mState != STATE.RECORDING) throw new IllegalArgumentException("StopRecording called in invalid state");
+        if (mState != STATE.RECORDING)
+            throw new IllegalArgumentException("StopRecording called in invalid state");
         mState = STATE.STOPPING;
         Log.i(TAG, "stopRecording");
         synchronized (mReadyForFrameFence) {
@@ -415,7 +429,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 }
             }
             Log.i(TAG, "Stopped. Proceeding to release");
-        }else if (mState != STATE.UNINITIALIZED) {
+        } else if (mState != STATE.UNINITIALIZED) {
             Log.i(TAG, "release called in invalid state " + mState);
             return;
             //throw new IllegalArgumentException("release called in invalid state");
@@ -426,7 +440,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     }
 
     private void handleRelease() {
-        if (mState != STATE.RELEASING) throw new IllegalArgumentException("handleRelease called in invalid state");
+        if (mState != STATE.RELEASING)
+            throw new IllegalArgumentException("handleRelease called in invalid state");
         Log.i(TAG, "handleRelease");
         shutdown();
         mState = STATE.RELEASED;
@@ -509,7 +524,8 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mInputWindowSurface.swapBuffers();
 
                 if (mEosRequested) {
-                    if (VERBOSE) Log.i(TAG, "Sending last video frame. Draining encoder");
+                    /*if (VERBOSE) */
+                    Log.i(TAG, "Sending last video frame. Draining encoder");
                     mVideoEncoder.signalEndOfStream();
                     mVideoEncoder.drainEncoder(true);
                     mRecording = false;
@@ -796,7 +812,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         List<int[]> fpsRanges = parms.getSupportedPreviewFpsRange();
         int[] maxFpsRange = null;
         // Get the maximum supported fps not to exceed 30
-        for (int x = fpsRanges.size() - 1; x >= 0 ; x--) {
+        for (int x = fpsRanges.size() - 1; x >= 0; x--) {
             maxFpsRange = fpsRanges.get(x);
             if (maxFpsRange[1] / 1000.0 <= 30) break;
         }

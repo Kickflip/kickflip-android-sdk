@@ -105,6 +105,7 @@ public abstract class Muxer {
         }
     }
 
+    public abstract void forceStop();
 
     protected boolean allTracksFinished(){
         return (mNumTracks == mNumTracksFinished);
@@ -118,7 +119,7 @@ public abstract class Muxer {
      * Muxer will call this itself if it detects BUFFER_FLAG_END_OF_STREAM
      * in writeSampleData.
      */
-    public void signalEndOfTrack(){
+    protected void signalEndOfTrack(){
         mNumTracksFinished++;
     }
 

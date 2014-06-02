@@ -141,7 +141,7 @@ public class MicrophoneEncoder implements Runnable {
 
         }
         mThreadReady = false;
-        if (VERBOSE) Log.i(TAG, "Exiting audio encode loop. Draining Audio Encoder");
+        /*if (VERBOSE) */ Log.i(TAG, "Exiting audio encode loop. Draining Audio Encoder");
         if (TRACE) Trace.beginSection("sendAudio");
         sendAudioToEncoder(true);
         if (TRACE) Trace.endSection();
