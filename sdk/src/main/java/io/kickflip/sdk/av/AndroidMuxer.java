@@ -104,4 +104,9 @@ public class AndroidMuxer extends Muxer {
             stop();
         }
     }
+
+    @Override
+    public void forceStop() {
+        stop();
+    }
 }

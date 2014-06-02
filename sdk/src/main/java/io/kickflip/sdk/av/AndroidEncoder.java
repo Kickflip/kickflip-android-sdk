@@ -23,6 +23,8 @@ public abstract class AndroidEncoder {
     protected MediaCodec.BufferInfo mBufferInfo;
     protected int mTrackIndex;
     protected volatile boolean mForceEos = false;
+    int mEosSpinCount = 0;
+    final int MAX_EOS_SPINS = 10;
 
     /**
      * This method should be called before the last input packet is queued
@@ -85,6 +87,12 @@ public abstract class AndroidEncoder {
                     if (!endOfStream) {
                         break;      // out of while
                     } else {
+                        mEosSpinCount++;
+                        if (mEosSpinCount > MAX_EOS_SPINS) {
+                            if (VERBOSE) Log.i(TAG, "Force shutting down Muxer");
+                            mMuxer.forceStop();
+                            break;
+                        }
                         /*if (VERBOSE) */Log.d(TAG, "no output available, spinning to await EOS");
                     }
                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
@@ -136,7 +144,7 @@ public abstract class AndroidEncoder {
                     }
                 }
             }
-            if (endOfStream && VERBOSE) {
+            if (endOfStream && VERBOSE ) {
                 if (isSurfaceInputEncoder()) {
                     Log.i(TAG, "final video drain complete");
                 } else {
