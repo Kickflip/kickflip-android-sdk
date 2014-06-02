@@ -43,7 +43,6 @@ public class GlassBroadcastActivity extends ImmersiveActivity implements Broadca
     public boolean onKeyDown(int keycode, KeyEvent event) {
         if (keycode == KeyEvent.KEYCODE_DPAD_CENTER) {
             mFragment.stopBroadcasting();
-            finish();
             return true;
         } else
             return super.onKeyDown(keycode, event);

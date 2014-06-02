@@ -73,4 +73,5 @@ public class AudioEncoderCore extends AndroidEncoder {
     protected boolean isSurfaceInputEncoder() {
         return false;
     }
+
 }

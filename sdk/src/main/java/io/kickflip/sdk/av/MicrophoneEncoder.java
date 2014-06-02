@@ -73,6 +73,7 @@ public class MicrophoneEncoder implements Runnable {
     }
 
     public void stopRecording() {
+        Log.i(TAG, "stopRecording");
         synchronized (mRecordingFence) {
             mRecordingRequested = false;
         }
@@ -178,8 +179,8 @@ public class MicrophoneEncoder implements Runnable {
                     Log.e(TAG, "Audio read error: invalid operation");
                 if (audioInputLength == AudioRecord.ERROR_BAD_VALUE)
                     Log.e(TAG, "Audio read error: bad value");
-                if (VERBOSE)
-                    Log.i(TAG, "queueing " + audioInputLength + " audio bytes with pts " + audioAbsolutePtsUs);
+//                if (VERBOSE)
+//                    Log.i(TAG, "queueing " + audioInputLength + " audio bytes with pts " + audioAbsolutePtsUs);
                 if (endOfStream) {
                     if (VERBOSE) Log.i(TAG, "EOS received in sendAudioToEncoder");
                     mMediaCodec.queueInputBuffer(audioInputBufferIndex, 0, audioInputLength, audioAbsolutePtsUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM);

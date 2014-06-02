@@ -33,8 +33,25 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private static final boolean TRACE = false;         // Systrace
     private static final boolean VERBOSE = false;       // Lots of logging
 
+    private enum STATE {
+        /* Stopped or pre-construction */
+        UNINITIALIZED,
+        /* Construction-prompted initialization */
+        INITIALIZING,
+        /* Camera frames are being received */
+        INITIALIZED,
+        /* Camera frames are being sent to Encoder */
+        RECORDING,
+        /* Was recording, and is now stopping */
+        STOPPING,
+        /* Releasing resources. */
+        RELEASING,
+        /* This instance can no longer be used */
+        RELEASED
+    }
+    private volatile STATE mState = STATE.UNINITIALIZED;
+
     // EncoderHandler Message types (Message#what)
-    private static final int MSG_STOP_RECORDING = 1;
     private static final int MSG_FRAME_AVAILABLE = 2;
     private static final int MSG_SET_SURFACE_TEXTURE = 3;
     private static final int MSG_REOPEN_CAMERA = 4;
@@ -59,7 +76,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     // ----- accessed by multiple threads -----
     private volatile EncoderHandler mHandler;
     private EglStateSaver mEglSaver;
-
+    private final Object mStopFence = new Object();
     private final Object mSurfaceTextureFence = new Object();   // guards mSurfaceTexture shared with GLSurfaceView.Renderer
     private SurfaceTexture mSurfaceTexture;
     private final Object mReadyForFrameFence = new Object();    // guards mReadyForFrames/mRecording
@@ -88,9 +105,11 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     private int mThumbnailRequestedOnFrame;
 
     public CameraEncoder(SessionConfig config) {
+        mState = STATE.INITIALIZING;
         init(config);
         mEglSaver = new EglStateSaver();
         startEncodingThread();
+        mState = STATE.INITIALIZED;
     }
 
     /**
@@ -129,10 +148,13 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      *               overwriting a previous recording.
      */
     public void reset(SessionConfig config) {
+        if (mState != STATE.UNINITIALIZED) throw new IllegalArgumentException("reset called in invalid state");
+        mState = STATE.INITIALIZING;
         mHandler.sendMessage(mHandler.obtainMessage(MSG_RESET, config));
     }
 
     private void handleReset(SessionConfig config) {
+        if (mState != STATE.INITIALIZING) throw new IllegalArgumentException("handleRelease called in invalid state");
         Log.i(TAG, "handleReset");
         init(config);
         // Make display EGLContext current
@@ -143,6 +165,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mSessionConfig.getVideoBitrate(),
                 mSessionConfig.getMuxer());
         mReadyForFrames = true;
+        mState = STATE.INITIALIZED;
     }
 
     public SessionConfig getConfig() {
@@ -325,9 +348,14 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * Called from UI thread
      */
     public void startRecording() {
+        if (mState != STATE.INITIALIZED) {
+            Log.e(TAG, "startRecording called in invalid state. Ignoring");
+            return;
+        }
         synchronized (mReadyForFrameFence) {
             mFrameNum = 0;
             mRecording = true;
+            mState = STATE.RECORDING;
         }
     }
 
@@ -357,18 +385,12 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * Called from UI thread
      */
     public void stopRecording() {
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_STOP_RECORDING));
+        if (mState != STATE.RECORDING) throw new IllegalArgumentException("StopRecording called in invalid state");
+        mState = STATE.STOPPING;
+        Log.i(TAG, "stopRecording");
+        mEosRequested = true;
     }
 
-    /**
-     * Called on Encoder thread
-     */
-    private void handleStopRecording() {
-        synchronized (mReadyForFrameFence) {
-            mEosRequested = true;
-            if (VERBOSE) Log.i(TAG, "handleStopRecording");
-        }
-    }
 
     /**
      * Release resources, including the Camera.
@@ -378,22 +400,34 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * Called from UI thread
      */
     public void release() {
-        synchronized (mReadyFence) {
-            if (mHandler != null) {
-                mHandler.sendMessage(mHandler.obtainMessage(MSG_RELEASE));
-                while (mRunning) {
+        if (mState == STATE.STOPPING) {
+            Log.i(TAG, "Release called while stopping. Trying to sync");
+            synchronized (mStopFence) {
+                while (mState != STATE.UNINITIALIZED) {
+                    Log.i(TAG, "Release called while stopping. Waiting...");
                     try {
-                        mReadyFence.wait();
+                        mStopFence.wait(250);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
             }
+            Log.i(TAG, "Stopped. Proceeding to release");
+        }else if (mState != STATE.UNINITIALIZED) {
+            Log.i(TAG, "release called in invalid state " + mState);
+            return;
+            //throw new IllegalArgumentException("release called in invalid state");
         }
+        Log.i(TAG, "Releasing");
+        mState = STATE.RELEASING;
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_RELEASE));
     }
 
     private void handleRelease() {
+        if (mState != STATE.RELEASING) throw new IllegalArgumentException("handleRelease called in invalid state");
+        Log.i(TAG, "handleRelease");
         shutdown();
+        mState = STATE.RELEASED;
     }
 
     /**
@@ -419,7 +453,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         // Then Encode and display frame
         mHandler.sendMessage(mHandler.obtainMessage(MSG_FRAME_AVAILABLE, surfaceTexture));
     }
-
 
     /**
      * Called on Encoder thread
@@ -469,6 +502,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     saveFrameAsImage();
                     mThumbnailRequested = false;
                 }
+                if (mEosRequested) {
+                    mVideoEncoder.forceEos();
+                    if (VERBOSE) Log.i(TAG, "Calling forceEos");
+                }
                 mInputWindowSurface.setPresentationTime(mSurfaceTexture.getTimestamp());
                 mInputWindowSurface.swapBuffers();
 
@@ -478,9 +515,10 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                     mRecording = false;
                     mEosRequested = false;
                     releaseEncoder();
-                    // The Egl Resources previously released by a call to shutdown()
-                    // will be handled when the CameraEncoder is released()s
-                    //shutdown();
+                    mState = STATE.UNINITIALIZED;
+                    synchronized (mStopFence) {
+                        mStopFence.notify();
+                    }
                 }
             }
         }
@@ -748,7 +786,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         }
 
         List<String> flashModes = parms.getSupportedFlashModes();
-        String flashMode = (mDesiredFlash != null)? mDesiredFlash : mCurrentFlash;
+        String flashMode = (mDesiredFlash != null) ? mDesiredFlash : mCurrentFlash;
         if (isValidFlashMode(flashModes, flashMode)) {
             parms.setFlashMode(flashMode);
         }
@@ -756,8 +794,15 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         parms.setRecordingHint(true);
 
         List<int[]> fpsRanges = parms.getSupportedPreviewFpsRange();
-        int[] maxFpsRange = fpsRanges.get(fpsRanges.size() - 1);
-        parms.setPreviewFpsRange(maxFpsRange[0], maxFpsRange[1]);
+        int[] maxFpsRange = null;
+        // Get the maximum supported fps not to exceed 30
+        for (int x = fpsRanges.size() - 1; x >= 0 ; x--) {
+            maxFpsRange = fpsRanges.get(x);
+            if (maxFpsRange[1] / 1000.0 <= 30) break;
+        }
+        if (maxFpsRange != null) {
+            parms.setPreviewFpsRange(maxFpsRange[0], maxFpsRange[1]);
+        }
 
         choosePreviewSize(parms, desiredWidth, desiredHeight);
         // leave the frame rate set to default
@@ -844,9 +889,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 case MSG_SET_SURFACE_TEXTURE:
                     encoder.handleSetSurfaceTexture((Integer) obj);
                     break;
-                case MSG_STOP_RECORDING:
-                    encoder.handleStopRecording();
-                    break;
                 case MSG_FRAME_AVAILABLE:
                     encoder.handleFrameAvailable((SurfaceTexture) obj);
                     break;
@@ -897,16 +939,15 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * Sets the requested flash mode and restarts the
      * camera preview. This will take effect immediately
      * or as soon as the camera preview becomes active.
-     *
+     * <p/>
      * <p/>
      * Called from UI thread
-     *
      */
     public void requestFlash(String desiredFlash) {
         mDesiredFlash = desiredFlash;
         /* If mCamera for some reason is null now flash mode will be applied
          * next time the camera opens through mDesiredFlash. */
-        if(mCamera == null) {
+        if (mCamera == null) {
             Log.w(TAG, "Ignoring requestFlash: Camera isn't available now.");
             return;
         }
@@ -946,18 +987,20 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         return false;
     }
 
-    /** @return returns the flash mode set in the camera */
+    /**
+     * @return returns the flash mode set in the camera
+     */
     public String getFlashMode() {
         return (mDesiredFlash != null) ? mDesiredFlash : mCurrentFlash;
     }
 
     private void postCameraOpenedEvent(Parameters params) {
-        if(mEventBus != null) {
+        if (mEventBus != null) {
             mEventBus.post(new CameraOpenedEvent(params));
         }
     }
 
-    public void setEventBus(EventBus eventBus){
+    public void setEventBus(EventBus eventBus) {
         mEventBus = eventBus;
     }
 }

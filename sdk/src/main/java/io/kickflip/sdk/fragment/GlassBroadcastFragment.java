@@ -38,7 +38,7 @@ import io.kickflip.sdk.view.GLCameraEncoderView;
  */
 public class GlassBroadcastFragment extends Fragment implements AdapterView.OnItemSelectedListener {
     private static final String TAG = "GlassBroadcastFragment";
-    private static final boolean VERBOSE = true;
+    private static final boolean VERBOSE = false;
     private static GlassBroadcastFragment mFragment;
     private static Broadcaster mBroadcaster;        // Make static to survive Fragment re-creation
     private GLCameraEncoderView mCameraView;

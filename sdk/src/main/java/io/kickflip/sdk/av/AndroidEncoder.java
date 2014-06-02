@@ -22,6 +22,11 @@ public abstract class AndroidEncoder {
     protected MediaCodec mEncoder;
     protected MediaCodec.BufferInfo mBufferInfo;
     protected int mTrackIndex;
+    protected volatile boolean mForceEos = false;
+
+    public void forceEos() {
+        mForceEos = true;
+    }
 
     public void release(){
         if(mMuxer != null)
@@ -46,6 +51,13 @@ public abstract class AndroidEncoder {
     }
 
     public void drainEncoder(boolean endOfStream) {
+        if (endOfStream) {
+            if (isSurfaceInputEncoder()) {
+                Log.i(TAG, "final video drain");
+            } else {
+                Log.i(TAG, "final audio drain");
+            }
+        }
         synchronized (mMuxer){
             final int TIMEOUT_USEC = 1000;
             if (VERBOSE) Log.d(TAG, "drainEncoder(" + endOfStream + ") track: " + mTrackIndex);
@@ -95,7 +107,10 @@ public abstract class AndroidEncoder {
                         // adjust the ByteBuffer values to match BufferInfo (not needed?)
                         encodedData.position(mBufferInfo.offset);
                         encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
-
+                        if (mForceEos) {
+                            mBufferInfo.flags = mBufferInfo.flags | MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                            Log.i(TAG, "Forcing EOS");
+                        }
                         // It is the muxer's responsibility to release encodedData
                         mMuxer.writeSampleData(mEncoder, mTrackIndex, encoderStatus, encodedData, mBufferInfo);
                         if (VERBOSE) {
