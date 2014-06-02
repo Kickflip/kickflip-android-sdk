@@ -14,9 +14,10 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
 
 + **High Definition [HTTP Live Streaming](http://en.wikipedia.org/wiki/HTTP_Live_Streaming)**
 + **Background recording**
-+ **OpenGL Video Effects**
-
-
++ **OpenGL video effects**
++ **Pinch Zoom**
++ **Blazing fast, geo-aware upstreams**
++ **Global cloud-based Content Distribution Network**
 
 ## Quickstart
 
