@@ -93,7 +93,7 @@ public abstract class AndroidEncoder {
                             mMuxer.forceStop();
                             break;
                         }
-                        /*if (VERBOSE) */Log.d(TAG, "no output available, spinning to await EOS");
+                        if (VERBOSE) Log.d(TAG, "no output available, spinning to await EOS");
                     }
                 } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     // not expected for an encoder

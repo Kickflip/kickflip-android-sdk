@@ -185,7 +185,7 @@ public class Broadcaster extends AVRecorder {
         mKickflip.startStream(mConfig.getStream(), new KickflipCallback() {
             @Override
             public void onSuccess(Response response) {
-                mCamEncoder.requestThumbnailOnDeltaFrameWithScaling(10, 1);
+                //mCamEncoder.requestThumbnailOnDeltaFrameWithScaling(10, 2);
                 Log.i(TAG, "got StartStreamResponse");
                 checkArgument(response instanceof HlsStream, "Got unexpected StartStream Response");
                 onGotStreamResponse((HlsStream) response);
