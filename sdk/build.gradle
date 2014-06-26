@@ -72,7 +72,7 @@ apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
 android.libraryVariants.all { variant ->
 
     task("generate${variant.name}Javadoc", type: Javadoc) {
-        source = android.sourceSets.main.allJava
+        source = android.sourceSets.main.java
         title = null
         options.docletpath = configurations.jaxDoclet.files.asType(List)
         options.classpath = configurations.classpaths.files.asType(List)
