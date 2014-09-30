@@ -110,7 +110,17 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
 
 ### Building
 
-1. Define the Android SDK root location as $ANDROID_HOME in your environment.
+1. Define the Android SDK root location as $ANDROID_HOME in your environment. It's also a good idea to add the `platform-tools` and `tools` directories to your path so you can easily access common Android utilities, like adb.
+
+An example on Mac OS X using Android Studio:
+
+```
+# ~/.bash_profile
+
+# Android
+export ANDROID_HOME="/Applications/Android Studio.app/sdk"
+export PATH=$ANDROID_HOME"/tools":$ANDROID_HOME"/platform-tools":$PATH
+```
 
 
 2. From this directory run:
