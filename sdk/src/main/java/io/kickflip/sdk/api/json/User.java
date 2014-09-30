@@ -1,5 +1,6 @@
 package io.kickflip.sdk.api.json;
 
+import com.amazonaws.util.json.Jackson;
 import com.google.api.client.util.Key;
 
 import java.util.Map;
@@ -23,7 +24,7 @@ public class User extends Response {
     private String mUUID;
 
     @Key("extra_info")
-    private Map mExtraInfo;
+    private String mExtraInfoStr;
 
     @Key("avatar_url")
     private String mAvatarUrl;
@@ -32,7 +33,7 @@ public class User extends Response {
         mApp = app;
         mName = name;
         mUUID = uuid;
-        mExtraInfo = extraInfo;
+        mExtraInfoStr = Jackson.toJsonString(extraInfo);
     }
 
     public User(){
@@ -56,7 +57,7 @@ public class User extends Response {
     }
 
     public Map getExtraInfo() {
-        return mExtraInfo;
+        return Jackson.fromJsonString(mExtraInfoStr, Map.class);
     }
 
     public String getAvatarUrl() {
