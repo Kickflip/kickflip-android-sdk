@@ -5,7 +5,7 @@ versionName="1.1.1"
 
 android {
     compileSdkVersion 19
-    buildToolsVersion "19.1"
+    buildToolsVersion "20.0"
 
     defaultConfig {
         minSdkVersion 18
@@ -66,13 +66,13 @@ dependencies {
 // Maven publish task
 // Uncomment this line to enable publishing to Maven Central. Requires maven
 // credentials in gradle.properties
-apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
+//apply from: 'https://raw.github.com/OnlyInAmerica/mvn-repo/master/maven.gradle'
 
 // Generate JavaDoc
 android.libraryVariants.all { variant ->
 
     task("generate${variant.name}Javadoc", type: Javadoc) {
-        source = android.sourceSets.main.allJava
+        source = android.sourceSets.main.java
         title = null
         options.docletpath = configurations.jaxDoclet.files.asType(List)
         options.classpath = configurations.classpaths.files.asType(List)
