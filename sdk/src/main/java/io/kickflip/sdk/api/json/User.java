@@ -33,7 +33,8 @@ public class User extends Response {
         mApp = app;
         mName = name;
         mUUID = uuid;
-        mExtraInfoStr = Jackson.toJsonString(extraInfo);
+        if (extraInfo != null)
+            mExtraInfoStr = Jackson.toJsonString(extraInfo);
     }
 
     public User(){
@@ -57,7 +58,7 @@ public class User extends Response {
     }
 
     public Map getExtraInfo() {
-        return Jackson.fromJsonString(mExtraInfoStr, Map.class);
+        return (mExtraInfoStr == null ? null : Jackson.fromJsonString(mExtraInfoStr, Map.class));
     }
 
     public String getAvatarUrl() {
