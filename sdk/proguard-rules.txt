@@ -18,8 +18,6 @@
 
 -dontobfuscate
 
--dontobfuscate
-
 # Amazon AWS SDK
 -keep class org.apache.commons.logging.**               { *; }
 -keep class com.amazonaws.services.sqs.QueueUrlHandler  { *; }
@@ -28,6 +26,7 @@
 -keep class com.amazonaws.services.**.model.*Exception* { *; }
 -keep class org.codehaus.**                             { *; }
 -keepattributes Signature,*Annotation*
+-keep class com.amazonaws.org.apache.commons.logging.** { *; }
 
 -dontwarn javax.xml.stream.events.**
 -dontwarn org.codehaus.jackson.**

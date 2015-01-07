@@ -9,7 +9,7 @@ def getVersionName() {
 }
 
 android {
-    compileSdkVersion 19
+    compileSdkVersion 21
     buildToolsVersion "20.0"
 
     defaultConfig {
@@ -42,24 +42,19 @@ dependencies {
     compile 'com.google.guava:guava:18.0'
     compile 'com.android.support:support-v4:21.0.3'
 
-    // google-oauth-java-client
-    compile files('libs/google-http-client-1.17.0-rc.jar')
-    compile files('libs/google-http-client-android-1.17.0-rc.jar')
-    compile files('libs/google-http-client-jackson2-1.17.0-rc.jar')
-    compile files('libs/google-oauth-client-1.17.0-rc.jar')
-    compile files('libs/gson-2.1.jar')
-    compile files('libs/jsr305-1.3.9.jar')
-    compile files('libs/protobuf-java-2.4.1.jar')
+    compile 'com.google.http-client:google-http-client:1.19.0'
+    compile 'com.google.http-client:google-http-client-android:1.19.0'
+    compile 'com.google.http-client:google-http-client-jackson2:1.19.0'
+    compile 'com.google.oauth-client:google-oauth-client:1.19.0'
+    compile 'com.google.code.gson:gson:2.3.1'
+    compile 'com.google.code.findbugs:jsr305:3.0.0'
+    compile 'com.google.protobuf:protobuf-java:2.6.1'
 
     compile 'com.amazonaws:aws-android-sdk-core:2.1.5'
     compile 'com.amazonaws:aws-android-sdk-s3:2.1.5'
 
     compile 'com.fasterxml.jackson.core:jackson-core:2.5.0'
-    // fulfilled by aws-android-sdk:
-    //compile files('libs/jackson-core-2.1.3.jar')
-    //compile files('libs/jackson-core-asl-1.9.11.jar')
 
-    // m3u8 parser
     compile files('libs/m3u8parser-0.2.jar')
 
     // For Doclava JavaDoc
