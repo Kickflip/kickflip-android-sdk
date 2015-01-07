@@ -6,12 +6,13 @@ import android.util.Pair;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.event.ProgressEvent;
 import com.amazonaws.event.ProgressListener;
+import com.amazonaws.mobileconnectors.s3.transfermanager.TransferManager;
+import com.amazonaws.mobileconnectors.s3.transfermanager.Upload;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.transfer.TransferManager;
-import com.amazonaws.services.s3.transfer.Upload;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -20,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import io.kickflip.sdk.FileUtils;
 import io.kickflip.sdk.av.Broadcaster;
 import io.kickflip.sdk.event.S3UploadEvent;
 
@@ -106,11 +108,11 @@ public class S3BroadcastManager implements Runnable {
 
     @Override
     public void run() {
-        try {
-            boolean lastUploadComplete = false;
-            while (!lastUploadComplete) {
+        boolean lastUploadComplete = false;
+        while (!lastUploadComplete) {
+            try {
                 Pair<PutObjectRequest, Boolean> requestPair = mQueue.poll(mBroadcaster.getSessionConfig().getHlsSegmentDuration() * 2, TimeUnit.SECONDS);
-                if(requestPair != null) {
+                if (requestPair != null) {
                     final PutObjectRequest request = requestPair.first;
                     Upload upload = mTransferManager.upload(request);
                     upload.waitForCompletion();
@@ -120,14 +122,18 @@ public class S3BroadcastManager implements Runnable {
                     else if (VERBOSE)
                         Log.i(TAG, "Last Upload complete.");
                 } else {
-                    if (VERBOSE) Log.e(TAG, "Reached end of Queue before processing last segment!");
+                    if (VERBOSE)
+                        Log.e(TAG, "Reached end of Queue before processing last segment!");
                     lastUploadComplete = true;
                 }
+            } catch (InterruptedException e) {
+                Log.w(TAG, "InterruptedException. retrying.");
+                e.printStackTrace();
+            } catch (AmazonS3Exception s3e) {
+                // Possible Bad Digest. Retry
+                Log.w(TAG, "AmazonS3Exception. retrying.");
             }
-            if (VERBOSE) Log.i(TAG, "Shutting down");
-        } catch (InterruptedException e) {
-            Log.w(TAG, "upload interrupted");
-            e.printStackTrace();
         }
+        if (VERBOSE) Log.i(TAG, "Shutting down");
     }
 }
