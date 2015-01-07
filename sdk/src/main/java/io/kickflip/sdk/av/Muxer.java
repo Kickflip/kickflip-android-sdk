@@ -2,6 +2,7 @@ package io.kickflip.sdk.av;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.util.Log;
 
 import com.google.common.eventbus.EventBus;
@@ -144,6 +145,8 @@ public abstract class Muxer {
      * @return
      */
     protected boolean formatRequiresBuffering(){
+        if (Build.VERSION.SDK_INT >= 21) return true;
+
         switch(mFormat){
             case RTMP:
                return true;

@@ -1,7 +1,12 @@
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 
-versionInt=8
-versionName="1.1.1"
+def getVersionCode() {
+    return 8
+}
+
+def getVersionName() {
+    return '1.1.1'
+}
 
 android {
     compileSdkVersion 19
@@ -9,14 +14,14 @@ android {
 
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 19
-        versionCode versionInt
-        versionName versionName
+        targetSdkVersion 21
+        versionCode getVersionCode()
+        versionName getVersionName()
 
     }
     buildTypes {
         release {
-            runProguard true
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
