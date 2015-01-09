@@ -1,5 +1,7 @@
 package io.kickflip.sdk.av;
 
+import java.io.IOException;
+
 import io.kickflip.sdk.view.GLCameraView;
 
 /**
@@ -25,11 +27,11 @@ public class AVRecorder {
     private SessionConfig mConfig;
     private boolean mIsRecording;
 
-    public AVRecorder(SessionConfig config){
+    public AVRecorder(SessionConfig config) throws IOException {
         init(config);
     }
 
-    private void init(SessionConfig config){
+    private void init(SessionConfig config) throws IOException {
         mCamEncoder = new CameraEncoder(config);
         mMicEncoder = new MicrophoneEncoder(config);
         mConfig = config;
@@ -94,7 +96,7 @@ public class AVRecorder {
      * and before {@link #release()}
      * @param config
      */
-    public void reset(SessionConfig config){
+    public void reset(SessionConfig config) throws IOException {
         mCamEncoder.reset(config);
         mMicEncoder.reset(config);
         mConfig = config;

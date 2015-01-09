@@ -89,7 +89,7 @@ public class Broadcaster extends AVRecorder {
      * @param CLIENT_ID     the Client ID available from your Kickflip.io dashboard.
      * @param CLIENT_SECRET the Client Secret available from your Kickflip.io dashboard.
      */
-    public Broadcaster(Context context, SessionConfig config, String CLIENT_ID, String CLIENT_SECRET) {
+    public Broadcaster(Context context, SessionConfig config, String CLIENT_ID, String CLIENT_SECRET) throws IOException {
         super(config);
         checkArgument(CLIENT_ID != null && CLIENT_SECRET != null);
         init();

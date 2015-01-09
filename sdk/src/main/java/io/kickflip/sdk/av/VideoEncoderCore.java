@@ -22,6 +22,8 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
+import java.io.IOException;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
@@ -49,7 +51,7 @@ public class VideoEncoderCore extends AndroidEncoder{
     /**
      * Configures encoder and muxer state, and prepares the input Surface.
      */
-    public VideoEncoderCore(int width, int height, int bitRate, Muxer muxer) {
+    public VideoEncoderCore(int width, int height, int bitRate, Muxer muxer) throws IOException {
         mMuxer = muxer;
         mBufferInfo = new MediaCodec.BufferInfo();
 

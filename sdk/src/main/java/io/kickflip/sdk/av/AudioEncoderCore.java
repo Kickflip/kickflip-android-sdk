@@ -5,6 +5,8 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 
+import java.io.IOException;
+
 /**
  * @hide
  */
@@ -22,7 +24,7 @@ public class AudioEncoderCore extends AndroidEncoder {
     /**
      * Configures encoder and muxer state, and prepares the input Surface.
      */
-    public AudioEncoderCore(int numChannels, int bitRate, int sampleRate, Muxer muxer) {
+    public AudioEncoderCore(int numChannels, int bitRate, int sampleRate, Muxer muxer) throws IOException {
         switch (numChannels) {
             case 1:
                 mChannelConfig = AudioFormat.CHANNEL_IN_MONO;

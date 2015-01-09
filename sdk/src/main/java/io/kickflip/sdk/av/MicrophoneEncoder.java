@@ -7,6 +7,7 @@ import android.media.MediaRecorder;
 import android.os.Trace;
 import android.util.Log;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
@@ -32,11 +33,11 @@ public class MicrophoneEncoder implements Runnable {
 
     private boolean mRecordingRequested;
 
-    public MicrophoneEncoder(SessionConfig config) {
+    public MicrophoneEncoder(SessionConfig config) throws IOException {
         init(config);
     }
 
-    private void init(SessionConfig config) {
+    private void init(SessionConfig config) throws IOException {
         mEncoderCore = new AudioEncoderCore(config.getNumAudioChannels(),
                 config.getAudioBitrate(),
                 config.getAudioSamplerate(),
@@ -79,7 +80,7 @@ public class MicrophoneEncoder implements Runnable {
         }
     }
 
-    public void reset(SessionConfig config) {
+    public void reset(SessionConfig config) throws IOException {
         if (VERBOSE) Log.i(TAG, "reset");
         if (mThreadRunning) Log.e(TAG, "reset called before stop completed");
         init(config);

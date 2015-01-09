@@ -26,6 +26,8 @@ import android.widget.TextView;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.io.IOException;
+
 import io.kickflip.sdk.Kickflip;
 import io.kickflip.sdk.R;
 import io.kickflip.sdk.Share;
@@ -244,10 +246,16 @@ public class BroadcastFragment extends Fragment implements AdapterView.OnItemSel
                     Log.i(TAG, "Setting up Broadcaster for output " + Kickflip.getSessionConfig().getOutputPath() + " client key: " + Kickflip.getApiKey() + " secret: " + Kickflip.getApiSecret());
                 // TODO: Don't start recording until stream start response, so we can determine stream type...
                 Context context = getActivity().getApplicationContext();
-                mBroadcaster = new Broadcaster(context, Kickflip.getSessionConfig(), Kickflip.getApiKey(), Kickflip.getApiSecret());
-                mBroadcaster.getEventBus().register(this);
-                mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
-                Kickflip.clearSessionConfig();
+                try {
+                    mBroadcaster = new Broadcaster(context, Kickflip.getSessionConfig(), Kickflip.getApiKey(), Kickflip.getApiSecret());
+                    mBroadcaster.getEventBus().register(this);
+                    mBroadcaster.setBroadcastListener(Kickflip.getBroadcastListener());
+                    Kickflip.clearSessionConfig();
+                } catch (IOException e) {
+                    Log.e(TAG, "Unable to create Broadcaster. Could be trouble creating MediaCodec encoder.");
+                    e.printStackTrace();
+                }
+
             }
         }
     }

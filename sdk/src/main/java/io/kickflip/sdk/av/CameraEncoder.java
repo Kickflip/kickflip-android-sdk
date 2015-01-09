@@ -155,7 +155,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mHandler.sendMessage(mHandler.obtainMessage(MSG_RESET, config));
     }
 
-    private void handleReset(SessionConfig config) {
+    private void handleReset(SessionConfig config) throws IOException {
         if (mState != STATE.INITIALIZING)
             throw new IllegalArgumentException("handleRelease called in invalid state");
         Log.i(TAG, "handleReset");
@@ -434,7 +434,6 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
             return;
             //throw new IllegalArgumentException("release called in invalid state");
         }
-        Log.i(TAG, "Releasing");
         mState = STATE.RELEASING;
         mHandler.sendMessage(mHandler.obtainMessage(MSG_RELEASE));
     }
@@ -560,6 +559,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * Called on UI thread
      */
     public void onHostActivityPaused() {
+        Log.i(TAG, "onHostActivityPaused");
         synchronized (mReadyForFrameFence) {
             // Pause the GLSurfaceView's Renderer thread
             if (mDisplayView != null)
@@ -619,7 +619,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
     /**
      * Called on Encoder thread
      */
-    private void handleSetSurfaceTexture(int textureId) {
+    private void handleSetSurfaceTexture(int textureId) throws IOException {
         synchronized (mSurfaceTextureFence) {
             if (mSurfaceTexture != null) {
                 // We're hot-swapping the display EGLContext after
@@ -690,7 +690,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      * @param muxer         the desired output muxer
      */
     private void prepareEncoder(EGLContext sharedContext, int width, int height, int bitRate,
-                                Muxer muxer) {
+                                Muxer muxer) throws IOException {
         mVideoEncoder = new VideoEncoderCore(width, height, bitRate, muxer);
         if (mEglCore == null) {
             // This is the first prepare called for this CameraEncoder instance
@@ -901,27 +901,32 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 return;
             }
 
-            switch (what) {
-                case MSG_SET_SURFACE_TEXTURE:
-                    encoder.handleSetSurfaceTexture((Integer) obj);
-                    break;
-                case MSG_FRAME_AVAILABLE:
-                    encoder.handleFrameAvailable((SurfaceTexture) obj);
-                    break;
-                case MSG_REOPEN_CAMERA:
-                    encoder.openAndAttachCameraToSurfaceTexture();
-                    break;
-                case MSG_RELEASE_CAMERA:
-                    encoder.releaseCamera();
-                    break;
-                case MSG_RELEASE:
-                    encoder.handleRelease();
-                    break;
-                case MSG_RESET:
-                    encoder.handleReset((SessionConfig) obj);
-                    break;
-                default:
-                    throw new RuntimeException("Unexpected msg what=" + what);
+            try {
+                switch (what) {
+                    case MSG_SET_SURFACE_TEXTURE:
+                        encoder.handleSetSurfaceTexture((Integer) obj);
+                        break;
+                    case MSG_FRAME_AVAILABLE:
+                        encoder.handleFrameAvailable((SurfaceTexture) obj);
+                        break;
+                    case MSG_REOPEN_CAMERA:
+                        encoder.openAndAttachCameraToSurfaceTexture();
+                        break;
+                    case MSG_RELEASE_CAMERA:
+                        encoder.releaseCamera();
+                        break;
+                    case MSG_RELEASE:
+                        encoder.handleRelease();
+                        break;
+                    case MSG_RESET:
+                        encoder.handleReset((SessionConfig) obj);
+                        break;
+                    default:
+                        throw new RuntimeException("Unexpected msg what=" + what);
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Unable to reset! Could be trouble creating MediaCodec encoder");
+                e.printStackTrace();
             }
         }
     }
@@ -943,7 +948,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
      */
     public void toggleFlashMode() {
         String otherFlashMode = "";
-        if (mCurrentFlash == Parameters.FLASH_MODE_TORCH) {
+        if (mCurrentFlash.equals(Parameters.FLASH_MODE_TORCH)) {
             otherFlashMode = Parameters.FLASH_MODE_OFF;
         } else {
             otherFlashMode = Parameters.FLASH_MODE_TORCH;
