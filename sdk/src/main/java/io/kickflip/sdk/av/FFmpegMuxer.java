@@ -18,8 +18,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
-import pro.dbro.ffmpegwrapper.FFmpegWrapper;
-import pro.dbro.ffmpegwrapper.FFmpegWrapper.AVOptions;
+import net.openwatch.ffmpegwrapper.FFmpegWrapper;
 
 /**
  * Created by davidbrodsky on 1/23/14.
@@ -63,15 +62,15 @@ public class FFmpegMuxer extends Muxer implements Runnable {
     private FFmpegWrapper mFFmpeg;
     private boolean mStarted;
 
-    // Queue encoded buffers when muxing to stream
-    ArrayList<ArrayDeque<ByteBuffer>> mMuxerInputQueue;
+        // Queue encoded buffers when muxing to stream
+        ArrayList<ArrayDeque<ByteBuffer>> mMuxerInputQueue;
 
-    private FFmpegMuxer(String outputFile, FORMAT format) {
-        super(outputFile, format);
-        mReady = false;
-        mFFmpeg = new FFmpegWrapper();
+        private FFmpegMuxer(String outputFile, FORMAT format) {
+            super(outputFile, format);
+            mReady = false;
+            mFFmpeg = new FFmpegWrapper();
 
-        AVOptions opts = new AVOptions();
+        FFmpegWrapper.AVOptions opts = new FFmpegWrapper.AVOptions();
         switch (mFormat) {
             case MPEG4:
                 opts.outputFormatName = "mp4";

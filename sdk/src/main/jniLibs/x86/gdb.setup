@@ -1,0 +1,3 @@
+set solib-search-path /Users/davidbrodsky/Code/android/FFmpegWrapper-Android/FFmpegWrapper/obj/local/x86
+source /Applications/android-ndk-r10c/prebuilt/common/gdb/common.setup
+directory /Applications/android-ndk-r10c/platforms/android-9/arch-x86/usr/include /Users/davidbrodsky/Code/android/FFmpegWrapper-Android/FFmpegWrapper/jni/include /Applications/android-ndk-r10c/sources/cxx-stl/system
