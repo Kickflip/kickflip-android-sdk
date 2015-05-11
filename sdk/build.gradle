@@ -9,12 +9,12 @@ def getVersionName() {
 }
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "20.0"
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
 
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 21
+        targetSdkVersion 22
         versionCode getVersionCode()
         versionName getVersionName()
 
@@ -40,7 +40,7 @@ configurations {
 
 dependencies {
     compile 'com.google.guava:guava:18.0'
-    compile 'com.android.support:support-v4:21.0.3'
+    compile 'com.android.support:support-v4:22.1.1'
 
     compile 'com.google.http-client:google-http-client:1.19.0'
     compile 'com.google.http-client:google-http-client-android:1.19.0'
@@ -50,8 +50,8 @@ dependencies {
     compile 'com.google.code.findbugs:jsr305:3.0.0'
     compile 'com.google.protobuf:protobuf-java:2.6.1'
 
-    compile 'com.amazonaws:aws-android-sdk-core:2.1.5'
-    compile 'com.amazonaws:aws-android-sdk-s3:2.1.5'
+    compile 'com.amazonaws:aws-android-sdk-core:2.2.1'
+    compile 'com.amazonaws:aws-android-sdk-s3:2.2.1'
 
     compile 'com.fasterxml.jackson.core:jackson-core:2.5.0'
 

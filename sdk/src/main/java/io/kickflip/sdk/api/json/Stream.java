@@ -1,7 +1,8 @@
 package io.kickflip.sdk.api.json;
 
-import com.amazonaws.util.json.Jackson;
 import com.google.api.client.util.Key;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -132,13 +133,13 @@ public class Stream extends Response implements Comparable<Stream>, Serializable
 
     public Map getExtraInfo() {
         if (mExtraInfo != null && !mExtraInfo.equals("")) {
-            return Jackson.fromJsonString(mExtraInfo, Map.class);
+            return new Gson().fromJson(mExtraInfo, Map.class);
         }
         return null;
     }
 
     public void setExtraInfo(Map mExtraInfo) {
-        this.mExtraInfo = Jackson.toJsonString(mExtraInfo);
+        this.mExtraInfo = new Gson().toJson(mExtraInfo);
     }
 
     public double getLatitude() {
@@ -212,7 +213,7 @@ public class Stream extends Response implements Comparable<Stream>, Serializable
 
     @Override
     public String toString() {
-        return Jackson.toJsonPrettyString(this);
+        return new GsonBuilder().setPrettyPrinting().create().toJson(this);
     }
 
 }
