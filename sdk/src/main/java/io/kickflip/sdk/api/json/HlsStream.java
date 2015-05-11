@@ -22,6 +22,12 @@ public class HlsStream extends Stream {
     @Key("aws_secret_key")
     private String mAwsSecret;
 
+    @Key("aws_session_token")
+    private String mToken;
+
+    @Key("aws_duration")
+    private String mDuration;
+
     public String getAwsS3Bucket() {
         return mBucket;
     }
@@ -40,6 +46,14 @@ public class HlsStream extends Stream {
 
     public String getAwsSecret() {
         return mAwsSecret;
+    }
+
+    public String getToken() {
+        return mToken;
+    }
+
+    public String getDuration() {
+        return mDuration;
     }
 
     public String toString(){

@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import android.util.Pair;
 
-import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.google.common.eventbus.DeadEvent;
@@ -208,7 +208,8 @@ public class Broadcaster extends AVRecorder {
         mStream.setExtraInfo(mConfig.getExtraInfo());
         mStream.setIsPrivate(mConfig.isPrivate());
         if (VERBOSE) Log.i(TAG, "Got hls start stream " + stream);
-        mS3Manager = new S3BroadcastManager(this, new BasicAWSCredentials(mStream.getAwsKey(), mStream.getAwsSecret()));
+        mS3Manager = new S3BroadcastManager(this,
+                new BasicSessionCredentials(mStream.getAwsKey(), mStream.getAwsSecret(), mStream.getToken()));
         mS3Manager.setRegion(mStream.getRegion());
         mS3Manager.addRequestInterceptor(mS3RequestInterceptor);
         mReadyToBroadcast = true;
