@@ -8,6 +8,6 @@ import io.kickflip.sdk.exception.KickflipException;
  *
  */
 public interface KickflipCallback {
-    public void onSuccess(Response response);
-    public void onError(KickflipException error);
+    void onSuccess(Response response);
+    void onError(KickflipException error);
 }
