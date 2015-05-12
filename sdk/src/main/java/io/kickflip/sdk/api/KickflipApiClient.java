@@ -64,7 +64,7 @@ public class KickflipApiClient extends OAuthClient {
     private static final String SEARCH_KEYWORD      = "/search";
     private static final String SEARCH_USER         = "/search/user";
     private static final String SEARCH_GEO          = "/search/location";
-    private static final String API_VERSION         = "/1.1";
+    private static final String API_VERSION         = "/1.2";
     private static final int MAX_EOF_RETRIES        = 1;
     private static int UNKNOWN_ERROR_CODE           = R.integer.generic_error;    // Error code used when none provided from server
     private static String BASE_URL;
