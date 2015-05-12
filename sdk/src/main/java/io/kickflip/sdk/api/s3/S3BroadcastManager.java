@@ -43,6 +43,10 @@ public class S3BroadcastManager implements Runnable {
     }
 
     public S3BroadcastManager(Broadcaster broadcaster, AWSCredentials creds) {
+
+        // XXX - Need to determine what's going wrong with MD5 computation
+        System.setProperty("com.amazonaws.services.s3.disableGetObjectMD5Validation", "true");
+
         mTransferManager = new TransferManager(creds);
         mBroadcaster = broadcaster;
         mQueue = new LinkedBlockingQueue<>();
