@@ -130,7 +130,7 @@ public class FileUtils {
         return createTempFile(c, recordingDir, filename.split("\\.")[0], filename.split("\\.")[1]);
     }
     
-    public static String convertStreamToString(InputStream is) throws Exception {
+    public static String convertStreamToString(InputStream is) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
         String line = null;
@@ -140,7 +140,7 @@ public class FileUtils {
         return sb.toString();
     }
 
-    public static String getStringFromFile (String filePath) throws Exception {
+    public static String getStringFromFile (String filePath) throws IOException {
         File fl = new File(filePath);
         FileInputStream fin = new FileInputStream(fl);
         String ret = convertStreamToString(fin);
