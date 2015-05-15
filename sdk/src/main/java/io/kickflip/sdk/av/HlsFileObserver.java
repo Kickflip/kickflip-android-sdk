@@ -55,7 +55,7 @@ public class HlsFileObserver extends FileObserver {
      * @param eventBus an EventBus to post events to
      */
     public HlsFileObserver(String path, EventBus eventBus) {
-        super(path, CLOSE_WRITE);
+        super(path, CLOSE_WRITE | MOVED_TO);
         mEventBus = eventBus;
         mObservedPath = path;
     }
@@ -65,13 +65,17 @@ public class HlsFileObserver extends FileObserver {
         if (path == null) return; // If the directory was deleted.
         String ext = path.substring(path.lastIndexOf('.') + 1);
         String absolutePath = mObservedPath + File.separator + path;
-        if (ext.compareTo(M3U8_EXT) == 0) {
+        Log.d(TAG, String.format("Event %d at %s ext %s", event, path, ext));
+
+        if (event == MOVED_TO && ext.equals(M3U8_EXT)) {
             if (VERBOSE) Log.i(TAG, "posting manifest written " + absolutePath);
             mEventBus.post(new HlsManifestWrittenEvent(absolutePath));
-        } else if (ext.compareTo(TS_EXT) == 0) {
+
+        } else if (event == CLOSE_WRITE && ext.equals(TS_EXT)) {
             if (VERBOSE) Log.i(TAG, "posting hls segment written " + absolutePath);
             mEventBus.post(new HlsSegmentWrittenEvent(absolutePath));
-        } else if (ext.compareTo(JPG_EXT) == 0) {
+
+        } else if (event == CLOSE_WRITE && ext.equals(JPG_EXT)) {
             if (VERBOSE) Log.i(TAG, "posting thumbnail written " + absolutePath);
             mEventBus.post(new ThumbnailWrittenEvent(absolutePath));
         }

@@ -79,9 +79,6 @@ public class FFmpegMuxer extends Muxer implements Runnable {
             case HLS:
                 opts.outputFormatName = "hls";
                 break;
-            case RTMP:
-                opts.outputFormatName = "flv";
-                break;
             default:
                 throw new IllegalArgumentException("Unrecognized format!");
         }

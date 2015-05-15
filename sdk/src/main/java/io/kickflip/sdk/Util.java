@@ -46,32 +46,6 @@ public class Util {
         return result;
     }
 
-    /**
-     * Create a {@link io.kickflip.sdk.av.SessionConfig}
-     * corresponding to a 720p video stream
-     *
-     * @param context the host application Context. Used to access Internal Storage
-     * @return the resulting SessionConfig
-     */
-    public static SessionConfig createRTMPpSessionConfig(Context context, String target) {
-        String outputPath = target;
-        // Note SessionConfig actually places each recording in a unique folder
-        // e.g: if you pass /sdcard/test/index.m3u8, your recording will be in
-        //                  /sdcard/test/<some-uuid>/index.m3u8
-        // You can query the actual output file location with SessionConfig#getOutputPath() or the containing directory
-        // with SessionConfig#getOutputDirectory() after construction.
-        SessionConfig config = new SessionConfig.Builder(outputPath)
-                .withTitle(Util.getHumanDateString())
-                .withDescription("A live stream!")
-                .withVideoResolution(320, 240)
-                .withVideoBitrate(300 * 1000)
-                .withAudioBitrate(192 * 1000)
-                .withPrivateVisibility(false)
-                .withLocation(false)
-                .build();
-        return config;
-    }
-
     public static SessionConfig create720pHLSSessionConfig(Context context) {
         HashMap<String, String> extraData = new HashMap<>();
         extraData.put("key", "value");

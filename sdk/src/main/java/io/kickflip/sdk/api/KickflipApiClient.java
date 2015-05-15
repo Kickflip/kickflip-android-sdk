@@ -331,7 +331,6 @@ public class KickflipApiClient extends OAuthClient {
     private void startStreamWithUser(User user, Stream stream, final KickflipCallback cb) {
         checkNotNull(user);
         checkNotNull(stream);
-        // TODO: Be HLS / RTMP Agnostic
         GenericData data = new GenericData();
         data.put("uuid", user.getUUID());
         data.put("private", stream.isPrivate());
@@ -354,7 +353,7 @@ public class KickflipApiClient extends OAuthClient {
      *
      * @param cb This callback will receive a Stream subclass in {@link io.kickflip.sdk.api.KickflipCallback#onSuccess(io.kickflip.sdk.api.json.Response)}
      *           depending on the Kickflip account type. Implementors should
-     *           check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
+     *           check if the response is instanceof HlsStream, etc.
      */
     public void stopStream(Stream stream, final KickflipCallback cb) {
         if (!assertActiveUserAvailable(cb)) return;
@@ -366,11 +365,10 @@ public class KickflipApiClient extends OAuthClient {
      *
      * @param cb This callback will receive a Stream subclass in #onSuccess(response)
      *           depending on the Kickflip account type. Implementors should
-     *           check if the response is instanceof HlsStream, StartRtmpStreamResponse, etc.
+     *           check if the response is instanceof HlsStream, etc.
      */
     private void stopStream(User user, Stream stream, final KickflipCallback cb) {
         checkNotNull(stream);
-        // TODO: Be HLS / RTMP Agnostic
         // TODO: Add start / stop lat lon to Stream?
         GenericData data = new GenericData();
         data.put("stream_id", stream.getStreamId());

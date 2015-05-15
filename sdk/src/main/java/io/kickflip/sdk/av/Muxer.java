@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class Muxer {
     private static final String TAG = "Muxer";
 
-    public static enum FORMAT { MPEG4, HLS, RTMP }
+    public static enum FORMAT { MPEG4, HLS }
 
     private final int mExpectedNumTracks = 2;           // TODO: Make this configurable?
 
@@ -148,8 +148,8 @@ public abstract class Muxer {
         if (Build.VERSION.SDK_INT >= 21) return true;
 
         switch(mFormat){
-            case RTMP:
-               return true;
+            case HLS:
+               return false;
             default:
                 return false;
         }

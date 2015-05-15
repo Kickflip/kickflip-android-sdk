@@ -194,7 +194,7 @@ public class SessionConfig {
 
         /**
          * Configure a SessionConfig quickly with intelligent path interpretation.
-         * Valid inputs are "/path/to/name.m3u8", "/path/to/name.mp4", "rtmp://path/to/endpoint"
+         * Valid inputs are "/path/to/name.m3u8", "/path/to/name.mp4"
          * <p/>
          * For file-based outputs (.m3u8, .mp4) the file structure is managed
          * by a recording UUID.
@@ -221,17 +221,13 @@ public class SessionConfig {
             setMetaDefaults();
             mUUID = UUID.randomUUID();
 
-            if (outputLocation.contains("rtmp://")) {
-                mMuxer = FFmpegMuxer.create(outputLocation, Muxer.FORMAT.RTMP);
-            } else if (outputLocation.contains(".flv") /*|| outputLocation.contains("f4v") */) {
-                mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.RTMP);
-            } else if (outputLocation.contains(".m3u8")) {
+            if (outputLocation.contains(".m3u8")) {
                 mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.HLS);
             } else if (outputLocation.contains(".mp4")) {
                 mMuxer = AndroidMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
                 //mMuxer = FFmpegMuxer.create(createRecordingPath(outputLocation), Muxer.FORMAT.MPEG4);
             } else
-                throw new RuntimeException("Unexpected muxer output. Expected a .mp4, .m3u8, or rtmp url: " + outputLocation);
+                throw new RuntimeException("Unexpected muxer output. Expected a .mp4 or .m3u8. Got: " + outputLocation);
 
         }
 
