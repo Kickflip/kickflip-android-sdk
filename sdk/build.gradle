@@ -1,11 +1,11 @@
 apply plugin: 'com.android.library'
 
 def getVersionCode() {
-    return 9
+    return 10
 }
 
 def getVersionName() {
-    return '1.2'
+    return '1.3'
 }
 
 android {
