@@ -1,4 +1,4 @@
-# Kickflip SDK for Android
+# Kickflip SDK for Android [ ![Download](https://api.bintray.com/packages/onlyinamerica/maven/io.kickflip.sdk/images/download.svg) ](https://bintray.com/onlyinamerica/maven/io.kickflip.sdk/_latestVersion)
 
 ![kickflip live broadcast screenshot](http://i.imgur.com/ELljE1a.jpg)
 
@@ -43,14 +43,14 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
     **Dependencies:**
 	```groovy
 	dependencies {
-   		compile 'io.kickflip:sdk:1.1.1'
+   		compile 'io.kickflip:sdk:1.3'
 	}
 	```
 
 
 3. Add the following to your app's `AndroidManifest.xml`:
 
-    **Permissions:**
+    **Permissions** (Optional: These will be automatically merged into your AndroidManifest.xml)
 	```xml	       
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
@@ -60,7 +60,7 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 	```
 	
-	**BroadcastActivity:**	
+	**BroadcastActivity**
 	
 	```xml
     <activity
@@ -69,7 +69,7 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
     </activity>
 	```
 
-	**MediaPlayerActivity** (Optional):
+	**MediaPlayerActivity** (Optional)
 	
 	MediaPlayerActivity handles playing HLS streams with some additional features over Android's MediaPlayer (like indicating when a stream is "Live" and more accurately inferring the stream duration).
 	
@@ -108,7 +108,7 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
    	
 `BroadcastActivity` provides a pre-built UI including a camera preview and controls for starting, stopping, and sharing the broadcast.
 
-### Building
+## Building
 
 1. Define the Android SDK root location as $ANDROID_HOME in your environment. It's also a good idea to add the `platform-tools` and `tools` directories to your path so you can easily access common Android utilities, like adb.
 
