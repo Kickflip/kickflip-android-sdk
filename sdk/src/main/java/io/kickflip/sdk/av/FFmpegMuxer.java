@@ -240,7 +240,10 @@ public class FFmpegMuxer extends Muxer implements Runnable {
     }
 
     public void forceStop() {
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_FORCE_SHUTDOWN));
+        if (formatRequiresBuffering())
+            mHandler.sendMessage(mHandler.obtainMessage(MSG_FORCE_SHUTDOWN));
+        else
+            handleForceStop();
     }
 
     private void handleForceStop() {
