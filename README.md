@@ -90,8 +90,8 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
         }
 
         @Override
-        public void onBroadcastLive(String watchUrl) { 
-        	Log.i("Kickflip", "This phone is live at " + watchUrl);       
+        public void onBroadcastLive(Stream stream) {
+            Log.i(TAG, "BroadcastLive @ " + stream.getKickflipUrl());
         }
 
         @Override
