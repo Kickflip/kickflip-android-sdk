@@ -102,6 +102,7 @@ install {
             project {
                 packaging 'aar'
                 name repoDesc
+                description repoDesc
                 url siteUrl
                 licenses {
                     license {
