@@ -1,4 +1,4 @@
-# Kickflip SDK for Android [ ![Download](https://api.bintray.com/packages/onlyinamerica/maven/io.kickflip.sdk/images/download.svg) ](https://bintray.com/onlyinamerica/maven/io.kickflip.sdk/_latestVersion)
+# Kickflip SDK for Android  [ ![Download](https://api.bintray.com/packages/onlyinamerica/Kickflip/io.kickflip%3Asdk/images/download.svg) ](https://bintray.com/onlyinamerica/Kickflip/io.kickflip%3Asdk/_latestVersion)
 
 ![kickflip live broadcast screenshot](http://i.imgur.com/ELljE1a.jpg)
 

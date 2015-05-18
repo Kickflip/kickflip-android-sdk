@@ -83,8 +83,8 @@ bintray {
 
     configurations = ['archives'] //When uploading configuration files
     pkg {
-        repo = "maven"
-        name = 'io.kickflip.sdk'
+        repo = "Kickflip"
+        name = 'io.kickflip:sdk'
         desc = repoDesc
         websiteUrl = siteUrl
         issueTrackerUrl = 'https://github.com/Kickflip/kickflip-android-sdk/issues'
