@@ -41,7 +41,7 @@ public class KickflipApiClientGenerator {
 
         RestAdapter oAuthAdapter = new RestAdapter.Builder()
                 .setEndpoint(BASE_URL)
-                .setLogLevel(RestAdapter.LogLevel.FULL)
+//                .setLogLevel(RestAdapter.LogLevel.FULL)
                 .build();
 
         KickflipOAuthService oAuthService = oAuthAdapter.create(KickflipOAuthService.class);
@@ -58,7 +58,7 @@ public class KickflipApiClientGenerator {
 
         RestAdapter apiAdapter = new RestAdapter.Builder()
                 .setEndpoint(BASE_URL + "/api/" + API_VERSION)
-                .setLogLevel(RestAdapter.LogLevel.FULL)
+//                .setLogLevel(RestAdapter.LogLevel.FULL)
                 .setRequestInterceptor(new RequestInterceptor() {
                     @Override
                     public void intercept(RequestFacade request) {
