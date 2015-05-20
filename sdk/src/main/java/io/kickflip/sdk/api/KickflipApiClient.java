@@ -506,8 +506,18 @@ public class KickflipApiClient {
 
         checkNotNull(stream);
 
-        mService.setStreamInfo(stream,
-                getActiveUser().getUUID())
+        mService.setStreamInfo(stream.getStreamId(),
+                getActiveUser().getUUID(),
+                stream.getLatitude(), stream.getLongitude(),
+                stream.getTitle(),
+                stream.getDescription(),
+                stream.getExtraInfoString(),
+                stream.getCity(),
+                stream.getState(),
+                stream.getCountry(),
+                stream.getThumbnailUrl(),
+                stream.isPrivate(),
+                stream.isDeleted())
                 .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
                 .doOnError(new Action1<Throwable>() {
                     @Override

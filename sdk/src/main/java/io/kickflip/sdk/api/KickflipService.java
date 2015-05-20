@@ -75,10 +75,6 @@ public interface KickflipService {
 
     @FormUrlEncoded
     @POST(SET_STREAM_META)
-    Observable<Stream> setStreamInfo(@Body Stream stream, @Field("uuid") String userUUID);
-
-    @FormUrlEncoded
-    @POST(SET_STREAM_META)
     Observable<Stream> setStreamInfo(@FieldMap() Map<String, String> params);
 
     @FormUrlEncoded
