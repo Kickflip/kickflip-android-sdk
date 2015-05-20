@@ -39,7 +39,7 @@ import rx.functions.Func1;
  * MediaPlayerFragment demonstrates playing an HLS Stream, and fetching
  * stream metadata via the .m3u8 manifest to decorate the display for Live streams.
  * <p/>
- * Note : {@link Kickflip#setup(Context, String, String)} or {@link Kickflip#setup(Context, String, String, KickflipCallback)}
+ * Note : {@link Kickflip#setup(Context, String, String, boolean)} or {@link Kickflip#setup(Context, String, String, boolean, KickflipCallback)}
  * must be called before this Fragment is added to any Activity! We can remove this requirement by reading Kickflip credentials
  * from an xml resource...
  */
@@ -105,7 +105,7 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
             mMediaUrl = getArguments().getString(ARG_URL);
             if (Kickflip.isKickflipUrl(Uri.parse(mMediaUrl))) {
 
-                Kickflip.getApiClient(getActivity())
+                Kickflip.getApiClient(getActivity(), true)
                         .doOnNext(new Action1<KickflipApiClient>() {
                             @Override
                             public void call(KickflipApiClient kickflipApiClient) {

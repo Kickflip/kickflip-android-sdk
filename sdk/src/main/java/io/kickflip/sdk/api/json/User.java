@@ -32,6 +32,7 @@ public class User extends Response {
     @SerializedName("avatar_url")
     private String mAvatarUrl;
 
+    /** Constructor used to cache local user credentials */
     public User(String app, String name, String uuid, Map extraInfo) {
         mApp = app;
         mName = name;

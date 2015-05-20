@@ -110,7 +110,7 @@ public class Broadcaster extends AVRecorder {
         if (VERBOSE) Log.i(TAG, "Watching " + watchDir);
 
         mReadyToBroadcast = false;
-        Kickflip.setup(context, CLIENT_ID, CLIENT_SECRET, new KickflipCallback<KickflipApiClient>() {
+        Kickflip.setup(context, CLIENT_ID, CLIENT_SECRET, true, new KickflipCallback<KickflipApiClient>() {
             @Override
             public void onSuccess(KickflipApiClient client) {
                 mKickflip = client;

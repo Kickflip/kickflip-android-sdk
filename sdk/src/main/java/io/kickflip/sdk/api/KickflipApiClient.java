@@ -50,12 +50,21 @@ public class KickflipApiClient {
     // TODO : Add static creator allowing username, display_name etc.
 
     /**
-     * Return an Observable for a {@link KickflipApiClient} after creating a new Kickflip user
-     * for this application instance if necessary
+     * Return an Observable for a {@link KickflipApiClient}.
+     * @param autoCreateUser whether this call should also automatically create
+     *                                a new user for this app install if that has not yet been done.
+     *                                You'd generally only pass false if you want to specify a specific username,
+     *                                as the rest of the user details can be changed at any time via
+     *                                {@link KickflipApiClient#setUserInfo(String, String, String, Map, KickflipCallback)}
+     *                                If false, you must manually create a user upon receiving the KickflipApiClient:
+     *                                {@link KickflipApiClient#createNewUser(String, String, String, String, Map)}
+     *                                {@link KickflipApiClient#createNewUser(String, String, String, String, Map, KickflipCallback)}
+     *                                {@link KickflipApiClient#createNewUser(KickflipCallback)} <- this would be equivalent to auto-creating
      */
     public static Observable<KickflipApiClient> create(@NonNull final Context context,
                                                        @NonNull final String clientId,
-                                                       @NonNull final String clientSecret) {
+                                                       @NonNull final String clientSecret,
+                                                       final boolean autoCreateUser) {
         checkNotNull(context);
         checkNotNull(clientId);
         checkNotNull(clientSecret);
@@ -72,6 +81,8 @@ public class KickflipApiClient {
                 .flatMap(new Func1<KickflipApiClient, Observable<KickflipApiClient>>() {
                     @Override
                     public Observable<KickflipApiClient> call(final KickflipApiClient kickflipApiClient) {
+                        if (!autoCreateUser) return Observable.just(kickflipApiClient);
+
                         return kickflipApiClient.getOrCreateActiveUser()
                                 .map(new Func1<User, KickflipApiClient>() {
                                     @Override
@@ -710,10 +721,9 @@ public class KickflipApiClient {
      * This will be the User created on the last call to
      * {@link KickflipApiClient#createNewUser(KickflipCallback)}
      * <p/>
-     * The result of this function is guaranteed to be not null if {@link #create(Context, String, String)}
+     * The result of this function is guaranteed to be not null after {@link #getOrCreateActiveUser()}
      * succeeds
      *
-     * @return
      */
     @DebugLog
     public User getActiveUser() {
@@ -735,8 +745,9 @@ public class KickflipApiClient {
      * @param stream the Stream to test.
      * @return true if the active Kickflip User owns the Stream. false otherwise.
      */
+    @DebugLog
     public boolean activeUserOwnsStream(Stream stream) {
-        return getActiveUser().getName().compareTo(stream.getOwnerName()) == 0;
+        return getActiveUser().getName().equals(stream.getOwnerName());
     }
 
     @DebugLog

@@ -39,13 +39,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p/>
  * <h2>Setup</h2>
  * Before use Kickflip must be setup with your Kickflip Client ID and Client Secret with
- * {@link #setup(android.content.Context, String, String)}. These tokens are available in your kickflip
+ * {@link #setup(android.content.Context, String, String, boolean)}. These tokens are available in your kickflip
  * account dashboard.
  * <h2>Example Usage</h2>
  * <b>Starting a single live broadcast</b>
  * <p/>
  * <ol>
- * <li>{@link #setup(android.content.Context, String, String)}</li>
+ * <li>{@link #setup(android.content.Context, String, String, boolean)}</li>
  * <li>(Optional) {@link #setSessionConfig(io.kickflip.sdk.av.SessionConfig)}</li>
  * <li>{@link #startBroadcastActivity(android.app.Activity, io.kickflip.sdk.av.BroadcastListener)}</li>
  * </ol>
@@ -105,10 +105,11 @@ public class Kickflip {
     public static void setup(@NonNull Context context,
                              @NonNull String key,
                              @NonNull String secret,
+                             boolean autoCreateUser,
                              @Nullable KickflipCallback<KickflipApiClient> cb) {
         sContext = context;
         setApiCredentials(key, secret);
-        getApiClient(context, cb);
+        getApiClient(context, autoCreateUser, cb);
     }
 
     /**
@@ -123,10 +124,11 @@ public class Kickflip {
      */
     public static Observable<KickflipApiClient> setup(@NonNull Context context,
                                                       @NonNull String key,
-                                                      @NonNull String secret) {
+                                                      @NonNull String secret,
+                                                      boolean autoCreateUser) {
         sContext = context;
         setApiCredentials(key, secret);
-        return getApiClient(context);
+        return getApiClient(context, autoCreateUser);
     }
 
     private static void setApiCredentials(String key, String secret) {
@@ -138,8 +140,8 @@ public class Kickflip {
      * Start {@link io.kickflip.sdk.activity.BroadcastActivity}. This Activity
      * facilitates control over a single live broadcast.
      * <p/>
-     * <b>Must be called after {@link Kickflip#setup(android.content.Context, String, String)} or
-     * {@link Kickflip#setup(android.content.Context, String, String, KickflipCallback)}.</b>
+     * <b>Must be called after {@link Kickflip#setup(Context, String, String, boolean)} or
+     * {@link Kickflip#setup(Context, String, String, boolean, KickflipCallback)}.</b>
      *
      * @param host     the host {@link android.app.Activity} initiating this action
      * @param listener an optional {@link io.kickflip.sdk.av.BroadcastListener} to be notified on
@@ -176,8 +178,8 @@ public class Kickflip {
      * Start {@link io.kickflip.sdk.activity.MediaPlayerActivity}. This Activity
      * facilitates playing back a Kickflip broadcast.
      * <p/>
-     * <b>Must be called after {@link Kickflip#setup(android.content.Context, String, String)} or
-     * {@link Kickflip#setup(android.content.Context, String, String, KickflipCallback)}.</b>
+     * <b>Must be called after {@link Kickflip#setup(Context, String, String, boolean)} or
+     * {@link Kickflip#setup(Context, String, String, boolean, KickflipCallback)}.</b>
      *
      * @param host      the host {@link android.app.Activity} initiating this action
      * @param streamUrl a path of format https://kickflip.io/<stream_id> or https://xxx.xxx/xxx.m3u8
@@ -326,8 +328,8 @@ public class Kickflip {
 
     /**
      * Deprecated - you should cache the KickflipApiClient returned via
-     * {@link #setup(Context, String, String, KickflipCallback)} or
-     * {@link #setup(Context, String, String)}. I think this method
+     * {@link #setup(Context, String, String, boolean, KickflipCallback)} or
+     * {@link #setup(Context, String, String, boolean)}. I think this method
      * is confusing because it doesn't guarantee that API keys are present.
      *
      * Create a new instance of the KickflipApiClient if one hasn't
@@ -337,11 +339,11 @@ public class Kickflip {
      * @param context the context of the host application
      */
     @Deprecated
-    public static Observable<KickflipApiClient> getApiClient(Context context) {
+    public static Observable<KickflipApiClient> getApiClient(Context context, boolean autoCreateUser) {
         checkNotNull(sClientKey);
         checkNotNull(sClientSecret);
         if (sKickflip == null || !sKickflip.getClientId().equals(sClientKey)) {
-            return KickflipApiClient.create(context, sClientKey, sClientSecret)
+            return KickflipApiClient.create(context, sClientKey, sClientSecret, autoCreateUser)
                     .doOnNext(new Action1<KickflipApiClient>() {
                         @Override
                         public void call(KickflipApiClient kickflipApiClient) {
@@ -357,8 +359,8 @@ public class Kickflip {
 
     /**
      * Deprecated - you should cache the KickflipApiClient returned via
-     * {@link #setup(Context, String, String, KickflipCallback)} or
-     * {@link #setup(Context, String, String)}. I think this method
+     * {@link #setup(Context, String, String, boolean, KickflipCallback)} or
+     * {@link #setup(Context, String, String, boolean)}. I think this method
      * is confusing because it doesn't guarantee that API keys are present.
      * Create a new instance of the KickflipApiClient if one hasn't
      * yet been created, or the provided API keys don't match
@@ -369,11 +371,11 @@ public class Kickflip {
      *                 corresponding to the provided API keys.
      */
     @Deprecated
-    public static void getApiClient(@NonNull Context context, @Nullable final KickflipCallback<KickflipApiClient> callback) {
+    public static void getApiClient(@NonNull Context context, boolean autoCreateUser, final KickflipCallback<KickflipApiClient> callback) {
         checkNotNull(sClientKey);
         checkNotNull(sClientSecret);
         if (sKickflip == null || !sKickflip.getClientId().equals(sClientKey)) {
-            KickflipApiClient.create(context, sClientKey, sClientSecret)
+            KickflipApiClient.create(context, sClientKey, sClientSecret, autoCreateUser)
                     .subscribeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Action1<KickflipApiClient>() {
                         @Override
