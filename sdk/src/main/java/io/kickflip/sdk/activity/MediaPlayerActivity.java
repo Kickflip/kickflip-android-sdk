@@ -17,7 +17,7 @@ public class MediaPlayerActivity extends ImmersiveActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setUseImmersiveMode(false);
+//        setUseImmersiveMode(false);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media_playback);
         // This must be setup before

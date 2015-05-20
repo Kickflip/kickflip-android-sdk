@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -13,14 +14,14 @@ import static io.kickflip.sdk.Kickflip.isKitKat;
 /**
  * @hide
  */
-public abstract class ImmersiveActivity extends Activity {
+public abstract class ImmersiveActivity extends AppCompatActivity {
     public static final String TAG = "ImmersiveActivity";
     private boolean mUseImmersiveMode = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        //requestWindowFeature(Window.FEATURE_NO_TITLE);
     }
 
     @Override

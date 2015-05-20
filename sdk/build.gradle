@@ -52,6 +52,7 @@ configurations {
 dependencies {
     compile 'com.google.guava:guava:18.0'
     compile 'com.android.support:support-v4:22.1.1'
+    compile 'com.android.support:appcompat-v7:22.1.1'
 
     compile 'com.amazonaws:aws-android-sdk-core:2.2.1'
     compile 'com.amazonaws:aws-android-sdk-s3:2.2.1'
