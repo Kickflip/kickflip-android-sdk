@@ -3,6 +3,7 @@ package io.kickflip.sdk.api.json;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
+import com.google.common.base.Objects;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -218,6 +219,25 @@ public class Stream extends Response implements Comparable<Stream>, Serializable
     @Override
     public String toString() {
         return new GsonBuilder().setPrettyPrinting().create().toJson(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if (obj == this) return true;
+        if (obj == null) return false;
+
+        if (obj instanceof Stream) {
+            Stream other = (Stream) obj;
+            return Objects.equal(mStreamId, other.getStreamId());
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(mStreamId);
     }
 
 }
