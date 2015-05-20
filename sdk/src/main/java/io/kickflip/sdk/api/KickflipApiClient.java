@@ -45,7 +45,6 @@ public class KickflipApiClient {
     private String mClientId;                               // Allow checking whether Client Creds have changed
     private String mClientSecret;
     private KickflipService mService;
-    private Handler mCallbackHandler;                       // Ensure callbacks are posted to consistent thread
     private Gson mGson;                                     // To convert extraInfo map to json string
 
     // TODO : Add static creator allowing username, display_name etc.
@@ -67,7 +66,7 @@ public class KickflipApiClient {
                 .map(new Func1<KickflipService, KickflipApiClient>() {
                     @Override
                     public KickflipApiClient call(KickflipService kickflipService) {
-                        return new KickflipApiClient(context, kickflipService, clientId, clientSecret, callbackHandler);
+                        return new KickflipApiClient(context, kickflipService, clientId, clientSecret);
                     }
                 })
                 .flatMap(new Func1<KickflipApiClient, Observable<KickflipApiClient>>() {
@@ -87,8 +86,7 @@ public class KickflipApiClient {
     private KickflipApiClient(@NonNull Context context,
                               @NonNull KickflipService service,
                               @NonNull String clientId,
-                              @NonNull String clientSecret,
-                              @NonNull Handler callbackHandler) {
+                              @NonNull String clientSecret) {
         checkNotNull(context);
         checkNotNull(service);
 
@@ -96,7 +94,6 @@ public class KickflipApiClient {
         mContext = context;
         mClientId = clientId;
         mClientSecret = clientSecret;
-        mCallbackHandler = callbackHandler;
 
         mGson = new Gson();
 
@@ -195,10 +192,10 @@ public class KickflipApiClient {
                               @Nullable String email,
                               @Nullable String displayName,
                               @Nullable Map extraInfo,
-                              @Nullable final KickflipCallback cb) {
+                              @Nullable final KickflipCallback<User> cb) {
 
         mService.createNewUser(username, password, displayName, email, mGson.toJson(extraInfo))
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -241,7 +238,7 @@ public class KickflipApiClient {
         final String password = generateRandomPassword();
 
         mService.createNewUser(password)
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -267,13 +264,13 @@ public class KickflipApiClient {
     @DebugLog
     public void loginUser(@NonNull String username,
                           @NonNull final String password,
-                          @Nullable final KickflipCallback cb) {
+                          @Nullable final KickflipCallback<User> cb) {
 
         checkNotNull(username);
         checkNotNull(password);
 
         mService.loginUser(username, password)
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -320,10 +317,10 @@ public class KickflipApiClient {
                             @Nullable String email,
                             @Nullable String displayName,
                             @Nullable Map extraInfo,
-                            @Nullable final KickflipCallback cb) {
+                            @Nullable final KickflipCallback<User> cb) {
 
         mService.setUserInfo(newPassword, email, displayName, mGson.toJson(extraInfo))
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -352,7 +349,7 @@ public class KickflipApiClient {
         checkNotNull(username);
 
         mService.getUserInfo(username)
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -423,7 +420,7 @@ public class KickflipApiClient {
                 stream.getTitle(),
                 stream.getDescription(),
                 stream.getExtraInfoString())
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -475,7 +472,7 @@ public class KickflipApiClient {
                 user.getUUID(),
                 stream.getLatitude(),
                 stream.getLongitude())
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -518,7 +515,7 @@ public class KickflipApiClient {
                 stream.getThumbnailUrl(),
                 stream.isPrivate(),
                 stream.isDeleted())
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -546,7 +543,7 @@ public class KickflipApiClient {
         checkNotNull(streamId);
 
         mService.getStreamInfo(streamId)
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -591,7 +588,7 @@ public class KickflipApiClient {
         checkNotNull(stream);
 
         mService.flagStream(stream.getStreamId(), getActiveUser().getUUID())
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -618,11 +615,11 @@ public class KickflipApiClient {
     public void getStreamsByUsername(@NonNull String username,
                                      int pageNumber,
                                      int itemsPerPage,
-                                     @Nullable final KickflipCallback cb) {
+                                     @Nullable final KickflipCallback<StreamList> cb) {
         checkNotNull(username);
         mService.getStreamsByUser(getActiveUser().getUUID(),
                 username, itemsPerPage, pageNumber)
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -635,6 +632,11 @@ public class KickflipApiClient {
                     @Override
                     public void call(StreamList streams) {
                         if (cb != null) cb.onSuccess(streams);
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        Log.e(TAG, "Error processing callback", throwable);
                     }
                 });
     }
@@ -649,11 +651,11 @@ public class KickflipApiClient {
      */
     @DebugLog
     public void getStreamsByKeyword(@NonNull String keyword, int pageNumber, int itemsPerPage,
-                                    @Nullable final KickflipCallback cb) {
+                                    @Nullable final KickflipCallback<StreamList> cb) {
         checkNotNull(keyword);
         mService.getStreamsByKeyword(getActiveUser().getUUID(),
                 keyword, itemsPerPage, pageNumber)
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
@@ -681,11 +683,11 @@ public class KickflipApiClient {
      */
     @DebugLog
     public void getStreamsByLocation(@NonNull Location location, int radius, int pageNumber, int itemsPerPage,
-                                     @Nullable final KickflipCallback cb) {
+                                     @Nullable final KickflipCallback<StreamList> cb) {
         checkNotNull(location);
         mService.getStreamsByLocation(getActiveUser().getUUID(),
                 location.getLatitude(), location.getLongitude(), radius, itemsPerPage, pageNumber)
-                .subscribeOn(AndroidSchedulers.handlerThread(mCallbackHandler))
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnError(new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
