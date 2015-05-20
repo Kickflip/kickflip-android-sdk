@@ -76,11 +76,9 @@ public class KickflipApiClientGenerator {
                     @Override
                     public Object fromBody(TypedInput body, Type type) throws ConversionException {
 
-                        Log.i("Converter", TypeToken.get(type).getRawType().getCanonicalName() + " vs. " + Stream.class.getName());
                         if (TypeToken.get(type).getRawType().getCanonicalName().equals(Stream.class.getCanonicalName())) {
                             // TODO : Kickflip server should return a definitive stream type
                             // until then, we assume all streams are HLS
-                            Log.i("Converter", "Converting Stream to HlsStream");
                             return super.fromBody(body, HlsStream.class);
                         }
                         return super.fromBody(body, type);
