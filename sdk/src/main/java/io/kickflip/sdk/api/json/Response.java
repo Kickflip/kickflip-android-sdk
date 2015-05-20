@@ -1,16 +1,16 @@
 package io.kickflip.sdk.api.json;
 
-import com.google.api.client.util.Key;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * JSON API object for Kickflip Responses
  */
 public class Response {
 
-    @Key("success")
+    @SerializedName("success")
     private boolean mSuccess;
 
-    @Key("reason")
+    @SerializedName("reason")
     private String mReason;
 
     public Response() {

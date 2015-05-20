@@ -1,8 +1,8 @@
 package io.kickflip.sdk.api.json;
 
-import com.google.api.client.util.Key;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -12,67 +12,67 @@ import java.util.Map;
  */
 public class Stream extends Response implements Comparable<Stream>, Serializable {
 
-    @Key("stream_id")
+    @SerializedName("stream_id")
     private String mStreamId;
 
-    @Key("stream_type")
+    @SerializedName("stream_type")
     private String mStreamType;
 
-    @Key("chat_url")
+    @SerializedName("chat_url")
     private String mChatUrl;
 
-    @Key("upload_url")
+    @SerializedName("upload_url")
     private String mUploadUrl;
 
-    @Key("stream_url")
+    @SerializedName("stream_url")
     private String mStreamUrl;
 
-    @Key("kickflip_url")
+    @SerializedName("kickflip_url")
     private String mKickflipUrl;
 
-    @Key("lat")
+    @SerializedName("lat")
     private double mLatitude;
 
-    @Key("lon")
+    @SerializedName("lon")
     private double mLongitude;
 
-    @Key("city")
+    @SerializedName("city")
     private String mCity;
 
-    @Key("state")
+    @SerializedName("state")
     private String mState;
 
-    @Key("country")
+    @SerializedName("country")
     private String mCountry;
 
-    @Key("private")
+    @SerializedName("private")
     private boolean mPrivate;
 
-    @Key("title")
+    @SerializedName("title")
     private String mTitle;
 
-    @Key("description")
+    @SerializedName("description")
     private String mDescription;
 
-    @Key("extra_info")
+    @SerializedName("extra_info")
     private String mExtraInfo;
 
-    @Key("thumbnail_url")
+    @SerializedName("thumbnail_url")
     private String mThumbnailUrl;
 
-    @Key("time_started")
+    @SerializedName("time_started")
     private String mTimeStarted;
 
-    @Key("length")
+    @SerializedName("length")
     private int mLength;
 
-    @Key("user_username")
+    @SerializedName("user_username")
     private String mOwnerName;
 
-    @Key("user_avatar")
+    @SerializedName("user_avatar")
     private String mOwnerAvatar;
 
-    @Key("deleted")
+    @SerializedName("deleted")
     private boolean mDeleted;
 
     public boolean isDeleted() {
@@ -136,6 +136,10 @@ public class Stream extends Response implements Comparable<Stream>, Serializable
             return new Gson().fromJson(mExtraInfo, Map.class);
         }
         return null;
+    }
+
+    public String getExtraInfoString() {
+        return mExtraInfo;
     }
 
     public void setExtraInfo(Map mExtraInfo) {

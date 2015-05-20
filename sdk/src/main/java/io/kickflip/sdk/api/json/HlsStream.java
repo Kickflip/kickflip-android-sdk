@@ -1,31 +1,31 @@
 package io.kickflip.sdk.api.json;
 
-import com.google.api.client.util.Key;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Created by davidbrodsky on 2/17/14.
  */
 public class HlsStream extends Stream {
 
-    @Key("bucket_name")
+    @SerializedName("bucket_name")
     private String mBucket;
 
-    @Key("aws_region")
+    @SerializedName("aws_region")
     private String mRegion;
 
-    @Key("aws_prefix")
+    @SerializedName("aws_prefix")
     private String mPrefix;
 
-    @Key("aws_access_key")
+    @SerializedName("aws_access_key")
     private String mAwsKey;
 
-    @Key("aws_secret_key")
+    @SerializedName("aws_secret_key")
     private String mAwsSecret;
 
-    @Key("aws_session_token")
+    @SerializedName("aws_session_token")
     private String mToken;
 
-    @Key("aws_duration")
+    @SerializedName("aws_duration")
     private String mDuration;
 
     public String getAwsS3Bucket() {

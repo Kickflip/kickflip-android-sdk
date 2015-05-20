@@ -21,6 +21,7 @@ import io.kickflip.sdk.api.KickflipApiClient;
 import io.kickflip.sdk.api.KickflipCallback;
 import io.kickflip.sdk.api.json.HlsStream;
 import io.kickflip.sdk.api.json.Response;
+import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.api.json.User;
 import io.kickflip.sdk.api.s3.S3BroadcastManager;
 import io.kickflip.sdk.event.BroadcastIsBufferingEvent;
@@ -109,12 +110,12 @@ public class Broadcaster extends AVRecorder {
         if (VERBOSE) Log.i(TAG, "Watching " + watchDir);
 
         mReadyToBroadcast = false;
-        mKickflip = Kickflip.setup(context, CLIENT_ID, CLIENT_SECRET, new KickflipCallback() {
+        Kickflip.setup(context, CLIENT_ID, CLIENT_SECRET, new KickflipCallback<KickflipApiClient>() {
             @Override
-            public void onSuccess(Response response) {
-                User user = (User) response;
-                mUser = user;
-                if (VERBOSE) Log.i(TAG, "Got storage credentials " + response);
+            public void onSuccess(KickflipApiClient client) {
+                mKickflip = client;
+                mUser = client.getActiveUser();
+                if (VERBOSE) Log.i(TAG, "Got storage credentials " + mUser);
             }
 
             @Override
@@ -181,14 +182,20 @@ public class Broadcaster extends AVRecorder {
      */
     @Override
     public void startRecording() {
+        if (mKickflip == null) {
+            Log.e(TAG, "Start recording requested before Kickflip api client available! Ignoring request");
+            return;
+        }
+
         super.startRecording();
-        mKickflip.startStream(mConfig.getStream(), new KickflipCallback() {
+        mKickflip.startStream(mConfig.getStream(), new KickflipCallback<Stream>() {
             @Override
-            public void onSuccess(Response response) {
+            public void onSuccess(Stream stream) {
                 mCamEncoder.requestThumbnailOnDeltaFrameWithScaling(10, 1);
                 Log.i(TAG, "got StartStreamResponse");
-                checkArgument(response instanceof HlsStream, "Got unexpected StartStream Response");
-                onGotStreamResponse((HlsStream) response);
+                checkArgument(stream instanceof HlsStream, "Got unexpected StartStream Response");
+                //noinspection ConstantConditions
+                onGotStreamResponse((HlsStream) stream);
             }
 
             @Override
@@ -239,10 +246,10 @@ public class Broadcaster extends AVRecorder {
         mSentBroadcastLiveEvent = false;
         if (mStream != null) {
             if (VERBOSE) Log.i(TAG, "Stopping Stream");
-            mKickflip.stopStream(mStream, new KickflipCallback() {
+            mKickflip.stopStream(mStream, new KickflipCallback<Stream>() {
                 @Override
-                public void onSuccess(Response response) {
-                    if (VERBOSE) Log.i(TAG, "Got stop stream response " + response);
+                public void onSuccess(Stream stream) {
+                    if (VERBOSE) Log.i(TAG, "Got stop stream response " + stream);
                 }
 
                 @Override

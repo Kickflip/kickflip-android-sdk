@@ -1,6 +1,6 @@
 package io.kickflip.sdk.api.json;
 
-import com.google.api.client.util.Key;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
@@ -9,19 +9,19 @@ import java.util.List;
  */
 public class StreamList extends Response {
 
-    @Key("streams")
+    @SerializedName("streams")
     private List<Stream> mStreams;
 
-    @Key("next_page_available")
+    @SerializedName("next_page_available")
     private boolean mNextPageAvailable;
 
-    @Key("total_items")
+    @SerializedName("total_items")
     private int mTotalItems;
 
-    @Key("page_number")
+    @SerializedName("page_number")
     private int mPageNumber;
 
-    @Key("results_per_page")
+    @SerializedName("results_per_page")
     private int mResultsPerPage;
 
     public List<Stream> getStreams() {

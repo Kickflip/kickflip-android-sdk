@@ -5,7 +5,7 @@ import java.io.IOException;
 /**
  * Kickflip Exception
  */
-public class KickflipException extends IOException{
+public class KickflipException extends Exception {
     private String mMessage;
     private int mCode;
 

@@ -2,8 +2,8 @@ package io.kickflip.sdk.api.json;
 
 import android.util.Log;
 
-import com.google.api.client.util.Key;
 import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.Map;
 
@@ -14,22 +14,22 @@ import java.util.Map;
 public class User extends Response {
     public static final String TAG = "User";
 
-    @Key("app")
+    @SerializedName("app")
     private String mApp;
 
-    @Key("display_name")
+    @SerializedName("display_name")
     private String mDisplayName;
 
-    @Key("name")
+    @SerializedName("name")
     private String mName;
 
-    @Key("uuid")
+    @SerializedName("uuid")
     private String mUUID;
 
-    @Key("extra_info")
+    @SerializedName("extra_info")
     private String mExtraInfoStr;
 
-    @Key("avatar_url")
+    @SerializedName("avatar_url")
     private String mAvatarUrl;
 
     public User(String app, String name, String uuid, Map extraInfo) {

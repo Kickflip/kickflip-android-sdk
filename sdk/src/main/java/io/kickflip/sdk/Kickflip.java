@@ -8,6 +8,8 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.common.eventbus.EventBus;
@@ -25,6 +27,9 @@ import io.kickflip.sdk.av.BroadcastListener;
 import io.kickflip.sdk.av.SessionConfig;
 import io.kickflip.sdk.event.StreamLocationAddedEvent;
 import io.kickflip.sdk.location.DeviceLocation;
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -56,21 +61,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Here's an example of how to build a {@link io.kickflip.sdk.av.SessionConfig} with {@link io.kickflip.sdk.av.SessionConfig.Builder}:
  * <p/>
  * <code>
- *   SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
- *     <br/>&nbsp.withTitle(Util.getHumanDateString())
- *     <br/>&nbsp.withDescription("Example Description")
- *     <br/>&nbsp.withVideoResolution(1280, 720)
- *     <br/>&nbsp.withVideoBitrate(2 * 1000 * 1000)
- *     <br/>&nbsp.withAudioBitrate(192 * 1000)
- *     <br/>&nbsp.withAdaptiveStreaming(true)
- *     <br/>&nbsp.withVerticalVideoCorrection(true)
- *     <br/>&nbsp.withExtraInfo(extraDataMap)
- *     <br/>&nbsp.withPrivateVisibility(false)
- *     <br/>&nbsp.withLocation(true)
- *
- *     <br/>&nbsp.build();
- *    <br/>Kickflip.setSessionConfig(config);
- *
+ * SessionConfig config = new SessionConfig.Builder(mRecordingOutputPath)
+ * <br/>&nbsp.withTitle(Util.getHumanDateString())
+ * <br/>&nbsp.withDescription("Example Description")
+ * <br/>&nbsp.withVideoResolution(1280, 720)
+ * <br/>&nbsp.withVideoBitrate(2 * 1000 * 1000)
+ * <br/>&nbsp.withAudioBitrate(192 * 1000)
+ * <br/>&nbsp.withAdaptiveStreaming(true)
+ * <br/>&nbsp.withVerticalVideoCorrection(true)
+ * <br/>&nbsp.withExtraInfo(extraDataMap)
+ * <br/>&nbsp.withPrivateVisibility(false)
+ * <br/>&nbsp.withLocation(true)
+ * <p/>
+ * <br/>&nbsp.build();
+ * <br/>Kickflip.setSessionConfig(config);
+ * <p/>
  * </code>
  * <br/>
  * Note that SessionConfig is initialized with sane defaults for a 720p broadcast. Every parameter is optional.
@@ -88,16 +93,22 @@ public class Kickflip {
     private static BroadcastListener sBroadcastListener;
 
     /**
-     * Register with Kickflip, creating a new user identity per app installation.
+     * Register with Kickflip, creating a single new user identity per app installation.
      *
      * @param context the host application's {@link android.content.Context}
      * @param key     your Kickflip Client Key
      * @param secret  your Kickflip Client Secret
-     * @return a {@link io.kickflip.sdk.api.KickflipApiClient} used to perform actions on behalf of a
-     * {@link io.kickflip.sdk.api.json.User}.
+     * @param cb      A callback to be invoked with a {@link KickflipApiClient} initialized
+     *                with a user for this application-install. Use this client
+     *                to perform all Kickflip operations on behalf of the application user.
      */
-    public static KickflipApiClient setup(Context context, String key, String secret) {
-        return setup(context, key, secret, null);
+    public static void setup(@NonNull Context context,
+                             @NonNull String key,
+                             @NonNull String secret,
+                             @Nullable KickflipCallback<KickflipApiClient> cb) {
+        sContext = context;
+        setApiCredentials(key, secret);
+        getApiClient(context, cb);
     }
 
     /**
@@ -106,14 +117,16 @@ public class Kickflip {
      * @param context the host application's {@link android.content.Context}
      * @param key     your Kickflip Client Key
      * @param secret  your Kickflip Client Secret
-     * @param cb      A callback to be invoked when Kickflip user credentials are available.
-     * @return a {@link io.kickflip.sdk.api.KickflipApiClient} used to perform actions on behalf of
-     * a {@link io.kickflip.sdk.api.json.User}.
+     * @return an Observable for {@link KickflipApiClient} initialized
+     * with a user for this application-install. Use this client
+     * to perform all Kickflip operations on behalf of the application user.
      */
-    public static KickflipApiClient setup(Context context, String key, String secret, KickflipCallback cb) {
+    public static Observable<KickflipApiClient> setup(@NonNull Context context,
+                                                      @NonNull String key,
+                                                      @NonNull String secret) {
         sContext = context;
         setApiCredentials(key, secret);
-        return getApiClient(context, cb);
+        return getApiClient(context);
     }
 
     private static void setApiCredentials(String key, String secret) {
@@ -126,7 +139,7 @@ public class Kickflip {
      * facilitates control over a single live broadcast.
      * <p/>
      * <b>Must be called after {@link Kickflip#setup(android.content.Context, String, String)} or
-     * {@link Kickflip#setup(android.content.Context, String, String, io.kickflip.sdk.api.KickflipCallback)}.</b>
+     * {@link Kickflip#setup(android.content.Context, String, String, KickflipCallback)}.</b>
      *
      * @param host     the host {@link android.app.Activity} initiating this action
      * @param listener an optional {@link io.kickflip.sdk.av.BroadcastListener} to be notified on
@@ -164,7 +177,7 @@ public class Kickflip {
      * facilitates playing back a Kickflip broadcast.
      * <p/>
      * <b>Must be called after {@link Kickflip#setup(android.content.Context, String, String)} or
-     * {@link Kickflip#setup(android.content.Context, String, String, io.kickflip.sdk.api.KickflipCallback)}.</b>
+     * {@link Kickflip#setup(android.content.Context, String, String, KickflipCallback)}.</b>
      *
      * @param host      the host {@link android.app.Activity} initiating this action
      * @param streamUrl a path of format https://kickflip.io/<stream_id> or https://xxx.xxx/xxx.m3u8
@@ -312,18 +325,41 @@ public class Kickflip {
     }
 
     /**
+     * Deprecated - you should cache the KickflipApiClient returned via
+     * {@link #setup(Context, String, String, KickflipCallback)} or
+     * {@link #setup(Context, String, String)}. I think this method
+     * is confusing because it doesn't guarantee that API keys are present.
+     *
      * Create a new instance of the KickflipApiClient if one hasn't
      * yet been created, or the provided API keys don't match
      * the existing client.
      *
      * @param context the context of the host application
-     * @return
      */
-    public static KickflipApiClient getApiClient(Context context) {
-        return getApiClient(context, null);
+    @Deprecated
+    public static Observable<KickflipApiClient> getApiClient(Context context) {
+        checkNotNull(sClientKey);
+        checkNotNull(sClientSecret);
+        if (sKickflip == null || !sKickflip.getClientId().equals(sClientKey)) {
+            return KickflipApiClient.create(context, sClientKey, sClientSecret)
+                    .doOnNext(new Action1<KickflipApiClient>() {
+                        @Override
+                        public void call(KickflipApiClient kickflipApiClient) {
+                            sKickflip = kickflipApiClient;
+                            sClientKey = kickflipApiClient.getClientId();
+                            sClientSecret = kickflipApiClient.getClientSecret();
+                        }
+                    });
+        }
+
+        return Observable.just(sKickflip);
     }
 
     /**
+     * Deprecated - you should cache the KickflipApiClient returned via
+     * {@link #setup(Context, String, String, KickflipCallback)} or
+     * {@link #setup(Context, String, String)}. I think this method
+     * is confusing because it doesn't guarantee that API keys are present.
      * Create a new instance of the KickflipApiClient if one hasn't
      * yet been created, or the provided API keys don't match
      * the existing client.
@@ -331,17 +367,27 @@ public class Kickflip {
      * @param context  the context of the host application
      * @param callback an optional callback to be notified with the Kickflip user
      *                 corresponding to the provided API keys.
-     * @return
      */
-    public static KickflipApiClient getApiClient(Context context, KickflipCallback callback) {
+    @Deprecated
+    public static void getApiClient(@NonNull Context context, @Nullable final KickflipCallback<KickflipApiClient> callback) {
         checkNotNull(sClientKey);
         checkNotNull(sClientSecret);
-        if (sKickflip == null || !sKickflip.getConfig().getClientId().equals(sClientKey)) {
-            sKickflip = new KickflipApiClient(context, sClientKey, sClientSecret, callback);
+        if (sKickflip == null || !sKickflip.getClientId().equals(sClientKey)) {
+            KickflipApiClient.create(context, sClientKey, sClientSecret)
+                    .subscribeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Action1<KickflipApiClient>() {
+                        @Override
+                        public void call(KickflipApiClient kickflipApiClient) {
+                            sKickflip = kickflipApiClient;
+                            sClientKey = kickflipApiClient.getClientId();
+                            sClientSecret = kickflipApiClient.getClientSecret();
+                            if (callback != null)
+                                callback.onSuccess(kickflipApiClient);
+                        }
+                    });
         } else if (callback != null) {
-            callback.onSuccess(sKickflip.getActiveUser());
+            callback.onSuccess(sKickflip);
         }
-        return sKickflip;
     }
 
     private static void setupDefaultSessionConfig() {
@@ -358,7 +404,7 @@ public class Kickflip {
 
     /**
      * Returns whether the current device is running Android 4.4, KitKat, or newer
-     *
+     * <p/>
      * KitKat is required for certain Kickflip features like Adaptive bitrate streaming
      */
     public static boolean isKitKat() {

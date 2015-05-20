@@ -2,6 +2,7 @@ package io.kickflip.sdk.fragment;
 
 
 import android.app.Fragment;
+import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -30,10 +31,17 @@ import io.kickflip.sdk.api.json.Response;
 import io.kickflip.sdk.api.json.Stream;
 import io.kickflip.sdk.av.M3u8Parser;
 import io.kickflip.sdk.exception.KickflipException;
+import rx.Observable;
+import rx.functions.Action1;
+import rx.functions.Func1;
 
 /**
  * MediaPlayerFragment demonstrates playing an HLS Stream, and fetching
  * stream metadata via the .m3u8 manifest to decorate the display for Live streams.
+ * <p/>
+ * Note : {@link Kickflip#setup(Context, String, String)} or {@link Kickflip#setup(Context, String, String, KickflipCallback)}
+ * must be called before this Fragment is added to any Activity! We can remove this requirement by reading Kickflip credentials
+ * from an xml resource...
  */
 public class MediaPlayerFragment extends Fragment implements TextureView.SurfaceTextureListener, MediaController.MediaPlayerControl {
     private static final String TAG = "MediaPlayerFragment";
@@ -95,25 +103,30 @@ public class MediaPlayerFragment extends Fragment implements TextureView.Surface
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mMediaUrl = getArguments().getString(ARG_URL);
-            // NOTE: the kickflip client may not be fully initialized immediately.
-            mKickflip = Kickflip.getApiClient(getActivity(), null);
             if (Kickflip.isKickflipUrl(Uri.parse(mMediaUrl))) {
-                Log.i(TAG, "MediaPlayerFragment got kickflip url");
-                String streamId = Kickflip.getStreamIdFromKickflipUrl(Uri.parse(mMediaUrl));
-                mKickflip.getStreamInfo(streamId, new KickflipCallback() {
-                    @Override
-                    public void onSuccess(Response response) {
-                        Stream stream = (Stream) response;
-                        Log.i(TAG, "got kickflip stream meta: " + stream.getStreamUrl());
-                        mMediaUrl = stream.getStreamUrl();
-                        parseM3u8FromMediaUrl();
-                    }
 
-                    @Override
-                    public void onError(KickflipException error) {
-                        Log.i(TAG, "get kickflip stream meta failed");
-                    }
-                });
+                Kickflip.getApiClient(getActivity())
+                        .doOnNext(new Action1<KickflipApiClient>() {
+                            @Override
+                            public void call(KickflipApiClient kickflipApiClient) {
+                                mKickflip = kickflipApiClient;
+                            }
+                        })
+                        .flatMap(new Func1<KickflipApiClient, Observable<Stream>>() {
+                            @Override
+                            public Observable<Stream> call(KickflipApiClient kickflipApiClient) {
+                                String streamId = Kickflip.getStreamIdFromKickflipUrl(Uri.parse(mMediaUrl));
+                                return kickflipApiClient.getStreamInfo(streamId);
+                            }
+                        })
+                        .subscribe(new Action1<Stream>() {
+                            @Override
+                            public void call(Stream stream) {
+                                Log.i(TAG, "got kickflip stream meta: " + stream.getStreamUrl());
+                                mMediaUrl = stream.getStreamUrl();
+                                parseM3u8FromMediaUrl();
+                            }
+                        });
             } else if (mMediaUrl.substring(mMediaUrl.lastIndexOf(".") + 1).equals("m3u8")) {
                 parseM3u8FromMediaUrl();
             } else {

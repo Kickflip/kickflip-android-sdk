@@ -1,13 +1,11 @@
 package io.kickflip.sdk.api;
 
-import io.kickflip.sdk.api.json.Response;
 import io.kickflip.sdk.exception.KickflipException;
 
 /**
- * Callback interface for Kickflip API calls
- *
+ * Generic callback interface for Kickflip
  */
-public interface KickflipCallback {
-    void onSuccess(Response response);
+public interface KickflipCallback<T> {
+    void onSuccess(T response);
     void onError(KickflipException error);
 }
