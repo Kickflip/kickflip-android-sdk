@@ -500,6 +500,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
 
                 if (mIncomingSizeUpdated) {
                     mFullScreen.getProgram().setTexSize(mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
+                    GLES20.glViewport(0, 0, mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
                     mIncomingSizeUpdated = false;
                 }
 
@@ -641,6 +642,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
                 mFullScreen = new FullFrameRect(
                         new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
                 mFullScreen.getProgram().setTexSize(mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
+                GLES20.glViewport(0, 0, mSessionConfig.getVideoWidth(), mSessionConfig.getVideoHeight());
                 mIncomingSizeUpdated = true;
                 mSurfaceTexture.attachToGLContext(mTextureId);
                 //mEglSaver.makeNothingCurrent();
@@ -704,6 +706,7 @@ public class CameraEncoder implements SurfaceTexture.OnFrameAvailableListener, R
         mFullScreen = new FullFrameRect(
                 new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
         mFullScreen.getProgram().setTexSize(width, height);
+        GLES20.glViewport(0, 0, width, height);
         mIncomingSizeUpdated = true;
     }
 
