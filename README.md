@@ -6,7 +6,8 @@
 
 The Kickflip Android SDK requires Android 4.3+ (API 18+).
 
-Check out our [Android example application](https://github.com/Kickflip/kickflip-android-example) to see how to easily put this SDK to work.
+Check out our Android example application on [Github](https://github.com/Kickflip/kickflip-android-example) or Google Play (below).
+[![Google Play link](http://steverichey.github.io/google-play-badge-svg/img/en_get.svg)](https://play.google.com/store/apps/details?id=io.kickflip.sample)
 
 Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk) and [iOS Example application](https://github.com/Kickflip/kickflip-ios-example)
 
