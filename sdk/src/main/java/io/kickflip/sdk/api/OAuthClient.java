@@ -19,6 +19,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Manage the OAuth Client Credentials authentication
@@ -135,8 +136,9 @@ public abstract class OAuthClient {
                         e.printStackTrace();
                     }
                     if (response != null) {
-                        if (VERBOSE) Log.i(TAG, "Got Access Token " + response.getAccessToken().substring(0, 5) + "...");
-                        storeAccessToken(response.getAccessToken());
+                        if (VERBOSE)
+                            Log.i(TAG, "Got Access Token " + response.getAccessToken().substring(0, 5) + "...");
+                        storeAccessToken(response);
                         mOauthInProgress = false;
                         if (cb != null)
                             cb.onSuccess(getRequestFactoryFromAccessToken(mStorage.getString(ACCESS_TOKEN_KEY, null)));
@@ -169,10 +171,11 @@ public abstract class OAuthClient {
     }
 
     protected boolean isAccessTokenCached() {
-        // An unexpired Access Token is stored along with a Client ID that matches what's currently provided
+        // An unexpired Access Token is stored along with a Client ID that matches what's currently provided via mConfig
         long now = new Date().getTime();
         long tokenExpiryTime = getStorage().getLong(ACCESS_TOKEN_EXP_KEY, 0);
-        boolean validCredentialsStored = (mStorage.contains(ACCESS_TOKEN_KEY) && mStorage.getString(CLIENT_ID, "").equals(mConfig.getClientId())) &&
+        boolean validCredentialsStored = (mStorage.contains(ACCESS_TOKEN_KEY) &&
+                mStorage.getString(CLIENT_ID, "").equals(mConfig.getClientId())) &&
                 now < tokenExpiryTime;
 
         if (!validCredentialsStored)
@@ -181,13 +184,13 @@ public abstract class OAuthClient {
         return validCredentialsStored;
     }
 
-    protected void storeAccessToken(TokenResponse tokenResonse) {
+    protected void storeAccessToken(TokenResponse tokenResponse) {
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.SECOND, tokenResponse.getExpiresInSeconds() - 60);
+        cal.add(Calendar.SECOND, (int) (tokenResponse.getExpiresInSeconds() - 60));
         long tokenExpirtyTime = cal.getTimeInMillis();
 
         getContext().getSharedPreferences(mConfig.getCredentialStoreName(), mContext.MODE_PRIVATE).edit()
-                .putString(ACCESS_TOKEN_KEY, tokenResonse.getAccessToken())
+                .putString(ACCESS_TOKEN_KEY, tokenResponse.getAccessToken())
                 .putLong(ACCESS_TOKEN_EXP_KEY, tokenExpirtyTime)
                 .putString(CLIENT_ID, mConfig.getClientId())
                 .apply();
@@ -209,7 +212,8 @@ public abstract class OAuthClient {
      * credentials are acquired.
      */
     protected void executeQueuedCallbacks() {
-        if (VERBOSE) Log.i(TAG, String.format("Executing %d queued callbacks", mCallbackQueue.size()));
+        if (VERBOSE)
+            Log.i(TAG, String.format("Executing %d queued callbacks", mCallbackQueue.size()));
         for (OAuthCallback cb : mCallbackQueue) {
             cb.onSuccess(getRequestFactoryFromCachedCredentials());
         }
