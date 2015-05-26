@@ -18,6 +18,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.Calendar;
 
 /**
  * Manage the OAuth Client Credentials authentication
@@ -31,6 +32,7 @@ public abstract class OAuthClient {
 
     // For SharedPreferences storage
     private final String ACCESS_TOKEN_KEY = "AT";
+    private final String ACCESS_TOKEN_EXP_KEY = "EXP";
     private final String CLIENT_ID = "CID";
 
     private HttpRequestFactory mRequestFactory;         // RequestFactory cached for life of mOAuthAccessToken
@@ -167,16 +169,26 @@ public abstract class OAuthClient {
     }
 
     protected boolean isAccessTokenCached() {
-        // An Access Token is stored along with a Client ID that matches what's currently provided
-        boolean validCredentialsStored = (mStorage.contains(ACCESS_TOKEN_KEY) && mStorage.getString(CLIENT_ID, "").equals(mConfig.getClientId()));
+        // An unexpired Access Token is stored along with a Client ID that matches what's currently provided
+        long now = new Date().getTime();
+        long tokenExpiryTime = getStorage().getLong(ACCESS_TOKEN_EXP_KEY, 0);
+        boolean validCredentialsStored = (mStorage.contains(ACCESS_TOKEN_KEY) && mStorage.getString(CLIENT_ID, "").equals(mConfig.getClientId())) &&
+                now < tokenExpiryTime;
+
         if (!validCredentialsStored)
             clearAccessToken();
+
         return validCredentialsStored;
     }
 
-    protected void storeAccessToken(String accessToken) {
+    protected void storeAccessToken(TokenResponse tokenResonse) {
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.SECOND, tokenResponse.getExpiresInSeconds() - 60);
+        long tokenExpirtyTime = cal.getTimeInMillis();
+
         getContext().getSharedPreferences(mConfig.getCredentialStoreName(), mContext.MODE_PRIVATE).edit()
-                .putString(ACCESS_TOKEN_KEY, accessToken)
+                .putString(ACCESS_TOKEN_KEY, tokenResonse.getAccessToken())
+                .putLong(ACCESS_TOKEN_EXP_KEY, tokenExpirtyTime)
                 .putString(CLIENT_ID, mConfig.getClientId())
                 .apply();
     }
