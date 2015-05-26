@@ -51,14 +51,14 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
 	```
 	
     **Git Submodule:**
-    1. First add Kickflip as a submodule with git.
+    First add Kickflip as a submodule with git.
     
     ```bash
     $ cd ./path/to/project
     $ git submodule add https://github.com/Kickflip/kickflip-android-sdk.git ./submodules/kickflip-android-sdk/
     ```
 
-    2. Next, add the submodule as a gradle dependency
+    Next, add the submodule as a gradle dependency
     ```groovy
     //settings.gradle
     include ':app'
