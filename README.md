@@ -39,15 +39,40 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
     }
     ```
 
-2. Add Kickflip to your app's `build.gradle`:
+2. Add Kickflip to your app as a Maven artifact or, if you plan to modify Kickflip, as a submodule. `build.gradle`:
 
-    **Dependencies:**
+    **Maven Artifact:**
 	```groovy
+	//build.gradle
+	...
 	dependencies {
    		compile 'io.kickflip:sdk:1.3.1'
 	}
 	```
+	
+    **Git Submodule:**
+    1. First add Kickflip as a submodule with git.
+    
+    ```bash
+    $ cd ./path/to/project
+    $ git submodule add https://github.com/Kickflip/kickflip-android-sdk.git ./submodules/kickflip-android-sdk/
+    ```
 
+    2. Next, add the submodule as a gradle dependency
+    ```groovy
+    //settings.gradle
+    include ':app'
+    include ':submodules:kickflip-android-sdk:sdk'
+    ```
+    
+    ```groovy
+    //your app module's build.gradle
+    ...
+    dependencies {
+        ...
+        compile project(':submodules:kickflip-android-sdk:sdk')
+    }
+    ```
 
 3. Add the following to your app's `AndroidManifest.xml`:
 
