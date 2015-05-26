@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'com.jfrog.bintray'
+//apply plugin: 'com.github.dcendents.android-maven'
+//apply plugin: 'com.jfrog.bintray'
 
 group = 'io.kickflip'
 version = '1.3'
@@ -73,59 +73,59 @@ dependencies {
 // Bintray publishing
 
 //def repoName = 'Kickflip'
-def repoDesc = 'Kickflip.io Android SDK'
-def siteUrl = 'https://kickflip.io'
-def gitUrl = 'https://github.com/Kickflip/kickflip-android-sdk.git'
-
-bintray {
-    user = username
-    key = apiKey
-
-    configurations = ['archives'] //When uploading configuration files
-    pkg {
-        repo = "Kickflip"
-        name = 'io.kickflip:sdk'
-        desc = repoDesc
-        websiteUrl = siteUrl
-        issueTrackerUrl = 'https://github.com/Kickflip/kickflip-android-sdk/issues'
-        vcsUrl = gitUrl
-        licenses = ['Apache-2.0']
-        labels = ['aar', 'android', 'kickflip']
-        publicDownloadNumbers = true
-        publish = true //If version should be auto published after an upload
-    }
-}
-
-install {
-    repositories.mavenInstaller {
-        pom {
-            project {
-                packaging 'aar'
-                name repoDesc
-                description repoDesc
-                url siteUrl
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-                developers {
-                    developer {
-                        id 'onlyinamerica'
-                        name 'David Brodsky'
-                        email 'dbro@dbro.pro'
-                    }
-                }
-                scm {
-                    connection gitUrl
-                    developerConnection siteUrl
-                    url siteUrl
-                }
-            }
-        }
-    }
-}
+//def repoDesc = 'Kickflip.io Android SDK'
+//def siteUrl = 'https://kickflip.io'
+//def gitUrl = 'https://github.com/Kickflip/kickflip-android-sdk.git'
+//
+//bintray {
+//    user = username
+//    key = apiKey
+//
+//    configurations = ['archives'] //When uploading configuration files
+//    pkg {
+//        repo = "Kickflip"
+//        name = 'io.kickflip:sdk'
+//        desc = repoDesc
+//        websiteUrl = siteUrl
+//        issueTrackerUrl = 'https://github.com/Kickflip/kickflip-android-sdk/issues'
+//        vcsUrl = gitUrl
+//        licenses = ['Apache-2.0']
+//        labels = ['aar', 'android', 'kickflip']
+//        publicDownloadNumbers = true
+//        publish = true //If version should be auto published after an upload
+//    }
+//}
+//
+//install {
+//    repositories.mavenInstaller {
+//        pom {
+//            project {
+//                packaging 'aar'
+//                name repoDesc
+//                description repoDesc
+//                url siteUrl
+//                licenses {
+//                    license {
+//                        name 'The Apache Software License, Version 2.0'
+//                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//                    }
+//                }
+//                developers {
+//                    developer {
+//                        id 'onlyinamerica'
+//                        name 'David Brodsky'
+//                        email 'dbro@dbro.pro'
+//                    }
+//                }
+//                scm {
+//                    connection gitUrl
+//                    developerConnection siteUrl
+//                    url siteUrl
+//                }
+//            }
+//        }
+//    }
+//}
 
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
