@@ -18,6 +18,11 @@ android {
     compileSdkVersion 22
     buildToolsVersion "22.0.1"
 
+    sourceSets.main {
+        jni.srcDirs = [] // disable automatic ndk-build call. Invoke `ndk-build` manually in ./jni when native code changes are made
+        jniLibs.srcDir 'src/main/libs'
+    }
+
     defaultConfig {
         minSdkVersion 18
         targetSdkVersion 22
