@@ -76,7 +76,15 @@ To play a Kickflip broadcast within your app:
 
 You can obtain a Kickflip [`Stream`](https://github.com/Kickflip/kickflip-android-sdk/blob/preview/sdk/src/main/java/io/kickflip/sdk/api/json/Stream.java) raw media url with `stream.getStreamUrl()`. For an HLS broadcast this is a url of form https://xxx.xxx/xxx.m3u8
  
+### Updating FFmpeg
 
+The JNI bridge is currently written for FFmpeg 2.X, and are required for FFmpeg 3.X.
+To update FFmpeg:
+
+1. Download the [FFmpeg source](http://www.ffmpeg.org/download.html#releases) and build shared libraries using directions [here](https://github.com/OnlyInAmerica/FFmpeg-Android).
+2. Place the FFmpeg shared libraries produced in `./src/main/jni/ffmpeg/ARCH/`
+3. Update the JNI bridge at `./src/main/jni/FFmpegWrapper.c` as necessary by any changes to the libav* library APIs.
+4. Run `ndk-build` from the `./src/main/jni` dir.
 
 ### Activities and Fragments
 

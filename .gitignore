@@ -7,4 +7,5 @@ gradle.properties
 /.idea/
 .DS_Store
 
+sdk/src/main/obj
 .notes
