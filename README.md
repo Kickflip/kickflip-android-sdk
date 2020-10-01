@@ -1,4 +1,4 @@
-# Kickflip SDK for Android  [ ![Download](https://api.bintray.com/packages/onlyinamerica/Kickflip/io.kickflip%3Asdk/images/download.svg) ](https://bintray.com/onlyinamerica/Kickflip/io.kickflip%3Asdk/_latestVersion)
+# Best Kickflip SDK for Android  [ ![Download](https://api.bintray.com/packages/onlyinamerica/Kickflip/io.kickflip%3Asdk/images/download.svg) ](https://bintray.com/onlyinamerica/Kickflip/io.kickflip%3Asdk/_latestVersion)
 
 ![kickflip live broadcast screenshot](http://i.imgur.com/ELljE1a.jpg)
 
@@ -11,7 +11,7 @@ Check out our Android example application on [Github](https://github.com/Kickfli
 
 Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk) and [iOS Example application](https://github.com/Kickflip/kickflip-ios-example)
 
-## Features
+## Features :
 
 + **High Definition [HTTP Live Streaming](http://en.wikipedia.org/wiki/HTTP_Live_Streaming)**
 + **Background recording**
@@ -20,7 +20,7 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
 + **Blazing fast, geo-aware upstreams**
 + **Global cloud-based Content Distribution Network**
 
-## Quickstart
+## Quickstart :
 
 0. Make a [kickflip.io](https://kickflip.io) account to register an Application and receive your **Client Key** and **Client Secret**. You'll need these later.
 
@@ -134,7 +134,7 @@ Also check out our slick [iOS SDK](https://github.com/Kickflip/kickflip-ios-sdk)
    	
 `BroadcastActivity` provides a pre-built UI including a camera preview and controls for starting, stopping, and sharing the broadcast.
 
-## Building
+## Building :
 
 1. Define the Android SDK root location as $ANDROID_HOME in your environment. It's also a good idea to add the `platform-tools` and `tools` directories to your path so you can easily access common Android utilities, like adb.
 
@@ -157,11 +157,11 @@ The Kickflip SDK .aar will be in `./sdk/build/libs`.
 
 You may also import this project into Android Studio for easy development.
 
-## Documentation
+## Documentation :
 
 For a closer look at what you do with Kickflip, check out our [Android Documentation](https://github.com/Kickflip/kickflip-docs/tree/master/android) and [Android API Reference](http://kickflip.github.io/kickflip-android-sdk/reference/packages.html). We also have some [tutorials](https://github.com/Kickflip/kickflip-docs/tree/master/tutorials) to help you get started.
 
-## License
+## License :
 
 Apache 2.0
 
